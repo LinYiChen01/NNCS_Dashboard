@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
+  <title>Login &mdash; Stisla</title>
+
+  <!-- General CSS Files -->
+  <link rel="stylesheet" href="assets/modules/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/modules/fontawesome/css/all.min.css">
+
+  <!-- CSS Libraries -->
+  <link rel="stylesheet" href="assets/modules/bootstrap-social/bootstrap-social.css">
+
+  <!-- Template CSS -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+
+  <!-- Start GA -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-94034622-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'UA-94034622-3');
+  </script>
+  <!-- /END GA -->
+</head>
+
+<body>
+  <div id="app">
+    <section class="section">
+      <div class="container mt-5">
+        <div class="row">
+          <div class="col-12 col-sm-8 offset-sm-2 col-md-6 offset-md-3 col-lg-6 offset-lg-3 col-xl-4 offset-xl-4">
+            <div class="login-brand">
+              <img src="assets/img/NNCS_Matting.png" alt="logo" width="100" class="shadow-light rounded-circle">
+            </div>
+
+            <div class="card card-primary">
+              <div class="card-header"><h4>Login</h4></div>
+
+              <div class="card-body">
+                <form method="POST" action="{{ url_for('login') }}" class="needs-validation" novalidate="">
+                  <div class="form-group">
+                    <label for="acc">Email</label>
+                    <input id="acc" type="email" class="form-control" name="acc" tabindex="1" required autofocus>
+                    <!-- <div class="invalid-feedback">
+                      Please fill in your email
+                    </div> -->
+                  </div>
+
+                  <div class="form-group">
+                    <div class="d-block">
+                      <label for="pwd" class="control-label">Password</label>
+                    </div>
+                    <input id="pwd" type="password" class="form-control" name="pwd" tabindex="2" required>
+                    <!-- <div class="invalid-feedback">
+                      please fill in your password
+                    </div> -->
+                  </div>
+
+                  <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-lg btn-block" id="loginButton" tabindex="4">
+                      Login
+                    </button>
+                  </div>
+                </form>
+                <div class="text-center mt-4 mb-3">
+                  <div class="text-job text-muted">Or</div>
+                </div>
+                <div class="row sm-gutters">
+                  <div class="col-12" >
+                    <div style="border: 1px solid #bababa; border-radius: 6px;">
+                      <a class="btn btn-block" style="color: #34395e !important; display: flex; align-items: center; justify-content: center;">
+                          <img style="width: 20px; height: 20px; margin: 6px;" src="https://www.svgrepo.com/show/475656/google-color.svg">
+                          &nbsp;&nbsp;Login with Google
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal for Login Failure -->
+  {% if login_status == False %}
+  <div class="modal fade" id="loginFailureModal" tabindex="-1" role="dialog" aria-labelledby="loginFailureModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginFailureModalLabel" style="color: #f36969;">登入失敗</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          請確認帳號或密碼是否輸入正確
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- General JS Scripts -->
+  <script src="assets/modules/jquery.min.js"></script>
+  <script src="assets/modules/popper.js"></script>
+  <script src="assets/modules/bootstrap/js/bootstrap.min.js"></script>
+
+  <!-- Custom JS for Login Failure Modal -->
+  <script>
+    $(document).ready(function() {
+      {% if login_status == False %}
+        $('#loginFailureModal').modal('show');
+      {% endif %}
+    });
+  </script>
+
+</body>
+</html>
