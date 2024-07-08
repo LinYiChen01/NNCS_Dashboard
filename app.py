@@ -19,6 +19,7 @@ def index0():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    login_status = ''
     if request.method == 'POST':
         acc = request.form['acc']
         pwd = request.form['pwd']
@@ -36,15 +37,15 @@ def login():
                 if result:
                     return render_template("index.html", login_status=True)
                 else:
-                    return render_template("login.html", login_status=False)
+                    login_status = False
         except Exception as e:
             # Handle exceptions
-            return render_template("login.html", login_status=False)
+            login_status = False
         finally:
             # Close the database connection
             connection.close()
-    
-    return render_template("login.html")
+    return render_template("login.html", login_status=login_status)
+    # return render_template("login.html", **locals())
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -88,7 +88,6 @@
   </div>
 
   <!-- Modal for Login Failure -->
-  {% if login_status == False %}
   <div class="modal fade" id="loginFailureModal" tabindex="-1" role="dialog" aria-labelledby="loginFailureModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -104,21 +103,20 @@
       </div>
     </div>
   </div>
-  {% endif %}
 
   <!-- General JS Scripts -->
   <script src="assets/modules/jquery.min.js"></script>
   <script src="assets/modules/popper.js"></script>
   <script src="assets/modules/bootstrap/js/bootstrap.min.js"></script>
-
+  
   <!-- Custom JS for Login Failure Modal -->
+  {% if login_status == False %}
   <script>
     $(document).ready(function() {
-      {% if login_status == False %}
         $('#loginFailureModal').modal('show');
-      {% endif %}
     });
   </script>
+  {% endif %}
 
 </body>
 </html>
