@@ -143,5 +143,35 @@ def login():
     return render_template("login.html", login_status=login_status)
     # return render_template("login.html", **locals())
 
+@app.route('/logintest', methods=['GET', 'POST'])
+def logintest():
+    login_status = ''
+    if request.method == 'POST':
+        acc = request.form['acc']
+        pwd = request.form['pwd']
+        connection = pymysql.connect(host=db_host,
+                                     user=db_user,
+                                     password=db_pwd,
+                                     db=db_name,
+                                     cursorclass=pymysql.cursors.DictCursor)
+        try:
+            # Execute the SQL query to fetch user details
+            with connection.cursor() as cursor:
+                sql = "SELECT * FROM users WHERE acc=%s AND pwd=%s"
+                cursor.execute(sql, (acc, pwd))
+                result = cursor.fetchone()
+                if result:
+                    return render_template("index.html", login_status=True)
+                else:
+                    login_status = False
+        except Exception as e:
+            # Handle exceptions
+            login_status = False
+        finally:
+            # Close the database connection
+            connection.close()
+    return render_template("logintest.html", login_status=login_status)
+    # return render_template("login.html", **locals())
+
 if __name__ == '__main__':
     app.run(debug=True)
