@@ -1,0 +1,13 @@
+指令
+
+進到專案資料夾 cmd
+
+ngrok http 5000
+
+將連結複製到 line api裡 (關掉重開後，每次都要重做一遍來更新)
+https://developers.line.biz/console/channel/2005740032/messaging-api
+
+Webhook URL: 
+連結/callback
+
+點verify -> 成功!
