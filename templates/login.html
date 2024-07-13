@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
@@ -20,7 +21,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-94034622-3"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'UA-94034622-3');
   </script>
@@ -38,16 +39,15 @@
             </div>
 
             <div class="card card-primary">
-              <div class="card-header"><h4>Login</h4></div>
+              <div class="card-header">
+                <h4>Login</h4>
+              </div>
 
               <div class="card-body">
                 <form method="POST" action="{{ url_for('login') }}" class="needs-validation" novalidate="">
                   <div class="form-group">
                     <label for="acc">Email</label>
                     <input id="acc" type="email" class="form-control" name="acc" tabindex="1" required autofocus>
-                    <!-- <div class="invalid-feedback">
-                      Please fill in your email
-                    </div> -->
                   </div>
 
                   <div class="form-group">
@@ -55,9 +55,6 @@
                       <label for="pwd" class="control-label">Password</label>
                     </div>
                     <input id="pwd" type="password" class="form-control" name="pwd" tabindex="2" required>
-                    <!-- <div class="invalid-feedback">
-                      please fill in your password
-                    </div> -->
                   </div>
 
                   <div class="form-group">
@@ -70,11 +67,13 @@
                   <div class="text-job text-muted">Or</div>
                 </div>
                 <div class="row sm-gutters">
-                  <div class="col-12" >
+                  <div class="col-12">
                     <div style="border: 1px solid #bababa; border-radius: 6px;">
-                      <a class="btn btn-block" style="color: #34395e !important; display: flex; align-items: center; justify-content: center;">
-                          <img style="width: 20px; height: 20px; margin: 6px;" src="https://www.svgrepo.com/show/475656/google-color.svg">
-                          &nbsp;&nbsp;Login with Google
+                      <a class="btn btn-block"
+                        style="color: #34395e !important; display: flex; align-items: center; justify-content: center;">
+                        <img style="width: 20px; height: 20px; margin: 6px;"
+                          src="https://www.svgrepo.com/show/475656/google-color.svg">
+                        &nbsp;&nbsp;Login with Google
                       </a>
                     </div>
                   </div>
@@ -88,7 +87,8 @@
   </div>
 
   <!-- Modal for Login Failure -->
-  <div class="modal fade" id="loginFailureModal" tabindex="-1" role="dialog" aria-labelledby="loginFailureModalLabel" aria-hidden="true">
+  <div class="modal fade" id="loginFailureModal" tabindex="-1" role="dialog" aria-labelledby="loginFailureModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -108,15 +108,157 @@
   <script src="assets/modules/jquery.min.js"></script>
   <script src="assets/modules/popper.js"></script>
   <script src="assets/modules/bootstrap/js/bootstrap.min.js"></script>
-  
+
   <!-- Custom JS for Login Failure Modal -->
   {% if login_status == False %}
   <script>
-    $(document).ready(function() {
-        $('#loginFailureModal').modal('show');
+    $(document).ready(function () {
+      $('#loginFailureModal').modal('show');
     });
   </script>
   {% endif %}
 
+  <!-- Google OAuth2.0 Scripts -->
+  <button id="google_login" class="btn btn-large btn-primary">GOOGLE 登入</button>
+  <button id="google_logout" class="btn btn-large btn-warning">GOOGLE 登出</button>
+
+  <p />
+  <p>目前狀態：</p>
+  <div id="personal_info">尚未授權</div>
+
+  <script>
+    var client_id = "49241093853-4uo5e11jv954lbejvh9rmf85qmt2oro9.apps.googleusercontent.com",
+      Key = "AIzaSyDn9XKknz24OoivOY7KvUr58T8kxb9kLPg",
+      scope = "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/user.gender.read https://www.googleapis.com/auth/user.birthday.read",
+      personFields = "names,emailAddresses,photos,genders,birthdays",
+      discovery_doc = "https://www.googleapis.com/discovery/v1/apis/people/v1/rest",
+      resourceName = "people/me",
+      $personal_info = $("#personal_info"),
+      redirect_uri = "https://e2ea-101-10-2-230.ngrok-free.app/login",
+      tokenClient;
+
+    loadApi();
+
+    // 載入 Google API
+    function loadApi() {
+      // 載入 gapi
+      $.getScript("https://apis.google.com/js/api.js", function () {
+        gapi.load("client", function () {
+          gapi.client.init({
+            apiKey: Key,
+            discoveryDocs: [discovery_doc],
+          });
+        });
+      });
+
+      // 載入 gsi
+      $.getScript("https://accounts.google.com/gsi/client", function () {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: client_id,
+          scope: scope,
+          callback: signIn_callback,
+          error_callback: error_callback,
+          redirect_uri: redirect_uri
+        });
+      });
+    }
+
+    // 登入後 callback
+    function signIn_callback(res) {
+      // 登入失敗時
+      if (res.error !== undefined) {
+        console.log(res.error);
+        $personal_info.html(res.error);
+      }
+
+      // 登入成功後
+      if (res && res.access_token) {
+        // 顯示帳號資訊
+        listAccountInfo();
+      }
+    }
+
+    // 捕捉非 OAuth 錯誤 或是在傳回 OAuth 回應前遭到關閉
+    function error_callback(res) {
+      console.log(res);
+      $personal_info.html(res.message);
+    }
+
+    // 顯示帳號資訊
+    function listAccountInfo() {
+      // 呼叫 people api 取得資料
+      gapi.client.people.people.get({
+        "resourceName": resourceName,
+        "personFields": personFields,
+      }).then(function (res) {
+        // 顯示資料
+        var result = res.result,
+          html = "";
+
+        if (result.names && result.names.length > 0) {
+          html += "暱稱： " + result.names[0].displayName + "<br/>";
+        } else {
+          html += "暱稱： 無資料<br/>";
+        }
+
+        if (result.photos && result.photos.length > 0) {
+          html += "頭像：<img style='width: 40px;' src='" + result.photos[0].url + "'/><br/>";
+        } else {
+          html += "頭像：<br/>";
+        }
+
+        if (result.emailAddresses && result.emailAddresses.length > 0) {
+          html += "email：" + result.emailAddresses[0].value + "<br/>";
+        } else {
+          html += "email： 無資料<br/>";
+        }
+
+        if (result.genders && result.genders.length > 0) {
+          html += "性別：" + result.genders[0].formattedValue + "<br/>";
+        } else {
+          html += "性別： 無資料<br/>";
+        }
+
+        if (result.birthdays && result.birthdays.length > 0 && result.birthdays[0].date) {
+          var birthday = result.birthdays[0].date;
+          var birthdayStr = birthday.year + "-" + birthday.month + "-" + birthday.day;
+          html += "生日：" + birthdayStr + "<br/>";
+        } else {
+          html += "生日： 無資料<br/>";
+        }
+
+        $personal_info.html(html);
+      });
+    }
+
+    // 點擊登入按鈕
+    $("#google_login").click(function () {
+      // 進動畫
+      $personal_info.html("<img src='https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgATuJvkpy3TyBQtXW_JJ59fpiTcu6m9jkBoXtHXpCwpiiOqDdLSLIP2VkH56AQHEg_JubYb6aueZcHrVC-1muR1XwNF3Fxkt_fbNxdMtl6TiakzPHvqPlXefdZMOu2u9IzU6-a-X8So4ok/s512/indicator-light.gif' /> <span>請稍後...</span>");
+
+      if (gapi.client.getToken() === null) {
+        // 未登入則彈出登入視窗
+        tokenClient.requestAccessToken();
+      } else {
+        // 已登入則不彈出視窗
+        tokenClient.requestAccessToken({
+          prompt: ""
+        });
+      }
+    });
+
+    // 點擊登出按鈕
+    $("#google_logout").click(function () {
+      var token = gapi.client.getToken();
+      if (token !== null) {
+        google.accounts.oauth2.revoke(token.access_token);
+        gapi.client.setToken("");
+
+        // 登出後的動作
+        $personal_info.html("已登出");
+      }
+    });
+  </script>
 </body>
+
 </html>

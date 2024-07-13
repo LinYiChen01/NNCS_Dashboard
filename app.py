@@ -18,13 +18,6 @@ from linebot.v3.webhooks import (
     TextMessageContent
 )
 
-
-# from linebot.v3 import WebhookHandler
-# from linebot.v3.exceptions import InvalidSignatureError
-# from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, TextMessage
-# from linebot.v3.webhooks import MessageEvent, TextMessageContent
-# from linebot.v3.webhook import WebhookHandler, MessageEvent, TextMessage, TextSendMessage
-
 # Channel Access Token
 configuration = Configuration(access_token='ezTOh8SMwv3ATxslU3Wk4Bm5oAiP3cKadO+xnXZYiRNMOkl2R6w0IBuulijnc088OqwZJgjodYEcSiZO/n3mKfLVraN1GIFciPkcMANaPw4F8K1lyQKZ48SpGGp2KrxcVVQt8tu90S7R6EgIjazW9wdB04t89/1O/w1cDnyilFU=')
 # Channel Secret
@@ -37,6 +30,7 @@ db_pwd = ''
 db_name = 'nncs'
 
 app = Flask(__name__, static_folder='templates/assets')
+
 
 @app.route("/")
 @app.route("/index")
