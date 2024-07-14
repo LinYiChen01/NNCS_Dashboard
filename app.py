@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, abort
+import os
+from flask import Flask, render_template, request, abort, session
 import pymysql.cursors
 from linebot.v3 import (
     WebhookHandler
@@ -32,10 +33,19 @@ db_name = 'nncs'
 app = Flask(__name__, static_folder='templates/assets')
 
 
+
 @app.route("/")
-@app.route("/index")
+@app.route('/index', methods=['POST'])
 def index():
-    return render_template("index.html")
+    login_status = request.form.get('login_status')
+
+    if login_status == "True":
+        # 在此处可以获取用户信息，并渲染到 index.html 中
+        return render_template("index.html")
+    else:
+        # 如果 login_status 不为 True，返回登录页面或其他处理逻辑
+        return render_template("login.html")
+    
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -103,9 +113,9 @@ def handle_message(event):
         cursor.close()
         connection.close()
 
-@app.route("/index-0")
+@app.route("/index0")
 def index0():
-    return render_template("index-0.html")
+    return render_template("index0.html")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -135,36 +145,6 @@ def login():
             # Close the database connection
             connection.close()
     return render_template("login.html", login_status=login_status)
-    # return render_template("login.html", **locals())
-
-@app.route('/logintest', methods=['GET', 'POST'])
-def logintest():
-    login_status = ''
-    if request.method == 'POST':
-        acc = request.form['acc']
-        pwd = request.form['pwd']
-        connection = pymysql.connect(host=db_host,
-                                     user=db_user,
-                                     password=db_pwd,
-                                     db=db_name,
-                                     cursorclass=pymysql.cursors.DictCursor)
-        try:
-            # Execute the SQL query to fetch user details
-            with connection.cursor() as cursor:
-                sql = "SELECT * FROM users WHERE acc=%s AND pwd=%s"
-                cursor.execute(sql, (acc, pwd))
-                result = cursor.fetchone()
-                if result:
-                    return render_template("index.html", login_status=True)
-                else:
-                    login_status = False
-        except Exception as e:
-            # Handle exceptions
-            login_status = False
-        finally:
-            # Close the database connection
-            connection.close()
-    return render_template("logintest.html", login_status=login_status)
     # return render_template("login.html", **locals())
 
 if __name__ == '__main__':

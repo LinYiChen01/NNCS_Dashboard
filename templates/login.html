@@ -67,7 +67,7 @@
                   <div class="text-job text-muted">Or</div>
                 </div>
                 <div class="row sm-gutters">
-                  <div class="col-12">
+                  <div id="google_login" class="col-12">
                     <div style="border: 1px solid #bababa; border-radius: 6px;">
                       <a class="btn btn-block"
                         style="color: #34395e !important; display: flex; align-items: center; justify-content: center;">
@@ -119,22 +119,21 @@
   {% endif %}
 
   <!-- Google OAuth2.0 Scripts -->
-  <button id="google_login" class="btn btn-large btn-primary">GOOGLE 登入</button>
-  <button id="google_logout" class="btn btn-large btn-warning">GOOGLE 登出</button>
+  <!-- <button id="google_login" class="btn btn-large btn-primary">GOOGLE 登入</button>
+  <button id="google_logout" class="btn btn-large btn-warning">GOOGLE 登出</button> -->
 
-  <p />
-  <p>目前狀態：</p>
-  <div id="personal_info">尚未授權</div>
+  <!-- <p>目前狀態：</p>
+  <div id="personal_info">尚未授權</div> -->
 
   <script>
-    var client_id = "49241093853-4uo5e11jv954lbejvh9rmf85qmt2oro9.apps.googleusercontent.com",
+    var client_id = "49241093853-q97vjg4n2gsaqfjb27hrinc882h0r60s.apps.googleusercontent.com",
       Key = "AIzaSyDn9XKknz24OoivOY7KvUr58T8kxb9kLPg",
       scope = "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/user.gender.read https://www.googleapis.com/auth/user.birthday.read",
       personFields = "names,emailAddresses,photos,genders,birthdays",
       discovery_doc = "https://www.googleapis.com/discovery/v1/apis/people/v1/rest",
       resourceName = "people/me",
       $personal_info = $("#personal_info"),
-      redirect_uri = "https://e2ea-101-10-2-230.ngrok-free.app/login",
+      redirect_uri = "https://fa8d-219-70-149-68.ngrok-free.app/index",
       tokenClient;
 
     loadApi();
@@ -163,20 +162,34 @@
       });
     }
 
-    // 登入後 callback
+    // 登入成功後 callback
     function signIn_callback(res) {
-      // 登入失敗時
-      if (res.error !== undefined) {
-        console.log(res.error);
-        $personal_info.html(res.error);
+      if (res.error) {
+        console.error('Google login error:', res.error);
       }
 
-      // 登入成功後
+      // if (res && res.access_token) {
+      //   // 重定向到 index.html 页面，并设置 session 参数
+      //   var session = "True";
+      //   window.location.href = "/index?session=" + session;
+      // }
       if (res && res.access_token) {
-        // 顯示帳號資訊
-        listAccountInfo();
+        var login_status = "True";
+        $.ajax({
+          type: "POST",
+          url: "/index",
+          data: { login_status: login_status },
+          success: function (response) {
+            // 在成功获取内容后，可以将内容插入到当前页面中
+            $('body').html(response);
+          },
+          error: function (error) {
+            console.error("Error loading index:", error);
+          }
+        });
       }
     }
+
 
     // 捕捉非 OAuth 錯誤 或是在傳回 OAuth 回應前遭到關閉
     function error_callback(res) {
