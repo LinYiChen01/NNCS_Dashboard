@@ -164,32 +164,21 @@
 
     // 登入成功後 callback
     function signIn_callback(res) {
-      if (res.error) {
-        console.error('Google login error:', res.error);
-      }
-
-      // if (res && res.access_token) {
-      //   // 重定向到 index.html 页面，并设置 session 参数
-      //   var session = "True";
-      //   window.location.href = "/index?session=" + session;
-      // }
-      if (res && res.access_token) {
+    if (res && res.access_token) {
         var login_status = "True";
         $.ajax({
-          type: "POST",
-          url: "/index",
-          data: { login_status: login_status },
-          success: function (response) {
-            // 在成功获取内容后，可以将内容插入到当前页面中
-            $('body').html(response);
-          },
-          error: function (error) {
-            console.error("Error loading index:", error);
-          }
+            type: "POST",
+            url: "/index",
+            data: { login_status: login_status },
+            success: function (response) {
+                window.location.href = "/index";
+            },
+            error: function (error) {
+                console.error("Error loading a:", error);
+            }
         });
-      }
     }
-
+}
 
     // 捕捉非 OAuth 錯誤 或是在傳回 OAuth 回應前遭到關閉
     function error_callback(res) {

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, abort, session
+from flask import Flask, render_template, request, abort, session, redirect, url_for
 import pymysql.cursors
 from linebot.v3 import (
     WebhookHandler
@@ -31,22 +31,27 @@ db_pwd = ''
 db_name = 'nncs'
 
 app = Flask(__name__, static_folder='templates/assets')
+app.secret_key = os.urandom(24)  # 随机生成一个24字节的密钥
 
 
 
 @app.route("/")
-@app.route('/index', methods=['POST'])
+@app.route("/index", methods=['GET', 'POST'])
 def index():
-    login_status = request.form.get('login_status')
-
-    if login_status == "True":
-        # 在此处可以获取用户信息，并渲染到 index.html 中
-        return render_template("index.html")
+    if request.method == 'POST':
+        login_status = request.form.get("login_status")
+        session['login_status'] = login_status
+        if login_status == "True":
+            return render_template("index.html")
+        else:
+            return redirect(url_for('login'))
     else:
-        # 如果 login_status 不为 True，返回登录页面或其他处理逻辑
-        return render_template("login.html")
+        login_status = session.get('login_status')
+        if login_status == "True":
+            return render_template("index.html", login_status=login_status)
+        else:
+            return redirect(url_for('login'))
     
-
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
