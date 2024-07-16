@@ -4,6 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
   <title>Login &mdash; Stisla</title>
 
   <!-- General CSS Files -->
@@ -44,7 +49,7 @@
               </div>
 
               <div class="card-body">
-                <form method="POST" action="{{ url_for('login') }}" class="needs-validation" novalidate="">
+                <form id= "login_form" method="POST" action="{{ url_for('login') }}" class="needs-validation" novalidate="">
                   <div class="form-group">
                     <label for="acc">Email</label>
                     <input id="acc" type="email" class="form-control" name="acc" tabindex="1" required autofocus>
@@ -110,7 +115,7 @@
   <script src="assets/modules/bootstrap/js/bootstrap.min.js"></script>
 
   <!-- Custom JS for Login Failure Modal -->
-  {% if login_status == False %}
+  {% if login_status == "False" %}
   <script>
     $(document).ready(function () {
       $('#loginFailureModal').modal('show');
@@ -120,10 +125,11 @@
 
   <!-- Google OAuth2.0 Scripts -->
   <!-- <button id="google_login" class="btn btn-large btn-primary">GOOGLE 登入</button>
-  <button id="google_logout" class="btn btn-large btn-warning">GOOGLE 登出</button> -->
+  <button id="google_logout" class="btn btn-large btn-warning">GOOGLE 登出</button>
 
-  <!-- <p>目前狀態：</p>
+  <p>目前狀態：</p>
   <div id="personal_info">尚未授權</div> -->
+
 
   <script>
     var client_id = "346287506808-oe0cu9l0ovsie49b274hhkrmmsr4ih0v.apps.googleusercontent.com",
@@ -133,7 +139,7 @@
       discovery_doc = "https://www.googleapis.com/discovery/v1/apis/people/v1/rest",
       resourceName = "people/me",
       $personal_info = $("#personal_info"),
-      redirect_uri = "https://b772-219-70-149-68.ngrok-free.app/index",
+      redirect_uri = " https://68d2-1-164-160-29.ngrok-free.app",
       tokenClient;
 
     loadApi();
@@ -166,16 +172,34 @@
     function signIn_callback(res) {
     if (res && res.access_token) {
         var login_status = "True";
-        $.ajax({
-            type: "POST",
-            url: "/index",
-            data: { login_status: login_status },
-            success: function (response) {
-                window.location.href = "/index";
-            },
-            error: function (error) {
-                console.error("Error loading a:", error);
-            }
+        var login_method = "google";
+        var access_token = res.access_token;
+        
+        
+        // 使用 Google People API 獲取使用者資訊
+        gapi.client.people.people.get({
+            resourceName: 'people/me',
+            personFields: 'names,emailAddresses,photos,genders,birthdays'
+        }).then(function(response) {
+            var user_info = response.result;
+            
+            // 將使用者資訊傳送至後端 Flask 應用
+            $.ajax({
+                type: "POST",
+                url: "/login",
+                data: { 
+                    login_status: login_status, 
+                    login_method: login_method, 
+                    access_token: access_token,
+                    user_info: JSON.stringify(user_info)
+                },
+                success: function (response) {
+                    window.location.href = "/index";
+                },
+                error: function (error) {
+                    console.error("Error loading:", error);
+                }
+            });
         });
     }
 }

@@ -1,5 +1,7 @@
 import os
-from flask import Flask, render_template, request, abort, session, redirect, url_for
+from flask import Flask, render_template, request, abort, session, redirect, url_for, make_response
+from authlib.integrations.flask_client import OAuth
+import json
 import pymysql.cursors
 from linebot.v3 import (
     WebhookHandler
@@ -34,23 +36,52 @@ app = Flask(__name__, static_folder='templates/assets')
 app.secret_key = os.urandom(24)  # 随机生成一个24字节的密钥
 
 
-
 @app.route("/")
-@app.route("/index", methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
 def index():
-    if request.method == 'POST':
-        login_status = request.form.get("login_status")
-        session['login_status'] = login_status
-        if login_status == "True":
-            return render_template("index.html")
-        else:
-            return redirect(url_for('login'))
+    login_status = session.get('login_status')
+    if login_status == "True":
+        access_token = session.get('access_token')
+        # return render_template("index.html", login_status=login_status, access_token=access_token)
+        print('sessionfffff')
+        print(access_token)
+        return render_template("index.html", access_token=access_token)
+        
     else:
-        login_status = session.get('login_status')
-        if login_status == "True":
-            return render_template("index.html", login_status=login_status)
-        else:
-            return redirect(url_for('login'))
+        return redirect(url_for('login'))
+    # if request.method == 'POST':
+    #     login_status = request.form.get("login_status")
+    #     session['login_status'] = login_status
+    #     print(f"POST request received. login_status: {login_status}")
+    #     if login_status == "True":
+    #         return render_template("index.html")
+    #     else:
+    #         return redirect(url_for('login'))
+    # return request.method
+    
+    # print(f"GET request received.")
+    # login_status = session.get('login_status')
+    # if login_status == "True":
+    #     return render_template("index.html", login_status=login_status)
+    # else:
+    #     return redirect(url_for('login'))
+# @app.route("/index", methods=['GET', 'POST'])
+# def index():
+#     if request.method == 'POST':
+#         login_status = request.form.get("login_status")
+#         session['login_status'] = login_status
+#         if login_status == "True":
+#             return render_template("index.html")
+#         else:
+#             return redirect(url_for('login'))
+#     print(request.method)
+#     return redirect(url_for('login'))
+    # else:
+    #     login_status = session.get('login_status')
+    #     if login_status == "True":
+    #         return render_template("index.html", login_status=login_status)
+    #     else:
+    #         return redirect(url_for('login'))
     
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -124,33 +155,80 @@ def index0():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    login_status = ''
     if request.method == 'POST':
-        acc = request.form['acc']
-        pwd = request.form['pwd']
-        connection = pymysql.connect(host=db_host,
-                                     user=db_user,
-                                     password=db_pwd,
-                                     db=db_name,
-                                     cursorclass=pymysql.cursors.DictCursor)
-        try:
-            # Execute the SQL query to fetch user details
-            with connection.cursor() as cursor:
-                sql = "SELECT * FROM users WHERE acc=%s AND pwd=%s"
-                cursor.execute(sql, (acc, pwd))
-                result = cursor.fetchone()
-                if result:
-                    return render_template("index.html", login_status=True)
-                else:
-                    login_status = False
-        except Exception as e:
-            # Handle exceptions
-            login_status = False
-        finally:
-            # Close the database connection
-            connection.close()
-    return render_template("login.html", login_status=login_status)
+        login_method = request.form.get('login_method')
+        if login_method == "google":
+            login_status = request.form.get("login_status")
+            session['login_status'] = login_status
+            session['login_method'] = login_method
+            access_token = request.form.get("access_token")
+            session['access_token'] = access_token
+            user_info = json.loads(request.form.get("user_info"))
+            
+            # session['user_info'] = user_info
+            # 提取姓名
+            names = user_info['names']
+            if names:
+                display_name = names[0]['displayName']  # 取得顯示名稱
+                family_name = names[0].get('familyName', '')  # 取得姓氏
+                given_name = names[0].get('givenName', '')  # 取得名字
+                full_name = f"{given_name} {family_name}" if given_name and family_name else display_name
+
+            # 提取頭像
+            photos = user_info['photos']
+            if photos:
+                photo_url = photos[0]['url']  # 取得頭像 URL
+
+            # 提取郵件地址
+            email_addresses = user_info['emailAddresses']
+            if email_addresses:
+                email = email_addresses[0]['value']  # 取得郵件地址
+
+            print("姓名:", full_name)
+            print("頭像 URL:", photo_url)
+            print("郵件地址:", email)
+            # print(session)
+            if login_status == "True":
+                return render_template("index.html", session=session) 
+            else:
+                return redirect(url_for('login'))
+        
+        else:
+            acc = request.form['acc']
+            pwd = request.form['pwd']
+            connection = pymysql.connect(host=db_host,
+                                         user=db_user,
+                                         password=db_pwd,
+                                         db=db_name,
+                                         cursorclass=pymysql.cursors.DictCursor)
+            try:
+                # Execute the SQL query to fetch user details
+                with connection.cursor() as cursor:
+                    sql = "SELECT * FROM users WHERE acc=%s AND pwd=%s"
+                    cursor.execute(sql, (acc, pwd))
+                    result = cursor.fetchone()
+                    if result:
+                        session['login_status'] = "True"
+                        return redirect(url_for('index'))
+                    else:
+                        login_status = "False"
+            except Exception as e:
+                print(f"Database error: {e}")
+                login_status = "False"
+            finally:
+                # Close the database connection
+                connection.close()
+            return render_template("login.html", login_status=login_status)
+    
+    return render_template("login.html", login_status='')
     # return render_template("login.html", **locals())
+
+
+@app.route('/logout')
+def logout():
+    session.clear()  # 清除会话
+    return render_template("login.html")
+    
 
 if __name__ == '__main__':
     app.run(debug=True)

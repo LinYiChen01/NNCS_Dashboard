@@ -4,6 +4,11 @@
 
 ngrok http 5000
 
+VSCode 也是喔 login.html
+
+
+Line
+
 將連結複製到 line api裡 (關掉重開後，每次都要重做一遍來更新)
 https://developers.line.biz/console/channel/2005740032/messaging-api
 
@@ -11,3 +16,20 @@ Webhook URL:
 連結/callback
 
 點verify -> 成功!
+
+
+google 登入
+
+api
+
+AIzaSyB63lPx97CBNrxTAli8oz1A3n3_olyirq8
+
+
+id
+
+346287506808-oe0cu9l0ovsie49b274hhkrmmsr4ih0v.apps.googleusercontent.com
+
+
+pwd
+
+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
