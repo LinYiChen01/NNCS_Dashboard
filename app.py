@@ -167,6 +167,7 @@ def login():
             
             # session['user_info'] = user_info
             # 提取姓名
+
             names = user_info['names']
             if names:
                 display_name = names[0]['displayName']  # 取得顯示名稱
@@ -187,7 +188,21 @@ def login():
             print("姓名:", full_name)
             print("頭像 URL:", photo_url)
             print("郵件地址:", email)
-            # print(session)
+            print(session)
+            
+            # connection = pymysql.connect(host=db_host,
+            #                              user=db_user,
+            #                              password=db_pwd,
+            #                              db=db_name,
+            #                              cursorclass=pymysql.cursors.DictCursor)
+            # with connection.cursor() as cursor:
+            #             sql = "SELECT * FROM users WHERE acc=%s"
+            #             cursor.execute(sql, (email, pwd))
+            #             result = cursor.fetchone()
+            #             if result:
+            #                 session['login_status'] = "True"
+            #                 return redirect(url_for('index'))
+
             if login_status == "True":
                 return render_template("index.html", session=session) 
             else:
@@ -203,15 +218,17 @@ def login():
                                          cursorclass=pymysql.cursors.DictCursor)
             try:
                 # Execute the SQL query to fetch user details
-                with connection.cursor() as cursor:
-                    sql = "SELECT * FROM users WHERE acc=%s AND pwd=%s"
-                    cursor.execute(sql, (acc, pwd))
-                    result = cursor.fetchone()
-                    if result:
-                        session['login_status'] = "True"
-                        return redirect(url_for('index'))
-                    else:
-                        login_status = "False"
+                if pwd.strip() == '':
+                    with connection.cursor() as cursor:
+                        sql = "SELECT * FROM users WHERE acc=%s AND pwd=%s"
+                        cursor.execute(sql, (acc, pwd))
+                        result = cursor.fetchone()
+                        if result:
+                            session['login_status'] = "True"
+                            return redirect(url_for('index'))
+                        # else:
+                        #     login_status = "False"
+                login_status = "False"
             except Exception as e:
                 print(f"Database error: {e}")
                 login_status = "False"
