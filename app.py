@@ -185,24 +185,29 @@ def login():
             if email_addresses:
                 email = email_addresses[0]['value']  # 取得郵件地址
 
-            print("姓名:", full_name)
-            print("頭像 URL:", photo_url)
-            print("郵件地址:", email)
-            print(session)
+            # print("姓名:", full_name)
+            # print("頭像 URL:", photo_url)
+            # print("郵件地址:", email)
+            # print(session)
             
-            # connection = pymysql.connect(host=db_host,
-            #                              user=db_user,
-            #                              password=db_pwd,
-            #                              db=db_name,
-            #                              cursorclass=pymysql.cursors.DictCursor)
-            # with connection.cursor() as cursor:
-            #             sql = "SELECT * FROM users WHERE acc=%s"
-            #             cursor.execute(sql, (email, pwd))
-            #             result = cursor.fetchone()
-            #             if result:
-            #                 session['login_status'] = "True"
-            #                 return redirect(url_for('index'))
-
+            connection = pymysql.connect(host=db_host,
+                                         user=db_user,
+                                         password=db_pwd,
+                                         db=db_name,
+                                         cursorclass=pymysql.cursors.DictCursor)
+            with connection.cursor() as cursor:
+                        sql = "SELECT * FROM users WHERE acc=%s"
+                        cursor.execute(sql, (email))
+                        result = cursor.fetchone()
+                        if result:
+                            session['login_status'] = "True"
+                            # return redirect(url_for('index'))
+                        else:
+                            sql = "INSERT INTO users (acc, name, email, picture) VALUES (%s, %s, %s, %s)"
+                            cursor.execute(sql, (email, full_name, email, photo_url))
+                            connection.commit()  # 确保插入操作被提交
+                            session['login_status'] = "True"
+                            # return redirect(url_for('index'))           
             if login_status == "True":
                 return render_template("index.html", session=session) 
             else:
