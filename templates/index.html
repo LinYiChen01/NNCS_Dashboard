@@ -234,8 +234,10 @@
             </div>
           </li>
           <li class="dropdown"><a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
-            <img alt="image" src="assets/img/avatar/avatar-1.png" class="rounded-circle mr-1">
-            <div class="d-sm-none d-lg-inline-block">Hi, Ujang Maman</div></a>
+            {% if session['photo'] %}
+              <img alt="image" src={{session['photo']}} class="rounded-circle mr-1">
+            {% endif %}
+            <div class="d-sm-none d-lg-inline-block">{{session['name']}}</div></a>
             <div class="dropdown-menu dropdown-menu-right">
               <div class="dropdown-title">Logged in 5 min ago</div>
               <a href="features-profile.html" class="dropdown-item has-icon">
@@ -248,7 +250,7 @@
                 <i class="fas fa-cog"></i> Settings
               </a>
               <div class="dropdown-divider"></div>
-              <a id="google_logout" class="dropdown-item has-icon text-danger">
+              <a href="features-settings.html" id="google_logout" class="dropdown-item has-icon text-danger">
                 <i class="fas fa-sign-out-alt"></i> Logout
               </a>
             </div>
@@ -258,10 +260,10 @@
       <div class="main-sidebar sidebar-style-2">
         <aside id="sidebar-wrapper">
           <div class="sidebar-brand">
-            <a href="index.html">Stisla</a>
+            <a href="index">NNCS-補習班學生資訊系統</a>
           </div>
           <div class="sidebar-brand sidebar-brand-sm">
-            <a href="index.html">St</a>
+            <a href="index"><img src="assets/img/NNCS_Matting.png" height="40px" width="40px"></a>
           </div>
           <ul class="sidebar-menu">
             <li class="menu-header">Dashboard</li>

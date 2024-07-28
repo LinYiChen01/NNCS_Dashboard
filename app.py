@@ -43,46 +43,10 @@ def index():
     if login_status == "True":
         access_token = session.get('access_token')
         # return render_template("index.html", login_status=login_status, access_token=access_token)
-        print('sessionfffff')
-        print(access_token)
         return render_template("index.html", access_token=access_token)
         
     else:
-        return redirect(url_for('login'))
-    # if request.method == 'POST':
-    #     login_status = request.form.get("login_status")
-    #     session['login_status'] = login_status
-    #     print(f"POST request received. login_status: {login_status}")
-    #     if login_status == "True":
-    #         return render_template("index.html")
-    #     else:
-    #         return redirect(url_for('login'))
-    # return request.method
-    
-    # print(f"GET request received.")
-    # login_status = session.get('login_status')
-    # if login_status == "True":
-    #     return render_template("index.html", login_status=login_status)
-    # else:
-    #     return redirect(url_for('login'))
-# @app.route("/index", methods=['GET', 'POST'])
-# def index():
-#     if request.method == 'POST':
-#         login_status = request.form.get("login_status")
-#         session['login_status'] = login_status
-#         if login_status == "True":
-#             return render_template("index.html")
-#         else:
-#             return redirect(url_for('login'))
-#     print(request.method)
-#     return redirect(url_for('login'))
-    # else:
-    #     login_status = session.get('login_status')
-    #     if login_status == "True":
-    #         return render_template("index.html", login_status=login_status)
-    #     else:
-    #         return redirect(url_for('login'))
-    
+        return render_template("login.html")
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -163,8 +127,9 @@ def login():
             session['login_method'] = login_method
             access_token = request.form.get("access_token")
             session['access_token'] = access_token
+            # session['user_info'] = json.loads(request.form.get("user_info"))
             user_info = json.loads(request.form.get("user_info"))
-            
+
             # session['user_info'] = user_info
             # 提取姓名
 
@@ -174,21 +139,19 @@ def login():
                 family_name = names[0].get('familyName', '')  # 取得姓氏
                 given_name = names[0].get('givenName', '')  # 取得名字
                 full_name = f"{given_name} {family_name}" if given_name and family_name else display_name
+                session['name'] = display_name
 
             # 提取頭像
             photos = user_info['photos']
             if photos:
                 photo_url = photos[0]['url']  # 取得頭像 URL
+                session['photo'] = photo_url
 
             # 提取郵件地址
             email_addresses = user_info['emailAddresses']
             if email_addresses:
                 email = email_addresses[0]['value']  # 取得郵件地址
-
-            # print("姓名:", full_name)
-            # print("頭像 URL:", photo_url)
-            # print("郵件地址:", email)
-            # print(session)
+                session['email'] = email
             
             connection = pymysql.connect(host=db_host,
                                          user=db_user,
@@ -212,7 +175,6 @@ def login():
                 return render_template("index.html", session=session) 
             else:
                 return redirect(url_for('login'))
-        
         else:
             acc = request.form['acc']
             pwd = request.form['pwd']
@@ -223,16 +185,14 @@ def login():
                                          cursorclass=pymysql.cursors.DictCursor)
             try:
                 # Execute the SQL query to fetch user details
-                if pwd.strip() == '':
-                    with connection.cursor() as cursor:
-                        sql = "SELECT * FROM users WHERE acc=%s AND pwd=%s"
-                        cursor.execute(sql, (acc, pwd))
-                        result = cursor.fetchone()
-                        if result:
-                            session['login_status'] = "True"
-                            return redirect(url_for('index'))
-                        # else:
-                        #     login_status = "False"
+                with connection.cursor() as cursor:
+                    sql = "SELECT * FROM users WHERE acc=%s AND pwd=%s AND pwd !=''"
+                    cursor.execute(sql, (acc, pwd))
+                    result = cursor.fetchone()
+                    if result:
+                        session['login_status'] = "True"
+                        session['name'] = result['name']
+                        return redirect(url_for('index'))
                 login_status = "False"
             except Exception as e:
                 print(f"Database error: {e}")
