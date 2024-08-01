@@ -1,21 +1,33 @@
 "use strict";
 
+// 初始化当前年份和月份
+const currentYear = new Date().getFullYear();
+const currentMonth = new Date().getMonth();
+
+// 初始化 FullCalendar
 $("#myEvent").fullCalendar({
   height: 'auto',
   header: {
     left: 'prev,next today',
     center: 'title',
-    right: 'month,agendaWeek,agendaDay,listWeek'
+    right: 'filterButton'
   },
-  editable: true,
+  customButtons: {
+    filterButton: {
+      text: 'Filter', // 设置占位文本
+      click: function() {
+        $('#filterModal').modal('show');
+      }
+    }
+  },
   events: [
     {
       title: 'Conference',
-      start: '2018-01-9',
-      end: '2018-01-11',
+      start: '2024-08-09',
+      end: '2024-08-11',
       backgroundColor: "#fff",
-      borderColor: "#fff",
-      textColor: '#000'
+      borderColor: "red",
+      textColor: 'red'
     },
     {
       title: "John's Birthday",
@@ -62,5 +74,29 @@ $("#myEvent").fullCalendar({
       textColor: '#000',
     },
   ]
+});
+$(document).ready(function() {
+  // 手动修改按钮的 HTML
+  $('.fc-filterButton-button').html("<div class='ion-android-options' data-pack='android' data-tags='settings, mixer'></div>");
+});
 
+// 填充年份选择框
+for (let year = currentYear - 10; year <= currentYear + 10; year++) {
+  $('#modalYearSelect').append(`<option value="${year}">${year}</option>`);
+}
+for (let month = 0; month < 12; month++) {
+  $('#modalMonthSelect').append(`<option value="${month}">${month+1}月</option>`);
+}
+
+$('#modalYearSelect').val(currentYear);
+
+// 设置当前月份
+$('#modalMonthSelect').val(currentMonth);
+
+// 应用筛选
+$('#applyFilters').on('click', function() {
+  const year = $('#modalYearSelect').val();
+  const month = $('#modalMonthSelect').val();
+  $('#myEvent').fullCalendar('gotoDate', `${year}-${String(parseInt(month) + 1).padStart(2, '0')}-01`);
+  $('#filterModal').modal('hide');
 });

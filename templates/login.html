@@ -4,10 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
-
+<!-- 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
+  <meta http-equiv="Expires" content="0"> -->
   
   <title>Login &mdash; Stisla</title>
 
@@ -45,7 +45,7 @@
 
             <div class="card card-primary">
               <div class="card-header">
-                <h4>Login</h4>
+                <h4>Welcome🐱</h4>
               </div>
 
               <div class="card-body">
@@ -123,6 +123,8 @@
   </script>
   {% endif %}
 
+  <!-- {{session}} -->
+
   <!-- Google OAuth2.0 Scripts -->
   <!-- <button id="google_login" class="btn btn-large btn-primary">GOOGLE 登入</button>
   <button id="google_logout" class="btn btn-large btn-warning">GOOGLE 登出</button>
@@ -139,7 +141,7 @@
       discovery_doc = "https://www.googleapis.com/discovery/v1/apis/people/v1/rest",
       resourceName = "people/me",
       $personal_info = $("#personal_info"),
-      redirect_uri = "https://12ce-219-70-149-68.ngrok-free.app",
+      redirect_uri = "https://9589-1-164-174-136.ngrok-free.app",
       tokenClient;
 
     loadApi();
@@ -274,15 +276,29 @@
     });
 
     // 點擊登出按鈕
-    $("#google_logout").click(function () {
-      var token = gapi.client.getToken();
-      if (token !== null) {
-        google.accounts.oauth2.revoke(token.access_token);
-        gapi.client.setToken("");
+    // $("#google_logout").click(function () {
+    //   var token = gapi.client.getToken();
+    //   if (token !== null) {
+    //     google.accounts.oauth2.revoke(token.access_token);
+    //     gapi.client.setToken("");
 
-        // 登出後的動作
-        $personal_info.html("已登出");
-      }
+    //     // 登出後的動作
+    //     $personal_info.html("已登出");
+    //   }
+
+      $("#google_logout").click(function () {
+      $.ajax({
+        type: "GET",
+        url: "/logout",
+        success: function () {
+          // 清除浏览器的缓存
+          window.location.href = "/login";
+          window.location.reload(true);
+        },
+        error: function (error) {
+          console.error("Logout error:", error);
+        }
+      });
     });
   </script>
 </body>

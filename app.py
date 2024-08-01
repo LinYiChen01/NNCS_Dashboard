@@ -35,18 +35,7 @@ db_name = 'nncs'
 app = Flask(__name__, static_folder='templates/assets')
 app.secret_key = os.urandom(24)  # 随机生成一个24字节的密钥
 
-
-@app.route("/")
-@app.route('/index', methods=['GET', 'POST'])
-def index():
-    login_status = session.get('login_status')
-    if login_status == "True":
-        access_token = session.get('access_token')
-        # return render_template("index.html", login_status=login_status, access_token=access_token)
-        return render_template("index.html", access_token=access_token)
-        
-    else:
-        return render_template("login.html")
+# line webhook
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -64,6 +53,7 @@ def callback():
         abort(400)
     return 'OK'
 
+# linebot 訊息處理
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     user_input = event.message.text  # 獲取用戶輸入的訊息（帳號）
@@ -113,9 +103,34 @@ def handle_message(event):
         cursor.close()
         connection.close()
 
+# index 首頁
+@app.route("/")
+@app.route('/index', methods=['GET', 'POST'])
+def index():
+    login_status = session.get('login_status')
+    # 確認登入訊息是否成功
+    if login_status == "True":
+        access_token = session.get('access_token')
+        # return render_template("index.html", login_status=login_status, access_token=access_token) 
+        return render_template("index.html", **locals())
+    else:
+        return render_template("login.html")
+
+@app.route('/a')
+def a():
+    return render_template("aaaaaaa.html")
+
 @app.route("/index0")
 def index0():
-    return render_template("index0.html")
+    # return render_template("index0.html", **locals())
+    login_status = session.get('login_status')
+    # 確認登入訊息是否成功
+    if login_status == "True":
+        access_token = session.get('access_token')
+        # return render_template("index0.html", login_status=login_status, access_token=access_token) 
+        return render_template("index0.html", **locals())
+    else:
+        return render_template("login.html")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -172,9 +187,15 @@ def login():
                             session['login_status'] = "True"
                             # return redirect(url_for('index'))           
             if login_status == "True":
-                return render_template("index.html", session=session) 
+                # return render_template("index.html", session=session) 
+                return render_template("index.html", **locals()) 
             else:
-                return redirect(url_for('login'))
+                # return redirect(url_for('login'))
+                response = make_response(render_template("login.html"))
+                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+                response.headers["Pragma"] = "no-cache"
+                response.headers["Expires"] = "0"
+                return response
         else:
             acc = request.form['acc']
             pwd = request.form['pwd']
@@ -201,16 +222,26 @@ def login():
                 # Close the database connection
                 connection.close()
             return render_template("login.html", login_status=login_status)
+            # return render_template("index.html", **locals()) 
     
-    return render_template("login.html", login_status='')
+    # return render_template("login.html")
+    response = make_response(render_template("login.html"))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
     # return render_template("login.html", **locals())
 
 
 @app.route('/logout')
 def logout():
     session.clear()  # 清除会话
+    # response = make_response(render_template("login.html"))
+    # response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    # response.headers["Pragma"] = "no-cache"
+    # response.headers["Expires"] = "0"
+    # return response
     return render_template("login.html")
-    
 
 if __name__ == '__main__':
     app.run(debug=True)
