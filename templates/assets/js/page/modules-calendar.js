@@ -20,6 +20,10 @@ $("#myEvent").fullCalendar({
       }
     }
   },
+  dayClick: function(date) {
+    $('#courseModal').data('selectedDate', date.format());
+    $('#courseModal').modal('show');
+  },
   events: [
     {
       title: 'Conference',
@@ -75,9 +79,72 @@ $("#myEvent").fullCalendar({
     },
   ]
 });
+
+// 点击“我要排课”按钮
+$('#scheduleButton').on('click', function() {
+  // 清空之前的数据
+  $('#scheduleDate').val('');
+  $('#scheduleCourse').val('');
+  $('#scheduleMessage').text('');
+  $('#scheduleModal').modal('show');
+});
+
+// 保存排课
+$('#saveSchedule').on('click', function() {
+  const selectedDate = $('#scheduleDate').val();
+  const selectedCourse = $('#scheduleCourse').val();
+
+  if (selectedDate && selectedCourse) { 
+    const event = {
+      title: selectedCourse,
+      start: selectedDate,
+      allDay: true,
+      borderColor: "#6777ef",
+      backgroundColor: "#fff",
+      textColor: '#6777ef',
+      category: selectedCourse
+    };
+
+    // 显示事件到 FullCalendar
+    $('#myEvent').fullCalendar('renderEvent', event, true);
+    $('#scheduleModal').modal('hide');
+  } else { 
+    // 显示错误信息
+    $('#scheduleMessage').text('请選擇上课日期或课程').css('color', '#f36969');
+  }
+});
+
+// 当选择日期时，跳转到相应的日期
+$('#dateInput').on('change', function() {
+  const selectedDate = $(this).val();
+  $('#myEvent').fullCalendar('gotoDate', selectedDate);
+});
+
+// 保存课程选择
+$('#saveCourse').on('click', function() {
+  const selectedDate = $('#courseModal').data('selectedDate');
+  const selectedCourse = $('#courseSelect').val();
+  $('#myEvent').fullCalendar('renderEvent', {
+    title: selectedCourse,
+    start: selectedDate,
+    allDay: true,
+    borderColor: "#6777ef",
+    backgroundColor: "#fff",
+    textColor: '#6777ef'
+  });
+  $('#courseModal').modal('hide');
+});
+
+// 当弹出筛选模态框时清空数据
 $(document).ready(function() {
   // 手动修改按钮的 HTML
-  $('.fc-filterButton-button').html("<div class='ion-android-options' data-pack='android' data-tags='settings, mixer'></div>");
+  $('.fc-filterButton-button').html("<div class='ion-calendar'></div>");
+
+  // 当筛选模态框弹出时清空选择框
+  $('#filterModal').on('shown.bs.modal', function() {
+    $('#modalYearSelect').val(currentYear);
+    $('#modalMonthSelect').val(currentMonth);
+  });
 });
 
 // 填充年份选择框
@@ -87,11 +154,6 @@ for (let year = currentYear - 10; year <= currentYear + 10; year++) {
 for (let month = 0; month < 12; month++) {
   $('#modalMonthSelect').append(`<option value="${month}">${month+1}月</option>`);
 }
-
-$('#modalYearSelect').val(currentYear);
-
-// 设置当前月份
-$('#modalMonthSelect').val(currentMonth);
 
 // 应用筛选
 $('#applyFilters').on('click', function() {
