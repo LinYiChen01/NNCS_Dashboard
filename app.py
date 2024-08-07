@@ -236,12 +236,12 @@ def login():
 @app.route('/logout')
 def logout():
     session.clear()  # 清除会话
-    # response = make_response(render_template("login.html"))
-    # response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    # response.headers["Pragma"] = "no-cache"
-    # response.headers["Expires"] = "0"
-    # return response
-    return render_template("login.html")
+    response = make_response(render_template("login.html"))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+    # return render_template("login.html")
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -20,8 +20,9 @@ $("#myEvent").fullCalendar({
       }
     }
   },
-  dayClick: function(date) {
+  dayClick: function (date) {
     $('#courseModal').data('selectedDate', date.format());
+    $('#selectedDate').val(date.format('YYYY-MM-DD'));
     $('#courseModal').modal('show');
   },
   events: [
