@@ -3,6 +3,7 @@
 // 初始化当前年份和月份
 const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth();
+let selectedEvent = null; // 用于保存用户点击的事件
 
 // 初始化 FullCalendar
 $("#myEvent").fullCalendar({
@@ -21,9 +22,16 @@ $("#myEvent").fullCalendar({
     }
   },
   dayClick: function (date) {
-    $('#courseModal').data('selectedDate', date.format());
+    $('#courseDayModal').data('selectedDate', date.format());
     $('#selectedDate').val(date.format('YYYY-MM-DD'));
-    $('#courseModal').modal('show');
+    $('#courseDayModal').modal('show'); 
+  },
+  eventClick: function (event) {
+    selectedEvent = event;
+    $('#leaveDayModal').data('selectedEvent', event);
+    $('#leaveDayDate').val(event.start.format('YYYY-MM-DD'));
+    $('#leaveDayCourse').val(event.title);  // 更新课程名称
+    $('#leaveDayModal').modal('show');
   },
   events: [
     {
@@ -81,14 +89,55 @@ $("#myEvent").fullCalendar({
   ]
 });
 
+// 确认请假
+$('#leaveButton').on('click', function () {
+  $('#leaveModal').modal('show');
+});
+
+$('#confirmLeave').on('click', function () { 
+  const leaveDate = $('#leaveDate').val(); // 获取选择的日期
+  const leaveCourse = $('#leaveCourse').val(); // 获取选择的课程
+
+  // 判断是否已选择日期和课程
+  if (leaveDate && leaveCourse) { 
+    // 删除与选择的日期和课程匹配的事件
+    $('#myEvent').fullCalendar('removeEvents', function(event) {
+      // 根据事件的标题和日期来匹配
+      return event.title === leaveCourse && event.start.format('YYYY-MM-DD') === leaveDate;
+    });
+    
+    // 隐藏模态框
+    $('#leaveModal').modal('hide');
+  } else {
+    // 如果没有选择日期或课程，显示错误信息
+    $('#leaveMessage').text('请选择日期和课程').css('color', '#f36969');
+  }
+});
+
+$('#confirmDayLeave').on('click', function () { 
+  if (selectedEvent) { // 确保已选择了事件
+    // 删除用户点击的事件
+    $('#myEvent').fullCalendar('removeEvents', function(event) {
+      return event._id === selectedEvent._id; // 只删除匹配的事件
+    });
+    $('#leaveDayModal').modal('hide'); // 隐藏模态框
+    selectedEvent = null; // 清空 selectedEvent 变量
+  } else {
+    // 显示错误信息
+    $('#leaveDayMessage').text('请选择日期和课程').css('color', '#f36969');
+  }
+});
+
+
 // 点击“我要排课”按钮
 $('#scheduleButton').on('click', function() {
   // 清空之前的数据
   $('#scheduleDate').val('');
   $('#scheduleCourse').val('');
   $('#scheduleMessage').text('');
-  $('#scheduleModal').modal('show');
+  $('#courseModal').modal('show');
 });
+
 
 // 保存排课
 $('#saveSchedule').on('click', function() {
@@ -108,7 +157,7 @@ $('#saveSchedule').on('click', function() {
 
     // 显示事件到 FullCalendar
     $('#myEvent').fullCalendar('renderEvent', event, true);
-    $('#scheduleModal').modal('hide');
+    $('#courseModal').modal('hide');
   } else { 
     // 显示错误信息
     $('#scheduleMessage').text('请選擇上课日期或课程').css('color', '#f36969');
@@ -123,7 +172,7 @@ $('#dateInput').on('change', function() {
 
 // 保存课程选择
 $('#saveCourse').on('click', function() {
-  const selectedDate = $('#courseModal').data('selectedDate');
+  const selectedDate = $('#courseDayModal').data('selectedDate');
   const selectedCourse = $('#courseSelect').val();
   $('#myEvent').fullCalendar('renderEvent', {
     title: selectedCourse,
@@ -133,7 +182,7 @@ $('#saveCourse').on('click', function() {
     backgroundColor: "#fff",
     textColor: '#6777ef'
   });
-  $('#courseModal').modal('hide');
+  $('#courseDayModal').modal('hide');
 });
 
 // 当弹出筛选模态框时清空数据

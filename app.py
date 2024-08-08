@@ -112,13 +112,21 @@ def index():
     if login_status == "True":
         access_token = session.get('access_token')
         # return render_template("index.html", login_status=login_status, access_token=access_token) 
+        connection = pymysql.connect(host=db_host,
+                                         user=db_user,
+                                         password=db_pwd,
+                                         db=db_name,
+                                         cursorclass=pymysql.cursors.DictCursor)
+        try:
+            with connection.cursor() as cursor:
+                sql = "SELECT name FROM courses"
+                cursor.execute(sql)
+                courses = cursor.fetchall()
+        finally:
+            connection.close()
         return render_template("index.html", **locals())
     else:
         return render_template("login.html")
-
-@app.route('/a')
-def a():
-    return render_template("aaaaaaa.html")
 
 @app.route("/index0")
 def index0():
@@ -147,7 +155,6 @@ def login():
 
             # session['user_info'] = user_info
             # 提取姓名
-
             names = user_info['names']
             if names:
                 display_name = names[0]['displayName']  # 取得顯示名稱
@@ -225,23 +232,23 @@ def login():
             # return render_template("index.html", **locals()) 
     
     # return render_template("login.html")
-    response = make_response(render_template("login.html"))
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
-    # return render_template("login.html", **locals())
+    # response = make_response(render_template("login.html"))
+    # response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    # response.headers["Pragma"] = "no-cache"
+    # response.headers["Expires"] = "0"
+    # return response
+    return render_template("login.html", **locals())
 
 
 @app.route('/logout')
 def logout():
     session.clear()  # 清除会话
-    response = make_response(render_template("login.html"))
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
-    # return render_template("login.html")
+    # response = make_response(render_template("login.html"))
+    # response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    # response.headers["Pragma"] = "no-cache"
+    # response.headers["Expires"] = "0"
+    # return response
+    return render_template("login.html")
 
 if __name__ == '__main__':
     app.run(debug=True)
