@@ -1,0 +1,147 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+// 使用者資料表
+Table users {
+  user_id int [primary key] // 使用者編號
+  acc varchar(20) // 帳號
+  pwd varchar(20) // 密碼
+  name varchar(10) // 姓名
+  age int // 年齡
+  phone1 varchar(10) // 聯絡電話1
+  phone2 varchar(10) // 聯絡電話2
+  email varchar(255) // 信箱
+  picture text // 頭貼
+  create_date date //入職、入學日期
+  role varchar(2) [ // 權限
+    note: '''
+    1 = 學生
+    2 = 試上
+    3 = 老師
+    4 = 管理員
+    ''']
+  status varchar(2) [ // 權限
+    note: '''
+    1 = 在學、在職
+    2 = 休學、離職
+    3 = 試上
+    ''']
+}
+
+// 學生資料表
+Table students {
+  st_id int [primary key] // 學生編號
+  user_id int // 使用者編號
+  classtime_id int // 開課時段編號
+  teacher_id int // 指導老師編號
+  workplace varchar(10) // 工作單位
+  profession varchar(10) // 職業
+  parent varchar(10) // 家長
+  tuition int // 學費
+  create_date date // 入學日期
+}
+
+// 老師資料表
+Table teachers {
+  tr_id int [primary key] // 老師編號
+  user_id int	// 使用者編號
+  classroom_id int	// 所在教室編號
+  classTime_id int	// 開課時段邊號
+}
+
+// 證照資料表
+Table certs {
+  cert_id int [primary key] // 證照編號
+  name varchar(50) // 證照名稱
+  program varchar(50) // 考科
+  suitable_course int // 適合課程 
+}
+
+// 證照紀錄資料表
+Table certrecords {
+  certrecord_id int [primary key] // 證照記錄編號
+  user_id int // 使用者編號
+  cert_id int // 證照編號
+  cert_pic Blob // 證照圖片(佐證)
+  certificate_date date // 考照日期
+}
+
+// 教室資料表
+Table classroom {
+  classroom_id int [primary key] // 教室編號
+  name varchar(10) // 教室名稱
+  address varchar(100) // 地址
+}
+
+// 開課時段資料表
+Table classtime {
+  classtime_id int [primary key] // 開課時段編號
+  classroom_id int // 教室編號
+  course_id int // 課程編號
+  class_week int // 星期
+  start_time time // 開始上課時間
+  end_time time // 結束上課時間
+}
+
+// 課程資料表
+Table courses {
+  course_id int [primary key] // 課程編號
+  name varchar(20) // 課程名稱
+  introduction text // 課程介紹
+}
+
+// 出席紀錄
+Table attend {
+  attend_id int [primary key] // 出席紀錄編號
+  user_id int // 使用者編號
+  classroom_id int // 教室編號
+  classtime_id int // 開課時段編號
+  class_date date // 上課日期
+  status varchar(2) [ // 狀態
+    note: '''
+    1 = 上課
+    2 = 請假
+    3 = 曠課
+    4 = 停課
+    5 = 繳費
+    6 = 教材費
+    ''']
+}
+
+// 學生進度資料表
+Table stprogress {
+  progress_id int [primary key] // 學生進度編號 
+  st_id int // 學生編號
+  teacher_id int // 老師編號
+  course_id int // 課程編號
+  progress varchar(10) // 課程進度
+  problems int // 解題數量
+  feedback int // 課程回饋
+}
+
+// Relationships
+Ref: users.user_id < students.user_id // one-to-many
+Ref: users.user_id < teachers.user_id // one-to-many
+Ref: users.user_id < certrecords.user_id // one-to-many
+Ref: users.user_id < attend.user_id // one-to-many
+
+
+
+Ref: students.teacher_id > teachers.tr_id // many-to-one
+Ref: students.classtime_id > classtime.classtime_id // many-to-one
+Ref: students.st_id < stprogress.st_id// one-to-many
+
+
+Ref: attend.classroom_id > classroom.classroom_id // many-to-one
+Ref: attend.classtime_id > classtime.classtime_id // many-to-one
+
+Ref: teachers.classroom_id > classroom.classroom_id // many-to-one
+Ref: teachers.classTime_id > classtime.classtime_id // many-to-one
+
+Ref: classroom.classroom_id < classtime.classroom_id // one-to-many
+
+Ref: certs.cert_id < certrecords.cert_id // one-to-many
+Ref: certs.suitable_course > courses.course_id // many-to-one
+
+Ref: courses.course_id < classtime.course_id // one-to-many
+Ref: courses.course_id < stprogress.course_id // one-to-many
