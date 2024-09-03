@@ -1,4 +1,6 @@
 import os
+import base64
+import filetype
 from flask import Flask, render_template, request, abort, session, redirect, url_for, make_response
 from authlib.integrations.flask_client import OAuth
 import json
@@ -102,6 +104,50 @@ def handle_message(event):
     finally:
         cursor.close()
         connection.close()
+
+
+@app.route('/a', methods=['GET', 'POST'])
+def a():
+    img_data = None  # 初始化圖片資料變數
+    if request.method == 'POST':
+        file = request.files['file']
+        if file.filename != '':
+            photo_data = file.read()  # 讀取圖片並將其轉換為二進位資料
+
+            # 使用 filetype 模块确定图片的类型
+            kind = filetype.guess(photo_data)
+            print(kind)
+            if kind is None or kind.extension not in ['jpg', 'jpeg', 'png', 'webp']:
+                msg = '僅能上傳圖片副檔名為: jpg、jpeg、png、webp'
+                return render_template("a.html", msg=msg)
+            
+            mime_type = kind.mime  # 動態設置 MIME 類型
+            
+            connection = pymysql.connect(
+                host=db_host,
+                user=db_user,
+                password=db_pwd,
+                db=db_name,
+                cursorclass=pymysql.cursors.DictCursor
+            )
+            
+            with connection.cursor() as cursor:
+                sql = "UPDATE `users` SET `picture` = %s WHERE `users`.`user_id` = 1;"
+                cursor.execute(sql, (photo_data,))
+                connection.commit()  # 確保插入操作被提交
+
+                # 提取剛剛上傳的圖片
+                sql = "SELECT picture FROM users WHERE user_id = 1"
+                cursor.execute(sql)
+                result = cursor.fetchone()
+                if result and result['picture']:
+                    # 將圖片轉換為 base64 編碼格式
+                    encoded_img = base64.b64encode(result['picture']).decode('utf-8')
+                    img_data = f"data:{mime_type};base64,{encoded_img}"  # 使用動態的 MIME 類型
+            
+            connection.close()  # 確保連接被關閉
+            
+    return render_template("a.html", img_data=img_data)
 
 # index 首頁
 @app.route("/")
