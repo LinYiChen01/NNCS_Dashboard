@@ -29,10 +29,21 @@ configuration = Configuration(access_token='ezTOh8SMwv3ATxslU3Wk4Bm5oAiP3cKadO+x
 handler = WebhookHandler('8c6f630875f7495650df8b1827587a24')
 
 # 資料庫
-db_host = 'localhost'
-db_user = 'root'
-db_pwd = ''
-db_name = 'nncs'
+# db_host = 'localhost'
+# db_user = 'root'
+# db_pwd = ''
+# db_name = 'nncs'
+def get_db_connection():
+    return pymysql.connect(
+        host='localhost',
+        user='root',
+        password='',
+        db='nncs',
+        cursorclass=pymysql.cursors.DictCursor)
+
+# 圖片大小限制 (16MB)
+MAX_CONTENT_LENGTH = 64 * 1024
+
 
 app = Flask(__name__, static_folder='templates/assets')
 app.secret_key = os.urandom(24)  # 随机生成一个24字节的密钥
@@ -62,11 +73,12 @@ def handle_message(event):
 
     # 連接到資料庫
     try:
-        connection = pymysql.connect(host=db_host,
-                                     user=db_user,
-                                     password=db_pwd,
-                                     db=db_name,
-                                     cursorclass=pymysql.cursors.DictCursor)
+        # connection = pymysql.connect(host=db_host,
+        #                              user=db_user,
+        #                              password=db_pwd,
+        #                              db=db_name,
+        #                              cursorclass=pymysql.cursors.DictCursor)
+        connection = get_db_connection()
         cursor = connection.cursor()
         
         # 查詢帳號和密碼
@@ -109,28 +121,46 @@ def handle_message(event):
 @app.route('/a', methods=['GET', 'POST'])
 def a():
     img_data = None  # 初始化圖片資料變數
+    msg = ''
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        sql = "SELECT picture FROM users WHERE user_id = 1"
+        cursor.execute(sql)
+        result = cursor.fetchone()
+        kind = filetype.guess(result['picture'])
+        if result and result['picture']:
+            # 將圖片轉換為 base64 編碼格式
+            encoded_img = base64.b64encode(result['picture']).decode('utf-8')
+            img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
+        else:
+            msg = '您尚未上傳任何圖片!'
+    connection.close()  # 確保連接被關閉
+
     if request.method == 'POST':
         file = request.files['file']
         if file.filename != '':
+            file_size = request.content_length
+            print(file_size)
+            if file_size > MAX_CONTENT_LENGTH:
+                msg = f'上傳圖片過大，圖片大小最大為 {MAX_CONTENT_LENGTH / 1024} KB。'
+                return render_template("a.html", msg=msg)
             photo_data = file.read()  # 讀取圖片並將其轉換為二進位資料
-
             # 使用 filetype 模块确定图片的类型
             kind = filetype.guess(photo_data)
-            print(kind)
             if kind is None or kind.extension not in ['jpg', 'jpeg', 'png', 'webp']:
                 msg = '僅能上傳圖片副檔名為: jpg、jpeg、png、webp'
                 return render_template("a.html", msg=msg)
             
             mime_type = kind.mime  # 動態設置 MIME 類型
             
-            connection = pymysql.connect(
-                host=db_host,
-                user=db_user,
-                password=db_pwd,
-                db=db_name,
-                cursorclass=pymysql.cursors.DictCursor
-            )
-            
+            # connection = pymysql.connect(
+            #     host=db_host,
+            #     user=db_user,
+            #     password=db_pwd,
+            #     db=db_name,
+            #     cursorclass=pymysql.cursors.DictCursor
+            # )
+            connection = get_db_connection()
             with connection.cursor() as cursor:
                 sql = "UPDATE `users` SET `picture` = %s WHERE `users`.`user_id` = 1;"
                 cursor.execute(sql, (photo_data,))
@@ -144,10 +174,9 @@ def a():
                     # 將圖片轉換為 base64 編碼格式
                     encoded_img = base64.b64encode(result['picture']).decode('utf-8')
                     img_data = f"data:{mime_type};base64,{encoded_img}"  # 使用動態的 MIME 類型
-            
+                    msg = ''
             connection.close()  # 確保連接被關閉
-            
-    return render_template("a.html", img_data=img_data)
+    return render_template("a.html", **locals())
 
 # index 首頁
 @app.route("/")
@@ -158,18 +187,18 @@ def index():
     if login_status == "True":
         access_token = session.get('access_token')
         # return render_template("index.html", login_status=login_status, access_token=access_token) 
-        connection = pymysql.connect(host=db_host,
-                                         user=db_user,
-                                         password=db_pwd,
-                                         db=db_name,
-                                         cursorclass=pymysql.cursors.DictCursor)
-        try:
-            with connection.cursor() as cursor:
-                sql = "SELECT name FROM courses"
-                cursor.execute(sql)
-                courses = cursor.fetchall()
-        finally:
-            connection.close()
+        # connection = pymysql.connect(host=db_host,
+        #                                  user=db_user,
+        #                                  password=db_pwd,
+        #                                  db=db_name,
+        #                                  cursorclass=pymysql.cursors.DictCursor)
+        # try:
+        #     with connection.cursor() as cursor:
+        #         sql = "SELECT name FROM courses"
+        #         cursor.execute(sql)
+        #         courses = cursor.fetchall()
+        # finally:
+        #     connection.close()
         return render_template("index.html", **locals())
     else:
         return render_template("login.html")
@@ -221,11 +250,12 @@ def login():
                 email = email_addresses[0]['value']  # 取得郵件地址
                 session['email'] = email
             
-            connection = pymysql.connect(host=db_host,
-                                         user=db_user,
-                                         password=db_pwd,
-                                         db=db_name,
-                                         cursorclass=pymysql.cursors.DictCursor)
+            # connection = pymysql.connect(host=db_host,
+            #                              user=db_user,
+            #                              password=db_pwd,
+            #                              db=db_name,
+            #                              cursorclass=pymysql.cursors.DictCursor)
+            connection = get_db_connection()
             with connection.cursor() as cursor:
                         sql = "SELECT * FROM users WHERE acc=%s"
                         cursor.execute(sql, (email))
@@ -252,13 +282,14 @@ def login():
         else:
             acc = request.form['acc']
             pwd = request.form['pwd']
-            connection = pymysql.connect(host=db_host,
-                                         user=db_user,
-                                         password=db_pwd,
-                                         db=db_name,
-                                         cursorclass=pymysql.cursors.DictCursor)
+            # connection = pymysql.connect(host=db_host,
+            #                              user=db_user,
+            #                              password=db_pwd,
+            #                              db=db_name,
+            #                              cursorclass=pymysql.cursors.DictCursor)
             try:
                 # Execute the SQL query to fetch user details
+                connection = get_db_connection()
                 with connection.cursor() as cursor:
                     sql = "SELECT * FROM users WHERE acc=%s AND pwd=%s AND pwd !=''"
                     cursor.execute(sql, (acc, pwd))
