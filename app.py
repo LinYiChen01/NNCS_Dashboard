@@ -41,7 +41,7 @@ def get_db_connection():
         db='nncs',
         cursorclass=pymysql.cursors.DictCursor)
 
-# 圖片大小限制 (16MB)
+# 圖片大小限制 (64KB)
 MAX_CONTENT_LENGTH = 64 * 1024
 
 
@@ -192,26 +192,28 @@ def index():
         #                                  password=db_pwd,
         #                                  db=db_name,
         #                                  cursorclass=pymysql.cursors.DictCursor)
-        # try:
-        #     with connection.cursor() as cursor:
-        #         sql = "SELECT name FROM courses"
-        #         cursor.execute(sql)
-        #         courses = cursor.fetchall()
-        # finally:
-        #     connection.close()
+        connection = get_db_connection()
+        try:
+            with connection.cursor() as cursor:
+                sql = "SELECT name FROM courses"
+                cursor.execute(sql)
+                courses = cursor.fetchall()
+        finally:
+            connection.close()
         return render_template("index.html", **locals())
     else:
         return render_template("login.html")
 
-@app.route("/index0")
-def index0():
-    # return render_template("index0.html", **locals())
+# 個人簡介
+@app.route("/profiles")
+def profiles():
+    # return render_template("profiles.html", **locals())
     login_status = session.get('login_status')
     # 確認登入訊息是否成功
     if login_status == "True":
         access_token = session.get('access_token')
-        # return render_template("index0.html", login_status=login_status, access_token=access_token) 
-        return render_template("index0.html", **locals())
+        # return render_template("profiles.html", login_status=login_status, access_token=access_token) 
+        return render_template("profiles.html", **locals())
     else:
         return render_template("login.html")
 
@@ -296,7 +298,14 @@ def login():
                     result = cursor.fetchone()
                     if result:
                         session['login_status'] = "True"
+                        session['user_id'] = result['user_id']
                         session['name'] = result['name']
+                        if result['role'] == '1':
+                            session['role'] = '學生'
+                        elif result['role'] == '3':
+                            session['role'] = '老師'
+                        elif result['role'] == '4':
+                            session['role'] = '管理員'   
                         return redirect(url_for('index'))
                 login_status = "False"
             except Exception as e:
