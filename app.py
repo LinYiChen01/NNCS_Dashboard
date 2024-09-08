@@ -1,7 +1,7 @@
 import os
 import base64
 import filetype
-from flask import Flask, render_template, request, abort, session, redirect, url_for, make_response
+from flask import Flask, render_template, request, abort, session, redirect, url_for, make_response, jsonify
 from authlib.integrations.flask_client import OAuth
 import json
 import pymysql.cursors
@@ -212,10 +212,45 @@ def profiles():
     # 確認登入訊息是否成功
     if login_status == "True":
         access_token = session.get('access_token')
-        # return render_template("profiles.html", login_status=login_status, access_token=access_token) 
+        # return render_template("profiles.html", login_status=login_status, access_token=access_token)
+
+        img_data = None  # 初始化圖片資料變數
+        msg = ''
+        connection = get_db_connection()
+
+
+        # 從資料庫抓使用者圖片
+        cursor = connection.cursor()
+        sql = "SELECT picture FROM users WHERE user_id = 1"
+        cursor.execute(sql)
+        result = cursor.fetchone()
+        if result and result['picture']:
+            # 將圖片轉換為 base64 編碼格式
+            kind = filetype.guess(result['picture'])
+            encoded_img = base64.b64encode(result['picture']).decode('utf-8')
+            img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
+            msg = ''
+        connection.close()  # 確保連接被關閉
         return render_template("profiles.html", **locals())
     else:
         return render_template("login.html")
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    file = request.files.get('file')
+    phone1 = request.form.get('phone1')
+    phone2 = request.form.get('phone2')
+    email = request.form.get('email')
+    address = request.form.get('address')
+    workplace = request.form.get('workplace')
+    profession = request.form.get('profession')
+    print(file, phone1, phone2, email, address, workplace, profession)
+    # 進行必要的檢查和處理
+    # ...
+    return redirect(url_for('profiles'))
+    # 若檢查通過，則重定向至 login.html
+    # return redirect(url_for('login'))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -323,7 +358,7 @@ def login():
     # response.headers["Pragma"] = "no-cache"
     # response.headers["Expires"] = "0"
     # return response
-    return render_template("login.html", **locals())
+    return redirect(url_for('profiles'), **locals())
 
 
 @app.route('/logout')
