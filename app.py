@@ -206,50 +206,116 @@ def index():
 
 # 個人簡介
 @app.route("/profiles")
+
 def profiles():
-    # return render_template("profiles.html", **locals())
     login_status = session.get('login_status')
-    # 確認登入訊息是否成功
+    
     if login_status == "True":
         access_token = session.get('access_token')
-        # return render_template("profiles.html", login_status=login_status, access_token=access_token)
-
         img_data = None  # 初始化圖片資料變數
         msg = ''
         connection = get_db_connection()
 
+        try:
+            # 從資料庫抓使用者圖片
+            cursor = connection.cursor(pymysql.cursors.DictCursor)
+            sql = "SELECT picture FROM users WHERE user_id = 1"
+            cursor.execute(sql)
+            result = cursor.fetchone()
 
-        # 從資料庫抓使用者圖片
-        cursor = connection.cursor()
-        sql = "SELECT picture FROM users WHERE user_id = 1"
-        cursor.execute(sql)
-        result = cursor.fetchone()
-        if result and result['picture']:
-            # 將圖片轉換為 base64 編碼格式
-            kind = filetype.guess(result['picture'])
-            encoded_img = base64.b64encode(result['picture']).decode('utf-8')
-            img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
-            msg = ''
-        connection.close()  # 確保連接被關閉
-        return render_template("profiles.html", **locals())
+            if result and result.get('picture'):
+                # 這裡假設 'picture' 存儲的是文件的二進制數據
+                picture_data = result['picture']
+                
+                # 先檢查 picture_data 是否為有效的二進制數據
+                kind = filetype.guess(picture_data)
+                if kind:
+                    encoded_img = base64.b64encode(picture_data).decode('utf-8')
+                    img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
+                else:
+                    msg = '無法識別圖片類型'
+        except Exception as e:
+            msg = f"發生錯誤: {str(e)}"
+        finally:
+            connection.close()  # 確保連接被關閉
+        
+        return render_template("profiles.html", login_status=login_status, access_token=access_token, img_data=img_data, msg=msg)
     else:
+        # 未登入狀態下的處理
         return render_template("login.html")
 
 @app.route('/update_profile', methods=['POST'])
 def update_profile():
-    file = request.files.get('file')
-    phone1 = request.form.get('phone1')
-    phone2 = request.form.get('phone2')
-    email = request.form.get('email')
-    address = request.form.get('address')
-    workplace = request.form.get('workplace')
-    profession = request.form.get('profession')
-    print(file, phone1, phone2, email, address, workplace, profession)
-    # 進行必要的檢查和處理
-    # ...
-    return redirect(url_for('profiles'))
+    picture = request.files['file']
+    phone1 = request.form['phone1']
+    phone2 = request.form['phone2']
+    email = request.form['email']
+    address = request.form['address']
+    workplace = request.form['workplace']
+    profession = request.form['profession']
+    img_data = request.form['img_data']
+
+    # # 有更新圖片
+    # if file.filename != '':
+    #     file = request.files['file']
+    #     file_size = request.content_length
+    #     print(file_size, "這麼大!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    #     if file_size > MAX_CONTENT_LENGTH:
+    #         msg = f'上傳圖片過大，圖片大小最大為 {MAX_CONTENT_LENGTH / 1024} KB。'
+    #         return render_template("profiles.html", msg=msg)
+    #     photo_data = file.read()  # 讀取圖片並將其轉換為二進位資料
+    #     # 使用 filetype 模块确定图片的类型
+    #     kind = filetype.guess(photo_data)
+    #     if kind is None or kind.extension not in ['jpg', 'jpeg', 'png', 'webp']:
+    #         msg = '僅能上傳圖片副檔名為: jpg、jpeg、png、webp'
+    #         return render_template("profiles.html", msg=msg)
+    #     # print('---------------------------------------')
+    #     # print(file, "1234567890-234567890234567890")
+    #     # print('---------------------------------------')
+    # # 沒有更新圖片
+    # else:
+    #     file = request.form['img_data']
+    #     print('---------------------------------------')
+    #     print('NOOOOOOOOOOOOOOOOOOOO')
+    #     print('---------------------------------------')
+    # return redirect(url_for('profiles'))
+    # return render_template("profiles.html", msg=msg)
+    # if file.filename != '':
+    #     file_size = request.content_length
+    #     print(file_size)
+    #     if file_size > MAX_CONTENT_LENGTH:
+    #         msg = f'上傳圖片過大，圖片大小最大為 {MAX_CONTENT_LENGTH / 1024} KB。'
+    #         return render_template("profiles.html", msg=msg)
+    #     photo_data = file.read()  # 讀取圖片並將其轉換為二進位資料
+    #     # 使用 filetype 模块确定图片的类型
+    #     kind = filetype.guess(photo_data)
+    #     if kind is None or kind.extension not in ['jpg', 'jpeg', 'png', 'webp']:
+    #         msg = '僅能上傳圖片副檔名為: jpg、jpeg、png、webp'
+    #         return render_template("profiles.html", msg=msg)
+
+    # Update the users table
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    sql = "UPDATE users SET picture = %s, phone1 = %s, phone2 = %s, email = %s, address = %s WHERE user_id = %s;"
+    cursor.execute(sql, (picture, phone1, phone2, email, address, session['user_id']))
+    connection.commit()
+    print(cursor.fetchall())
+    connection.close()
+    print(cursor.fetchall())
+
+    # # Update the students table
+    # cursor.execute("""
+    #     UPDATE students SET workplace = %s, profession = %s
+    #     WHERE user_id = %s
+    # """, (workplace, profession, session['user_id']))
+
+        # connection.commit()
+        # connection.close()
+
+    # return redirect(url_for('profiles'))
+    return render_template("profiles.html", **locals())
     # 若檢查通過，則重定向至 login.html
-    # return redirect(url_for('login'))
+    # return redirect(url_for('index'))
 
 
 @app.route('/login', methods=['GET', 'POST'])

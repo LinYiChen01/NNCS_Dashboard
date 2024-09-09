@@ -1,37 +1,116 @@
 "use strict";
 
-// 彈出視窗時背景虛化
-function showBlur() {
-  document.getElementById('blurLayer').classList.add('show');
+const MAX_FILE_SIZE = 64 * 1024 // 64KB
+const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
+
+var pic_msg = document.getElementById("msg"); // 获取 msg 元素
+var img_data = document.getElementById("uploadedImage");
+var submit_msg = document.getElementById("submit_msg");
+
+// 背景虛化
+document.getElementById("updateDataButton").addEventListener("click", function() {
+  document.getElementById("blurLayer").classList.add("show");
+});
+
+// 移除背景虚化
+function removeBlur() {
+  document.getElementById("blurLayer").classList.remove("show");
 }
 
-function removeBlur() {
-  document.getElementById('blurLayer').classList.remove('show');
+document.getElementById("uploadButton").addEventListener("click", function() {
+  document.getElementById("file").click();
+
+});
+
+
+function detectFileType(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const arrayBuffer = event.target.result;
+      const bytes = new Uint8Array(arrayBuffer);
+
+      // Example magic numbers (you may need more or different ones depending on file types)
+      const magicNumbers = {
+        'jpg': [0xFF, 0xD8, 0xFF],
+        'png': [0x89, 0x50, 0x4E, 0x47],
+        'gif': [0x47, 0x49, 0x46, 0x38],
+        'webp': [0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50]
+      };
+
+      let detectedType = null;
+
+      for (const [type, magic] of Object.entries(magicNumbers)) {
+        if (bytes.slice(0, magic.length).every((val, index) => val === magic[index])) {
+          detectedType = type;
+          break;
+        }
+      }
+
+      resolve(detectedType);
+    };
+    reader.onerror = reject;
+
+    // Read the first 12 bytes to cover all examples
+    reader.readAsArrayBuffer(file.slice(0, 12));
+  });
 }
+
+document.getElementById("file").addEventListener("change", async function () {
+  var file = this.files[0];
+  if (file) {
+    // 验证文件大小
+    if (file.size > MAX_FILE_SIZE) {
+      img_data.src = "";
+      img_data.style.display = 'none'; // 隐藏图片
+      pic_msg.textContent = `上傳圖片過大，圖片大小最大為 ${MAX_FILE_SIZE / 1024} KB。`;
+      pic_msg.style.color = "red";
+      $("#updateModal").modal("show");
+      return;
+    }
+    
+    try {
+      const fileType = await detectFileType(file);
+      if (fileType && ALLOWED_EXTENSIONS.includes(fileType)) {
+        // 文件有效，读取并显示
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          img_data.src = e.target.result;
+          img_data.style.display = 'block'; // 显示图片
+        };
+        reader.readAsDataURL(file);
+      } else {
+        img_data.src = "";
+        img_data.style.display = 'none'; // 隐藏图片
+        pic_msg.textContent = "僅能上傳圖片副檔名為: jpg、jpeg、png、webp";
+        pic_msg.style.color = "red";
+        $("#updateModal").modal("show");
+      }
+    } catch (error) {
+      img_data.src = "";
+      img_data.style.display = 'none'; // 隐藏图片
+      pic_msg.textContent = "无法识别文件类型";
+      pic_msg.style.color = "red";
+      $("#updateModal").modal("show");
+    }
+  }
+});
 
 // 监听模态框关闭事件以移除背景虚化
-$('#updateModal').on('hidden.bs.modal', function () {
+$("#updateModal").on("hidden.bs.modal", function () {
   removeBlur();
 });
 
-// 提交表單更新資料
+// 提交表单的处理（可选）
 function submitUpdateForm() {
-  // 獲取表單資料
-  // const phone1 = document.getElementById('phone1').value;
-  // const phone2 = document.getElementById('phone2').value;
-  // const email = document.getElementById('email').value;
-  // const address = document.getElementById('address').value;
-  // const workplace = document.getElementById('workplace').value;
-  // const profession = document.getElementById('profession').value;
-
-  // // 更新顯示的資料
-  // document.querySelector('input[name="phone1"]').value = phone1;
-  // document.querySelector('input[name="phone2"]').value = phone2;
-  // document.querySelector('input[name="email"]').value = email;
-  // document.querySelector('input[name="address"]').value = address;
-  // document.querySelector('input[name="workplace"]').value = workplace;
-  // document.querySelector('input[name="profession"]').value = profession;
-
-  // 隱藏模態框
-  $('#updateModal').modal('hide');
+  if (pic_msg.textContent != "") {
+    $("#updateModal").modal("show");
+    submit_msg.textContent = "資料有誤，請重新確認!"
+  }
+  else { 
+    $("#updateModal").modal("hide");
+    var form = document.getElementById("updateForm");
+    form.submit();
+  }
+  // }
 }
