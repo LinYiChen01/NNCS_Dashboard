@@ -1,5 +1,5 @@
 import os
-import base64
+import base64, re
 import filetype
 from flask import Flask, render_template, request, abort, session, redirect, url_for, make_response, jsonify
 from authlib.integrations.flask_client import OAuth
@@ -219,41 +219,96 @@ def profiles():
         try:
             # 從資料庫抓使用者圖片
             cursor = connection.cursor(pymysql.cursors.DictCursor)
-            sql = "SELECT picture FROM users WHERE user_id = 1"
-            cursor.execute(sql)
+            sql = "SELECT user_id, address, phone1, phone2, email, picture FROM users WHERE user_id = %s;"
+            cursor.execute(sql, (session['user_id'],))
             result = cursor.fetchone()
 
-            if result and result.get('picture'):
-                # 這裡假設 'picture' 存儲的是文件的二進制數據
-                picture_data = result['picture']
+            session['address'] = result['address']
+            session['phone1'] = result['phone1']
+            session['phone2'] = result['phone2']
+            session['email'] = result['email']
+            session['picture'] = result['picture']
+            # print(session['picture'], "+++++++++++++++++++")
+            kind = filetype.guess(session['picture'])
+            if kind:
+                encoded_img = base64.b64encode(session['picture']).decode('utf-8')
+                session['picture'] = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
+                # print(session['picture'], "!!!!!!!!!!!!!!!!!!")
+            else:
+                msg = '無法識別圖片類型'
+            # print(session['picture'], "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+
+            # kind = filetype.guess(session['picture'])
+            
+            # # 輸出sql查詢語法
+            # # print(cursor.mogrify(sql, (session['user_id'],)))
+
+            # if result and result.get('picture'):
+            #     # 這裡假設 'picture' 存儲的是文件的二進制數據
+            #     picture_data = result['picture']
                 
-                # 先檢查 picture_data 是否為有效的二進制數據
-                kind = filetype.guess(picture_data)
-                if kind:
-                    encoded_img = base64.b64encode(picture_data).decode('utf-8')
-                    img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
-                else:
-                    msg = '無法識別圖片類型'
+            #     # 先檢查 picture_data 是否為有效的二進制數據
+            #     kind = filetype.guess(picture_data)
+            #     if kind:
+            #         encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            #         img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
+            #     else:
+            #         msg = '無法識別圖片類型'
         except Exception as e:
             msg = f"發生錯誤: {str(e)}"
         finally:
             connection.close()  # 確保連接被關閉
         
-        return render_template("profiles.html", login_status=login_status, access_token=access_token, img_data=img_data, msg=msg)
+        return render_template("profiles.html", **locals())
     else:
         # 未登入狀態下的處理
         return render_template("login.html")
 
 @app.route('/update_profile', methods=['POST'])
 def update_profile():
+    # if 'file' in request.files:
+    #     picture = request.files['file']
+    #     if picture.filename != '':
+    #         print("File uploaded")
+    #         # 处理文件
+    #     else:
+    #         print("No file selected")
+    # else:
+    #     print("No file field in request")
+
     picture = request.files['file']
+    if picture.filename != '':
+        session['picture'] = picture.read()
+        print("File uploaded")
+        print(session['picture'])
+            # 处理文件
+    else:
+        match = re.match(r'data:(.*?);base64,(.*)', request.form['img_data'])
+        if match:
+            base64_data = match.group(2)  # Base64 编码的数据
+            file_data = base64.b64decode(base64_data)  # 解码为二进制数据
+
+        session['picture'] = file_data
+        print("No file selected")
+        print(session['picture'])
+
+
+
+
+        # print(session['picture'])
+    # if request.form['file'] != '':
+    #     picture = request.files['file']
+    #     print(11111111111111111111111)
+    #     print(picture)
+    # else:
+    #     print(22222222222222222222222)
+    #     picture = request.form['img_data']
     phone1 = request.form['phone1']
     phone2 = request.form['phone2']
     email = request.form['email']
     address = request.form['address']
     workplace = request.form['workplace']
     profession = request.form['profession']
-    img_data = request.form['img_data']
 
     # # 有更新圖片
     # if file.filename != '':
@@ -297,11 +352,10 @@ def update_profile():
     connection = get_db_connection()
     cursor = connection.cursor()
     sql = "UPDATE users SET picture = %s, phone1 = %s, phone2 = %s, email = %s, address = %s WHERE user_id = %s;"
-    cursor.execute(sql, (picture, phone1, phone2, email, address, session['user_id']))
+    cursor.execute(sql, (session['picture'], phone1, phone2, email, address, session['user_id']))
     connection.commit()
-    print(cursor.fetchall())
+    # print(cursor.fetchall())
     connection.close()
-    print(cursor.fetchall())
 
     # # Update the students table
     # cursor.execute("""
@@ -309,11 +363,11 @@ def update_profile():
     #     WHERE user_id = %s
     # """, (workplace, profession, session['user_id']))
 
-        # connection.commit()
-        # connection.close()
+    #     connection.commit()
+    #     connection.close()
 
-    # return redirect(url_for('profiles'))
-    return render_template("profiles.html", **locals())
+    return redirect(url_for('profiles'))
+    # return render_template("profiles.html", **locals())
     # 若檢查通過，則重定向至 login.html
     # return redirect(url_for('index'))
 
