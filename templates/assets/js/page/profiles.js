@@ -75,6 +75,7 @@ document.getElementById("file").addEventListener("change", async function () {
         // 文件有效，读取并显示
         var reader = new FileReader();
         reader.onload = function (e) {
+          pic_msg.textContent = ''
           img_data.src = e.target.result;
           img_data.style.display = 'block'; // 显示图片
         };

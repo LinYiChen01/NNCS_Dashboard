@@ -68,14 +68,15 @@
         <ul class="navbar-nav navbar-right">
           <li class="dropdown"><a href="#" data-toggle="dropdown"
               class="nav-link dropdown-toggle  nav-link-lg nav-link-user">
-              {% if session['photo'] %}
-              <img alt="image" src={{session['photo']}} class="rounded-circle mr-1">
-              {% endif %}
-              <div class="d-sm-none d-lg-inline-block">{{session['name']}}</div></a>
+
+              <!-- <img alt="image" src="{{picture}}" class="rounded-circle mr-1"> -->
+              <img alt="image" src="{{picture}}" class="rounded-circle mr-1">
+
+              <div class="d-sm-none d-lg-inline-block">{{name}}</div></a>
               <div class="dropdown-menu dropdown-menu-right">
-                <div class="dropdown-title" style="text-transform: none; margin: 0px 8px; font-size: 13px;">Hi, {{session['name']}}!</div>
+                <div class="dropdown-title" style="text-transform: none; margin: 0px 8px; font-size: 13px;">Hi, {{name}}!</div>
                 <div class="dropdown-divider" style="border-top-color: #868e96;"></div>
-                <a href="login" id="google_logout" class="dropdown-item has-icon text-danger" >
+                <a href="{{ url_for('logout') }}" class="dropdown-item has-icon text-danger" >
                   <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
               </div>
@@ -869,20 +870,20 @@
       }
     });
 
-    $("#google_logout").click(function () {
-      $.ajax({
-        type: "GET",
-        url: "/logout",
-        success: function () {
-          // 清除浏览器的缓存
-          window.location.href = "/login";
-          window.location.reload(true);
-        },
-        error: function (error) {
-          console.error("Logout error:", error);
-        }
-      });
-    });
+    // $("#google_logout").click(function () {
+    //   $.ajax({
+    //     type: "GET",
+    //     url: "/logout",
+    //     success: function () {
+    //       // 清除浏览器的缓存
+    //       window.location.replace("/login");
+    //       window.location.reload(true);
+    //     },
+    //     error: function (error) {
+    //       console.error("Logout error:", error);
+    //     }
+    //   });
+    // });
   </script>
 
   <!-- General JS Scripts -->

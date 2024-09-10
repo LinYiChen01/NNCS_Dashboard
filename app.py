@@ -183,194 +183,137 @@ def a():
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     login_status = session.get('login_status')
-    # 確認登入訊息是否成功
+    user_id = session.get('user_id')
+
     if login_status == "True":
-        access_token = session.get('access_token')
-        # return render_template("index.html", login_status=login_status, access_token=access_token) 
-        # connection = pymysql.connect(host=db_host,
-        #                                  user=db_user,
-        #                                  password=db_pwd,
-        #                                  db=db_name,
-        #                                  cursorclass=pymysql.cursors.DictCursor)
         connection = get_db_connection()
-        try:
-            with connection.cursor() as cursor:
-                sql = "SELECT name FROM courses"
-                cursor.execute(sql)
-                courses = cursor.fetchall()
-        finally:
-            connection.close()
+        with connection.cursor() as cursor:
+            sql = "SELECT name FROM courses"
+            cursor.execute(sql)
+            courses = cursor.fetchall()
+
+        with connection.cursor() as cursor:
+            sql = "SELECT * FROM users WHERE user_id = %s"
+            cursor.execute(sql, (user_id))
+            result = cursor.fetchone()
+            if result:
+                name= result['name']
+                # role = result['role']
+                # if role == '1':
+                #     role = '學生'
+                # elif role == '3':
+                #     role = '老師'
+                # elif role == '4':
+                #     role = '管理員' 
+            # 從結果中獲取圖片的二進制數據
+
+            # photo = result['picture']
+            # # 確定圖片的 MIME 類型
+            # kind = filetype.guess(photo)
+            # mime_type = kind.mime
+
+            # # 將二進制數據編碼為 Base64 字符串
+            # encoded_img = base64.b64encode(photo).decode('utf-8')
+            # # 構建適用於前端的 Base64 數據 URL
+            # picture = f"data:{mime_type};base64,{encoded_img}"
+            # print(len(photo))
+
+            picture_data = result['picture']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+
+            # print(len(picture_data))
+        connection.close()
         return render_template("index.html", **locals())
     else:
-        return render_template("login.html")
-
+        return redirect(url_for('login'))
+    
 # 個人簡介
 @app.route("/profiles")
-
 def profiles():
     login_status = session.get('login_status')
+    user_id = session.get('user_id')
     
     if login_status == "True":
-        access_token = session.get('access_token')
-        img_data = None  # 初始化圖片資料變數
-        msg = ''
         connection = get_db_connection()
-
-        try:
-            # 從資料庫抓使用者圖片
-            cursor = connection.cursor(pymysql.cursors.DictCursor)
-            sql = "SELECT user_id, address, phone1, phone2, email, picture FROM users WHERE user_id = %s;"
-            cursor.execute(sql, (session['user_id'],))
+        with connection.cursor() as cursor:
+            sql = "SELECT * FROM users WHERE user_id = %s;"
+            cursor.execute(sql, (user_id))
+            connection.commit()  # 確保插入操作被提交
             result = cursor.fetchone()
+        name = result['name']
+        address = result['address']
+        phone1 = result['phone1']
+        phone2 = result['phone2']
+        email = result['email']
+        role = result['role']
+        if role == '1':
+            role = '學生'
+        elif role == '3':
+            role = '老師'
+        elif role == '4':
+            role = '管理員' 
+        picture_data = result['picture']
 
-            session['address'] = result['address']
-            session['phone1'] = result['phone1']
-            session['phone2'] = result['phone2']
-            session['email'] = result['email']
-            session['picture'] = result['picture']
-            # print(session['picture'], "+++++++++++++++++++")
-            kind = filetype.guess(session['picture'])
-            if kind:
-                encoded_img = base64.b64encode(session['picture']).decode('utf-8')
-                session['picture'] = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
-                # print(session['picture'], "!!!!!!!!!!!!!!!!!!")
-            else:
-                msg = '無法識別圖片類型'
-            # print(session['picture'], "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-
-            # kind = filetype.guess(session['picture'])
-            
-            # # 輸出sql查詢語法
-            # # print(cursor.mogrify(sql, (session['user_id'],)))
-
-            # if result and result.get('picture'):
-            #     # 這裡假設 'picture' 存儲的是文件的二進制數據
-            #     picture_data = result['picture']
-                
-            #     # 先檢查 picture_data 是否為有效的二進制數據
-            #     kind = filetype.guess(picture_data)
-            #     if kind:
-            #         encoded_img = base64.b64encode(picture_data).decode('utf-8')
-            #         img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
-            #     else:
-            #         msg = '無法識別圖片類型'
-        except Exception as e:
-            msg = f"發生錯誤: {str(e)}"
-        finally:
-            connection.close()  # 確保連接被關閉
-        
+        # 確定圖片的 MIME 類型
+        kind = filetype.guess(picture_data)
+        mime_type = kind.mime
+        # 將二進制數據編碼為 Base64 字符串
+        encoded_img = base64.b64encode(picture_data).decode('utf-8')
+        # 構建適用於前端的 Base64 數據 URL
+        picture = f"data:{mime_type};base64,{encoded_img}"
+        connection.close()  # 確保連接被關閉
         return render_template("profiles.html", **locals())
     else:
         # 未登入狀態下的處理
-        return render_template("login.html")
+        return redirect(url_for('login'))
 
 @app.route('/update_profile', methods=['POST'])
 def update_profile():
-    # if 'file' in request.files:
-    #     picture = request.files['file']
-    #     if picture.filename != '':
-    #         print("File uploaded")
-    #         # 处理文件
-    #     else:
-    #         print("No file selected")
-    # else:
-    #     print("No file field in request")
-
-    picture = request.files['file']
-    if picture.filename != '':
-        session['picture'] = picture.read()
-        print("File uploaded")
-        print(session['picture'])
-            # 处理文件
-    else:
-        match = re.match(r'data:(.*?);base64,(.*)', request.form['img_data'])
-        if match:
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+    
+    if login_status == "True":
+        phone1 = request.form['phone1']
+        phone2 = request.form['phone2']
+        email = request.form['email']
+        address = request.form['address']
+        workplace = request.form['workplace']
+        profession = request.form['profession']
+        # 處理圖片
+        picture = request.files['file']
+        if picture.filename != '': # 有更新傳圖片
+            picture = picture.read()
+        else:
+            # 沒有更新圖片
+            match = re.match(r'data:(.*?);base64,(.*)', request.form['img_data'])
             base64_data = match.group(2)  # Base64 编码的数据
-            file_data = base64.b64decode(base64_data)  # 解码为二进制数据
+            picture_data = base64.b64decode(base64_data)  # 解码为二进制数据
+            picture = picture_data
 
-        session['picture'] = file_data
-        print("No file selected")
-        print(session['picture'])
+        # Update the users table
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        sql = "UPDATE users SET picture = %s, phone1 = %s, phone2 = %s, email = %s, address = %s WHERE user_id = %s;"
+        cursor.execute(sql, (picture, phone1, phone2, email, address, user_id))
+        connection.commit()
 
+        # Update the students table
+        cursor = connection.cursor()
+        sql = " UPDATE students SET workplace = %s, profession = %s WHERE user_id = %s;"
+        cursor.execute(sql, (workplace, profession, user_id))
+        connection.commit()
+        connection.close()
 
-
-
-        # print(session['picture'])
-    # if request.form['file'] != '':
-    #     picture = request.files['file']
-    #     print(11111111111111111111111)
-    #     print(picture)
-    # else:
-    #     print(22222222222222222222222)
-    #     picture = request.form['img_data']
-    phone1 = request.form['phone1']
-    phone2 = request.form['phone2']
-    email = request.form['email']
-    address = request.form['address']
-    workplace = request.form['workplace']
-    profession = request.form['profession']
-
-    # # 有更新圖片
-    # if file.filename != '':
-    #     file = request.files['file']
-    #     file_size = request.content_length
-    #     print(file_size, "這麼大!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    #     if file_size > MAX_CONTENT_LENGTH:
-    #         msg = f'上傳圖片過大，圖片大小最大為 {MAX_CONTENT_LENGTH / 1024} KB。'
-    #         return render_template("profiles.html", msg=msg)
-    #     photo_data = file.read()  # 讀取圖片並將其轉換為二進位資料
-    #     # 使用 filetype 模块确定图片的类型
-    #     kind = filetype.guess(photo_data)
-    #     if kind is None or kind.extension not in ['jpg', 'jpeg', 'png', 'webp']:
-    #         msg = '僅能上傳圖片副檔名為: jpg、jpeg、png、webp'
-    #         return render_template("profiles.html", msg=msg)
-    #     # print('---------------------------------------')
-    #     # print(file, "1234567890-234567890234567890")
-    #     # print('---------------------------------------')
-    # # 沒有更新圖片
-    # else:
-    #     file = request.form['img_data']
-    #     print('---------------------------------------')
-    #     print('NOOOOOOOOOOOOOOOOOOOO')
-    #     print('---------------------------------------')
-    # return redirect(url_for('profiles'))
-    # return render_template("profiles.html", msg=msg)
-    # if file.filename != '':
-    #     file_size = request.content_length
-    #     print(file_size)
-    #     if file_size > MAX_CONTENT_LENGTH:
-    #         msg = f'上傳圖片過大，圖片大小最大為 {MAX_CONTENT_LENGTH / 1024} KB。'
-    #         return render_template("profiles.html", msg=msg)
-    #     photo_data = file.read()  # 讀取圖片並將其轉換為二進位資料
-    #     # 使用 filetype 模块确定图片的类型
-    #     kind = filetype.guess(photo_data)
-    #     if kind is None or kind.extension not in ['jpg', 'jpeg', 'png', 'webp']:
-    #         msg = '僅能上傳圖片副檔名為: jpg、jpeg、png、webp'
-    #         return render_template("profiles.html", msg=msg)
-
-    # Update the users table
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    sql = "UPDATE users SET picture = %s, phone1 = %s, phone2 = %s, email = %s, address = %s WHERE user_id = %s;"
-    cursor.execute(sql, (session['picture'], phone1, phone2, email, address, session['user_id']))
-    connection.commit()
-    # print(cursor.fetchall())
-    connection.close()
-
-    # # Update the students table
-    # cursor.execute("""
-    #     UPDATE students SET workplace = %s, profession = %s
-    #     WHERE user_id = %s
-    # """, (workplace, profession, session['user_id']))
-
-    #     connection.commit()
-    #     connection.close()
-
-    return redirect(url_for('profiles'))
-    # return render_template("profiles.html", **locals())
-    # 若檢查通過，則重定向至 login.html
-    # return redirect(url_for('index'))
-
+        return redirect(url_for('profiles'))
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -378,118 +321,94 @@ def login():
         login_method = request.form.get('login_method')
         if login_method == "google":
             login_status = request.form.get("login_status")
-            session['login_status'] = login_status
-            session['login_method'] = login_method
             access_token = request.form.get("access_token")
-            session['access_token'] = access_token
-            # session['user_info'] = json.loads(request.form.get("user_info"))
-            user_info = json.loads(request.form.get("user_info"))
+            user_info = request.form.get("user_info")
 
-            # session['user_info'] = user_info
-            # 提取姓名
-            names = user_info['names']
-            if names:
-                display_name = names[0]['displayName']  # 取得顯示名稱
-                family_name = names[0].get('familyName', '')  # 取得姓氏
-                given_name = names[0].get('givenName', '')  # 取得名字
-                full_name = f"{given_name} {family_name}" if given_name and family_name else display_name
+            # 初始化 session 變數
+            session['login_status'] = "False"
+            session['login_method'] = login_method
+            session['access_token'] = access_token
+
+            try:
+                user_info = json.loads(user_info)
+                names = user_info.get('names', [])
+                display_name = names[0].get('displayName', '') if names else ''
+                family_name = names[0].get('familyName', '') if names else ''
+                given_name = names[0].get('givenName', '') if names else ''
+                full_name = f"{given_name} {family_name}".strip() or display_name
                 session['name'] = display_name
 
-            # 提取頭像
-            photos = user_info['photos']
-            if photos:
-                photo_url = photos[0]['url']  # 取得頭像 URL
-                session['photo'] = photo_url
+                photos = user_info.get('photos', [])
+                photo_url = photos[0].get('url', '') if photos else ''
+                session['picture'] = photo_url
 
-            # 提取郵件地址
-            email_addresses = user_info['emailAddresses']
-            if email_addresses:
-                email = email_addresses[0]['value']  # 取得郵件地址
+                email_addresses = user_info.get('emailAddresses', [])
+                email = email_addresses[0].get('value', '') if email_addresses else ''
                 session['email'] = email
-            
-            # connection = pymysql.connect(host=db_host,
-            #                              user=db_user,
-            #                              password=db_pwd,
-            #                              db=db_name,
-            #                              cursorclass=pymysql.cursors.DictCursor)
-            connection = get_db_connection()
-            with connection.cursor() as cursor:
-                        sql = "SELECT * FROM users WHERE acc=%s"
-                        cursor.execute(sql, (email))
-                        result = cursor.fetchone()
-                        if result:
-                            session['login_status'] = "True"
-                            # return redirect(url_for('index'))
-                        else:
-                            sql = "INSERT INTO users (acc, name, email, picture) VALUES (%s, %s, %s, %s)"
-                            cursor.execute(sql, (email, full_name, email, photo_url))
-                            connection.commit()  # 确保插入操作被提交
-                            session['login_status'] = "True"
-                            # return redirect(url_for('index'))           
-            if login_status == "True":
-                # return render_template("index.html", session=session) 
-                return render_template("index.html", **locals()) 
-            else:
-                # return redirect(url_for('login'))
-                response = make_response(render_template("login.html"))
-                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-                response.headers["Pragma"] = "no-cache"
-                response.headers["Expires"] = "0"
-                return response
+
+                # 連接到資料庫
+                connection = get_db_connection()
+                with connection.cursor() as cursor:
+                    # 檢查用戶是否存在
+                    cursor.execute("SELECT * FROM users WHERE acc=%s", (email,))
+                    result = cursor.fetchone()
+                    if result:
+                        session['login_status'] = "True"
+                    else:
+                        # 插入新用戶
+                        cursor.execute("INSERT INTO users (acc, name, email, picture) VALUES (%s, %s, %s, %s)",
+                                       (email, full_name, email, photo_url))
+                        connection.commit()
+                        session['login_status'] = "True"
+                connection.close()
+
+                if session['login_status'] == "True":
+                    return redirect(url_for('index'))
+                else:
+                    return render_template("login.html", **locals())
+            except Exception as e:
+                print(f"處理 Google 登入時出錯: {e}")
+                return render_template("login.html", error="登入失敗，請再試一次。")
+        
         else:
             acc = request.form['acc']
             pwd = request.form['pwd']
-            # connection = pymysql.connect(host=db_host,
-            #                              user=db_user,
-            #                              password=db_pwd,
-            #                              db=db_name,
-            #                              cursorclass=pymysql.cursors.DictCursor)
+
             try:
-                # Execute the SQL query to fetch user details
                 connection = get_db_connection()
                 with connection.cursor() as cursor:
-                    sql = "SELECT * FROM users WHERE acc=%s AND pwd=%s AND pwd !=''"
-                    cursor.execute(sql, (acc, pwd))
+                    cursor.execute("SELECT * FROM users WHERE acc=%s AND pwd=%s AND pwd !=''", (acc, pwd))
                     result = cursor.fetchone()
                     if result:
                         session['login_status'] = "True"
                         session['user_id'] = result['user_id']
-                        session['name'] = result['name']
-                        if result['role'] == '1':
-                            session['role'] = '學生'
-                        elif result['role'] == '3':
-                            session['role'] = '老師'
-                        elif result['role'] == '4':
-                            session['role'] = '管理員'   
                         return redirect(url_for('index'))
-                login_status = "False"
+                    else:
+                        session['login_status'] = "False"
+                        return render_template("login.html", error="憑證無效，請再試一次。")
             except Exception as e:
-                print(f"Database error: {e}")
-                login_status = "False"
+                print(f"資料庫錯誤: {e}")
+                return render_template("login.html", error="發生錯誤，請再試一次。")
             finally:
-                # Close the database connection
                 connection.close()
-            return render_template("login.html", login_status=login_status)
-            # return render_template("index.html", **locals()) 
     
-    # return render_template("login.html")
-    # response = make_response(render_template("login.html"))
-    # response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    # response.headers["Pragma"] = "no-cache"
-    # response.headers["Expires"] = "0"
-    # return response
-    return redirect(url_for('profiles'), **locals())
+    return render_template("login.html")
+
 
 
 @app.route('/logout')
 def logout():
     session.clear()  # 清除会话
-    # response = make_response(render_template("login.html"))
-    # response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    # response.headers["Pragma"] = "no-cache"
-    # response.headers["Expires"] = "0"
-    # return response
-    return render_template("login.html")
+    return redirect(url_for('login'))
+
+# 防止瀏覽器快存 避免登出後按返回還能看到系統 
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
+
 
 if __name__ == '__main__':
     app.run(debug=True)

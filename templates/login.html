@@ -69,7 +69,7 @@
                   </div>
                 </form>
                 <div class="text-center mt-4 mb-3">
-                  <div class="text-job text-muted">Or</div>
+                  <div class="text-job text-muted">Or {{session['login_status']}}</div>
                 </div>
                 <div class="row sm-gutters">
                   <div id="google_login" class="col-12">
@@ -115,11 +115,11 @@
   <script src="assets/modules/bootstrap/js/bootstrap.min.js"></script>
 
   <!-- Custom JS for Login Failure Modal -->
-  {% if login_status == "False" %}
+  {% if session['login_status'] == "False" %}
   <script>
-    $(document).ready(function () {
-      $('#loginFailureModal').modal('show');
-    });
+      $(document).ready(function () {
+          $('#loginFailureModal').modal('show');
+      });
   </script>
   {% endif %}
 
