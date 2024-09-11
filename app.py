@@ -118,8 +118,8 @@ def handle_message(event):
         connection.close()
 
 
-@app.route('/a', methods=['GET', 'POST'])
-def a():
+# @app.route('/a', methods=['GET', 'POST'])
+# def a():
     img_data = None  # 初始化圖片資料變數
     msg = ''
     connection = get_db_connection()
@@ -178,6 +178,12 @@ def a():
             connection.close()  # 確保連接被關閉
     return render_template("a.html", **locals())
 
+@app.route("/a")
+@app.route('/a', methods=['GET', 'POST'])
+def a():
+    return render_template("a.html", **locals())
+
+
 # index 首頁
 @app.route("/")
 @app.route('/index', methods=['GET', 'POST'])
@@ -193,11 +199,43 @@ def index():
             courses = cursor.fetchall()
 
         with connection.cursor() as cursor:
+            sql = """
+            SELECT
+                classroom.name,
+                classtime.class_week,
+                classtime.start_time,
+                classtime.end_time
+            FROM
+                classtime
+            JOIN
+                classroom ON classtime.classroom_id = classroom.classroom_id
+            ORDER BY
+                classroom.name ASC,
+                FIELD(classtime.class_week, '一', '二', '三', '四', '五', '六', '日'),
+                classtime.start_time ASC;
+            """
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            classroom = []
+            classroom_area = []
+            class_week = []
+            start_time = []
+            end_time = []
+
+            
+            for i in result:
+                classroom.append(i['name'])
+                classroom_area.append(i['name'][:2])
+                class_week.append(i['class_week'])
+                start_time.append(str(i['start_time'])[:-3])
+                end_time.append(str(i['end_time'])[:-3])
+            classroom_area = sorted(set(classroom_area))
+
+        with connection.cursor() as cursor:
             sql = "SELECT * FROM users WHERE user_id = %s"
             cursor.execute(sql, (user_id))
             result = cursor.fetchone()
-            if result:
-                name= result['name']
+            name= result['name']
                 # role = result['role']
                 # if role == '1':
                 #     role = '學生'
@@ -205,19 +243,6 @@ def index():
                 #     role = '老師'
                 # elif role == '4':
                 #     role = '管理員' 
-            # 從結果中獲取圖片的二進制數據
-
-            # photo = result['picture']
-            # # 確定圖片的 MIME 類型
-            # kind = filetype.guess(photo)
-            # mime_type = kind.mime
-
-            # # 將二進制數據編碼為 Base64 字符串
-            # encoded_img = base64.b64encode(photo).decode('utf-8')
-            # # 構建適用於前端的 Base64 數據 URL
-            # picture = f"data:{mime_type};base64,{encoded_img}"
-            # print(len(photo))
-
             picture_data = result['picture']
             # 確定圖片的 MIME 類型
             kind = filetype.guess(picture_data)
@@ -230,6 +255,7 @@ def index():
 
             # print(len(picture_data))
         connection.close()
+        print(start_time)
         return render_template("index.html", **locals())
     else:
         return redirect(url_for('login'))
