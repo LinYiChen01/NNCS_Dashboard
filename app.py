@@ -120,69 +120,62 @@ def handle_message(event):
 
 # @app.route('/a', methods=['GET', 'POST'])
 # def a():
-    img_data = None  # 初始化圖片資料變數
-    msg = ''
-    connection = get_db_connection()
-    with connection.cursor() as cursor:
-        sql = "SELECT picture FROM users WHERE user_id = 1"
-        cursor.execute(sql)
-        result = cursor.fetchone()
-        kind = filetype.guess(result['picture'])
-        if result and result['picture']:
-            # 將圖片轉換為 base64 編碼格式
-            encoded_img = base64.b64encode(result['picture']).decode('utf-8')
-            img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
-        else:
-            msg = '您尚未上傳任何圖片!'
-    connection.close()  # 確保連接被關閉
+    # img_data = None  # 初始化圖片資料變數
+    # msg = ''
+    # connection = get_db_connection()
+    # with connection.cursor() as cursor:
+    #     sql = "SELECT picture FROM users WHERE user_id = 1"
+    #     cursor.execute(sql)
+    #     result = cursor.fetchone()
+    #     kind = filetype.guess(result['picture'])
+    #     if result and result['picture']:
+    #         # 將圖片轉換為 base64 編碼格式
+    #         encoded_img = base64.b64encode(result['picture']).decode('utf-8')
+    #         img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
+    #     else:
+    #         msg = '您尚未上傳任何圖片!'
+    # connection.close()  # 確保連接被關閉
 
-    if request.method == 'POST':
-        file = request.files['file']
-        if file.filename != '':
-            file_size = request.content_length
-            print(file_size)
-            if file_size > MAX_CONTENT_LENGTH:
-                msg = f'上傳圖片過大，圖片大小最大為 {MAX_CONTENT_LENGTH / 1024} KB。'
-                return render_template("a.html", msg=msg)
-            photo_data = file.read()  # 讀取圖片並將其轉換為二進位資料
-            # 使用 filetype 模块确定图片的类型
-            kind = filetype.guess(photo_data)
-            if kind is None or kind.extension not in ['jpg', 'jpeg', 'png', 'webp']:
-                msg = '僅能上傳圖片副檔名為: jpg、jpeg、png、webp'
-                return render_template("a.html", msg=msg)
+    # if request.method == 'POST':
+    #     file = request.files['file']
+    #     if file.filename != '':
+    #         file_size = request.content_length
+    #         if file_size > MAX_CONTENT_LENGTH:
+    #             msg = f'上傳圖片過大，圖片大小最大為 {MAX_CONTENT_LENGTH / 1024} KB。'
+    #             return render_template("a.html", msg=msg)
+    #         photo_data = file.read()  # 讀取圖片並將其轉換為二進位資料
+    #         # 使用 filetype 模块确定图片的类型
+    #         kind = filetype.guess(photo_data)
+    #         if kind is None or kind.extension not in ['jpg', 'jpeg', 'png', 'webp']:
+    #             msg = '僅能上傳圖片副檔名為: jpg、jpeg、png、webp'
+    #             return render_template("a.html", msg=msg)
             
-            mime_type = kind.mime  # 動態設置 MIME 類型
+    #         mime_type = kind.mime  # 動態設置 MIME 類型
             
-            # connection = pymysql.connect(
-            #     host=db_host,
-            #     user=db_user,
-            #     password=db_pwd,
-            #     db=db_name,
-            #     cursorclass=pymysql.cursors.DictCursor
-            # )
-            connection = get_db_connection()
-            with connection.cursor() as cursor:
-                sql = "UPDATE `users` SET `picture` = %s WHERE `users`.`user_id` = 1;"
-                cursor.execute(sql, (photo_data,))
-                connection.commit()  # 確保插入操作被提交
+    #         # connection = pymysql.connect(
+    #         #     host=db_host,
+    #         #     user=db_user,
+    #         #     password=db_pwd,
+    #         #     db=db_name,
+    #         #     cursorclass=pymysql.cursors.DictCursor
+    #         # )
+    #         connection = get_db_connection()
+    #         with connection.cursor() as cursor:
+    #             sql = "UPDATE `users` SET `picture` = %s WHERE `users`.`user_id` = 1;"
+    #             cursor.execute(sql, (photo_data,))
+    #             connection.commit()  # 確保插入操作被提交
 
-                # 提取剛剛上傳的圖片
-                sql = "SELECT picture FROM users WHERE user_id = 1"
-                cursor.execute(sql)
-                result = cursor.fetchone()
-                if result and result['picture']:
-                    # 將圖片轉換為 base64 編碼格式
-                    encoded_img = base64.b64encode(result['picture']).decode('utf-8')
-                    img_data = f"data:{mime_type};base64,{encoded_img}"  # 使用動態的 MIME 類型
-                    msg = ''
-            connection.close()  # 確保連接被關閉
-    return render_template("a.html", **locals())
-
-@app.route("/a")
-@app.route('/a', methods=['GET', 'POST'])
-def a():
-    return render_template("a.html", **locals())
-
+    #             # 提取剛剛上傳的圖片
+    #             sql = "SELECT picture FROM users WHERE user_id = 1"
+    #             cursor.execute(sql)
+    #             result = cursor.fetchone()
+    #             if result and result['picture']:
+    #                 # 將圖片轉換為 base64 編碼格式
+    #                 encoded_img = base64.b64encode(result['picture']).decode('utf-8')
+    #                 img_data = f"data:{mime_type};base64,{encoded_img}"  # 使用動態的 MIME 類型
+    #                 msg = ''
+    #         connection.close()  # 確保連接被關閉
+    # return render_template("a.html", **locals())
 
 # index 首頁
 @app.route("/")
@@ -216,6 +209,8 @@ def index():
             """
             cursor.execute(sql)
             result = cursor.fetchall()
+
+            classroom_data = []
             classroom = []
             classroom_area = []
             class_week = []
@@ -223,12 +218,18 @@ def index():
             end_time = []
 
             
-            for i in result:
-                classroom.append(i['name'])
-                classroom_area.append(i['name'][:2])
-                class_week.append(i['class_week'])
-                start_time.append(str(i['start_time'])[:-3])
-                end_time.append(str(i['end_time'])[:-3])
+            for i in range(len(result)):
+                classroom_data.append({})
+                classroom_data[i]['classroom'] = result[i]['name']
+                classroom_data[i]['class_week'] = result[i]['class_week']
+                classroom_data[i]['start_time'] = str(result[i]['start_time'])[:-3]
+                classroom_data[i]['end_time'] = str(result[i]['end_time'])[:-3]
+
+                classroom.append(result[i]['name'])
+                classroom_area.append(result[i]['name'][:2])
+                class_week.append(result[i]['class_week'])
+                start_time.append(str(result[i]['start_time'])[:-3])
+                end_time.append(str(result[i]['end_time'])[:-3])
             classroom_area = sorted(set(classroom_area))
 
         with connection.cursor() as cursor:
@@ -236,13 +237,6 @@ def index():
             cursor.execute(sql, (user_id))
             result = cursor.fetchone()
             name= result['name']
-                # role = result['role']
-                # if role == '1':
-                #     role = '學生'
-                # elif role == '3':
-                #     role = '老師'
-                # elif role == '4':
-                #     role = '管理員' 
             picture_data = result['picture']
             # 確定圖片的 MIME 類型
             kind = filetype.guess(picture_data)
@@ -252,14 +246,79 @@ def index():
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
+        
+        # 查詢用戶的參加課程信息
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT classtime_id, class_date FROM attend WHERE user_id=%s", (user_id,))
+            attendances = cursor.fetchall()
 
-            # print(len(picture_data))
+        event_data = []
+        
+        # 查詢每個參加課程的詳細信息
+        for attendance in attendances:
+            fc_classtime_id = attendance['classtime_id']
+            fc_class_date = attendance['class_date']
+
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT classroom_name, start_time, end_time FROM classroom_schedule WHERE classtime_id=%s", (fc_classtime_id,))
+                result = cursor.fetchone()
+                fc_classroom_name = result['classroom_name']
+                fc_start_time = str(result['start_time'])[:-3]
+                fc_end_time = str(result['end_time'])[:-3]
+                # print(fc_start_time, fc_end_time)
+
+                # 構建日曆事件數據
+                event_data.append({
+                    'title': fc_classroom_name + "\n" + fc_start_time + '-' + fc_end_time,
+                    'start': fc_class_date,  # 日期
+                    'end': fc_class_date,
+                    'allDay': True,  # 整天事件
+                    'borderColor': "#6777ef",
+                    'backgroundColor': "#fff",
+                    'textColor': '#6777ef'
+                })
+
         connection.close()
-        print(start_time)
         return render_template("index.html", **locals())
     else:
         return redirect(url_for('login'))
-    
+
+
+@app.route("/fc_scheduleButton", methods=['POST'])
+def fc_scheduleButton():
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+        classroomDateSelect = request.form['classroomDateSelect']
+        fc_classroomAreaSelect = request.form['fc_classroomAreaSelect']
+        fc_classroomSelect = request.form['fc_classroomSelect']
+        fc_timeslotSelect = request.form['fc_timeslotSelect'].split()
+        class_week = fc_timeslotSelect[0][-1]
+        start_time = fc_timeslotSelect[1][:5]
+        end_time = fc_timeslotSelect[1][6:]
+        
+        try:
+            connection = get_db_connection()
+            with connection.cursor() as cursor:
+                # 使用檢視表一次查詢所需數據
+                cursor.execute("""
+                    SELECT classtime_id FROM classroom_schedule 
+                    WHERE classroom_name=%s AND class_week=%s AND start_time=%s AND end_time=%s
+                """, (fc_classroomSelect, class_week, start_time, end_time))
+                result = cursor.fetchone()
+                if result:
+                    classtime_id = result['classtime_id']
+                
+                    # 插入數據到 attend 表
+                    cursor.execute("""
+                        INSERT INTO attend (user_id, classtime_id, class_date) 
+                        VALUES (%s, %s, %s)
+                    """, (user_id, classtime_id, classroomDateSelect))
+                    connection.commit()
+        finally:
+            connection.close()
+        return redirect(url_for('index'))
+    return redirect(url_for('login'))
+
 # 個人簡介
 @app.route("/profiles")
 def profiles():

@@ -59,6 +59,8 @@
 //   }
 // });
 
+
+
 function updateDropdown(element, text) {
   // 更新按鈕文本
   document.getElementById("dropdownMenuButton").textContent = text;
@@ -124,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const weekText = weekStrings.join("<br>");
 
       listItem.innerHTML = `
-            <img class="mr-3 rounded" width="55" src="assets/img/products/product-3-50.png" alt="product">
+            <img class="mr-3 rounded" width="55" src="assets/img/products/product-4-50.png" alt="product">
             <div class="media-body" style="line-height: 30px;">
                 <div class="media-title">${classroom}</div>
                 <div class="mt-1">
@@ -134,7 +136,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 </div>
             </div>
         `;
-
       listElement.appendChild(listItem);
     }
   }

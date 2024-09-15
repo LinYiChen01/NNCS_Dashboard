@@ -4,7 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
-  <title>Ecommerce Dashboard &mdash; Stisla</title>
+  <title>NNCS 補習班學生資訊系統</title>
+  <link rel="icon" href="assets/img/NNCS_Matting.png" type="image/png type">
+  
+
+
 
   <!-- General CSS Files -->
   <link rel="stylesheet" href="assets/modules/bootstrap/css/bootstrap.min.css">
@@ -20,14 +24,14 @@
   <link rel="stylesheet" href="assets/modules/ionicons/css/ionicons.min.css">
 
   <!-- air-datepicker -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/air-datepicker@3.3.5/air-datepicker.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/air-datepicker@3.3.5/air-datepicker.min.js"></script>
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/air-datepicker@3.3.5/air-datepicker.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/air-datepicker@3.3.5/air-datepicker.min.js"></script> -->
 
   <!-- Template CSS -->
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/components.css">
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
   <!-- 加载 Google API 客户端库 -->
   <script src="https://apis.google.com/js/api.js"></script>
 
@@ -204,220 +208,28 @@
                   <div class="card-header-action dropdown">
                     <button type="button" class="btn btn-primary" id="scheduleButton"
                       style="border-radius: .25rem !important;">我要排課</button>
-                    <button type="button" class="btn btn-danger" id="leaveButton" 
+                    <button type="button" class="btn btn-danger" id="leaveButton"
                       style="border-radius: .25rem !important;">我要請假</button>
                   </div>
 
                 </div>
                 <div class="card-body">
                   <div class="fc-overflow">
-                    <!-- 篩選日期 -->
-                    <!-- <div class="modal fade" id="filterModal" tabindex="-1" role="dialog"
-                      aria-labelledby="filterModalLabel" aria-hidden="true">
-                      <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="filterModalLabel">選擇日期</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          <div class="modal-body">
-                            <div>
-                              <label for="modalYearSelect">年份:</label>
-                              <select id="modalYearSelect" class="form-control"></select>
-                            </div>
-                            <br>
-                            <div>
-                              <label for="modalMonthSelect">月份:</label>
-                              <select id="modalMonthSelect" class="form-control"></select>
-                            </div>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                            <button type="button" class="btn btn-primary" id="applyFilters">確認</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div> -->
-                    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
-                      aria-labelledby="exampleModalLabel" aria-hidden="true">
-                      <div class="modal-dialog">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">請假</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                          </div>
-                          <div class="modal-body">
-                            <!-- Modal content goes here -->
-                            <form>
-                              <div class="form-group">
-                                <label for="leaveDate">開始日期</label>
-                                <input type="date" class="form-control" id="leaveDate">
-                              </div>
-                              <div class="form-group">
-                                <label for="leaveEndDate">結束日期</label>
-                                <input type="date" class="form-control" id="leaveEndDate">
-                              </div>
-                            </form>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                            <button type="button" class="btn btn-danger">確認請假</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- 請假 -->
-                    <!-- 我要請假 btn -->
-                    <!-- Modal HTML -->
-                    <!-- </div></div><div class="modal fade" id="leaveModal" tabindex="-1" role="dialog"
-                      aria-labelledby="leaveModalLabel" aria-hidden="true">
-                      <div class="modal-dialog modal-dialog" role="document">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="leaveModalLabel">請假</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          <div class="modal-body">
-                            <form>
-                              <div class="form-group">
-                                <label for="leaveDate">開始日期</label>
-                                <input type="date" class="form-control" id="leaveDate">
-                              </div>
-                              <div class="form-group">
-                                <label for="endDate">結束日期</label>
-                                <input type="date" class="form-control" id="endDate"> -->
-                                <!-- Uncomment if using a select input -->
-                                <!-- <select class="form-control" id="leaveCourse">
-              {% for i in courses %}
-              <option value="{{ i.name }}">{{ i.name }}</option>
-              {% endfor %}
-            </select> -->
-                              <!-- </div></div>
-                            </form>
-                            <div id="leaveMessage"></div>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                            <button type="button" class="btn btn-danger" id="confirmLeave">確認請假</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div> -->
-
-                    <!-- eventClick請假 -->
-                    <div class="modal fade" id="leaveDayModal" tabindex="-1" role="dialog"
-                      aria-labelledby="leaveDayModalLabel" aria-hidden="true">
-                      <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="leaveDayModalLabel">请假</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          <div class="modal-body">
-                            <form>
-                              <div class="form-group">
-                                <label for="leaveDayDate">日期</label>
-                                <input type="date" class="form-control" id="leaveDayDate" readonly>
-                              </div>
-                              <div class="form-group">
-                                <label for="leaveDayCourse">课程</label>
-                                <input type="text" class="form-control" id="leaveDayCourse" readonly>
-                                <!-- 应该是 text 类型 -->
-                              </div>
-                            </form>
-                            <div id="leaveDayMessage"></div>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                            <button type="button" class="btn btn-danger" id="confirmDayLeave">确认请假</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- 排課 -->
-                    <!-- 模态窗口用于选择课程 -->
-                    <div class="modal fade" id="courseDayModal" tabindex="-1" role="dialog"
-                      aria-labelledby="courseDayModalLabel" aria-hidden="true">
-                      <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="courseDayModalLabel">選擇課程</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          <div class="modal-body">
-                            <div>
-                              <label for="selectedDate">日期</label>
-                              <input type="text" id="selectedDate" class="form-control" readonly
-                                style="pointer-events: none; background-color: #efeeee; border: none;">
-                            </div>
-                            <br>
-                            <div>
-                              <label for="courseSelect">課程</label>
-                              <select id="courseSelect" class="form-control">
-                                {% for i in courses %}
-                                <option value="{{ i.name }}">{{ i.name }}</option>
-                                {% endfor %}
-                              </select>
-                            </div>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                            <button type="button" class="btn btn-primary" id="saveCourse">確認</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- 我要排課 -->
-                    <div class="modal fade" id="courseModal" tabindex="-1" role="dialog"
-                      aria-labelledby="courseModalLabel" aria-hidden="true">
-                      <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="courseModalLabel">排课</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          <div class="modal-body">
-                            <div class="form-group">
-                              <label for="scheduleDate">選擇日期</label>
-                              <input type="date" class="form-control" id="scheduleDate">
-                            </div>
-                            <div class="form-group">
-                              <label for="scheduleCourse">選擇課程</label>
-                              <select id="scheduleCourse" class="form-control">
-                                {% for i in courses %}
-                                <option value="{{ i.name }}">{{ i.name }}</option>
-                                {% endfor %}
-                              </select>
-                            </div>
-                            <div id="scheduleMessage"></div>
-
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                            <button type="button" class="btn btn-primary" id="saveSchedule">確認</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
 
                     <!-- 日曆 fullCalendar -->
                     <div id="myEvent"></div>
+                    <button type="button" class="btn btn-danger" id="fc_scheduleButton" style="display: none;"></button>  <!--dayclick-->
+                    <button type="button" class="btn btn-danger" id="fc_leaveButton" style="display: none;"></button>  <!--evenclick-->
+                    <button type="button" class="btn btn-danger" id="FilterModalButton" style="display: none;"></button>  <!--篩選日期按鈕-->
+                    <script>
+                      var event_data = {{event_data| tojson | safe}};
+                    </script>
+                    <div id="eventData" data-events='[]'></div>
                   </div>
                 </div>
               </div>
             </div>
+            <!-- 查看各教室上課時段 -->
             <div class="col-lg-4">
               <div class="card" style="height: calc(100% - 30px);">
                 <div class="card-header">
@@ -426,6 +238,9 @@
                     var class_week = {{ class_week| tojson | safe }};
                     var start_time = {{ start_time| tojson | safe }};
                     var end_time = {{ end_time| tojson | safe }};
+                    var classroom_area = {{ classroom_area| tojson | safe }};
+                    var classroom_data = {{ classroom_data| tojson | safe }};
+                    
                   </script>
                   <h4>上課時段</h4>
                   <div class="card-header-action dropdown">
@@ -456,32 +271,8 @@
                 <div class="card-header">
                   <h4>Best Products</h4>
                 </div>
-                <!-- <button class="btn btn-primary" id="modal-1">Launch Modal</button> -->
                 <div class="container mt-5">
-                  <!-- 觸發 Modal 的按鈕 -->
-                  <button class="btn btn-primary" id="modal-1">Launch Modal</button>
-          
-                  <!-- Modal -->
-                  <!-- <div class="modal fade" tabindex="-1" role="dialog" id="exampleModal">
-                      <div class="modal-dialog" role="document">
-                          <div class="modal-content">
-                              <div class="modal-header">
-                                  <h5 class="modal-title">Modal title</h5>
-                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                      <span aria-hidden="true">&times;</span>
-                                  </button>
-                              </div>
-                              <div class="modal-body">
-                                  <p>Modal body text goes here.</p>
-                              </div>
-                              <div class="modal-footer bg-whitesmoke br">
-                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                  <button type="button" class="btn btn-primary">Save changes</button>
-                              </div>
-                          </div>
-                      </div>
-                  </div> -->
-              </div>
+                </div>
                 <!-- <div class="card-body">
                   <div class="owl-carousel owl-theme" id="products-carousel">
                     <div>
@@ -751,7 +542,7 @@
           </div>
         </section>
       </div>
-      
+
       <footer class="main-footer">
         <div class="footer-left">
           組別: 113XXX 指導老師 : 林俊杰老師 &nbsp 專題組員: 11236001 林奕辰
@@ -855,12 +646,6 @@
     //   });
     // });
   </script>
-   <!-- <script>
-    // JavaScript to trigger modal
-    document.getElementById('showModalBtn').addEventListener('click', function () {
-        $('#myModal').modal('show');
-    });
-</script> -->
 
 
   <!-- General JS Scripts -->
@@ -873,7 +658,7 @@
   <script src="assets/js/stisla.js"></script>
 
   <!-- JS Libraies -->
-  <script src="assets/modules/prism/prism.js"></script>
+  <!-- <script src="assets/modules/prism/prism.js"></script> -->
   <script src="assets/modules/jquery.sparkline.min.js"></script>
   <script src="assets/modules/chart.min.js"></script>
   <script src="assets/modules/owlcarousel2/dist/owl.carousel.min.js"></script>
@@ -883,8 +668,9 @@
 
   <!-- Page Specific JS File -->
   <script src="assets/js/page/index.js"></script>
-  <script src="assets/js/page/modules-calendar.js"></script>
   <script src="assets/js/page/bootstrap-modal.js"></script>
+  <script src="assets/js/page/modules-calendar.js"></script>
+
 
 
   <!-- Template JS File -->
