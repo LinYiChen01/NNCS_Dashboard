@@ -3,23 +3,12 @@
 const MAX_FILE_SIZE = 64 * 1024 // 64KB
 const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
 
-var pic_msg = document.getElementById("msg"); // 获取 msg 元素
+var pic_msg = document.getElementById("pic_msg"); // 获取 msg 元素
 var img_data = document.getElementById("uploadedImage");
 var submit_msg = document.getElementById("submit_msg");
 
-// 背景虛化
-document.getElementById("updateDataButton").addEventListener("click", function() {
-  document.getElementById("blurLayer").classList.add("show");
-});
-
-// 移除背景虚化
-function removeBlur() {
-  document.getElementById("blurLayer").classList.remove("show");
-}
-
 document.getElementById("uploadButton").addEventListener("click", function() {
   document.getElementById("file").click();
-
 });
 
 
@@ -61,11 +50,10 @@ document.getElementById("file").addEventListener("change", async function () {
   if (file) {
     // 验证文件大小
     if (file.size > MAX_FILE_SIZE) {
-      img_data.src = "";
+      // img_data.src = '';
       img_data.style.display = 'none'; // 隐藏图片
       pic_msg.textContent = `上傳圖片過大，圖片大小最大為 ${MAX_FILE_SIZE / 1024} KB。`;
       pic_msg.style.color = "red";
-      $("#updateModal").modal("show");
       return;
     }
     
@@ -81,37 +69,37 @@ document.getElementById("file").addEventListener("change", async function () {
         };
         reader.readAsDataURL(file);
       } else {
-        img_data.src = "";
+        // img_data.src = "";
         img_data.style.display = 'none'; // 隐藏图片
         pic_msg.textContent = "僅能上傳圖片副檔名為: jpg、jpeg、png、webp";
         pic_msg.style.color = "red";
-        $("#updateModal").modal("show");
+        // $("#updateModal").modal("show");
       }
     } catch (error) {
-      img_data.src = "";
+      // img_data.src = "";
       img_data.style.display = 'none'; // 隐藏图片
-      pic_msg.textContent = "无法识别文件类型";
+      pic_msg.textContent = "無法辨識圖片檔案，請更換圖片上傳";
       pic_msg.style.color = "red";
-      $("#updateModal").modal("show");
+      // $("#updateModal").modal("show");
     }
   }
 });
 
-// 监听模态框关闭事件以移除背景虚化
-$("#updateModal").on("hidden.bs.modal", function () {
-  removeBlur();
-});
+// // 监听模态框关闭事件以移除背景虚化
+// $("#updateModal").on("hidden.bs.modal", function () {
+//   removeBlur();
+// });
 
 // 提交表单的处理（可选）
-function submitUpdateForm() {
-  if (pic_msg.textContent != "") {
-    $("#updateModal").modal("show");
-    submit_msg.textContent = "資料有誤，請重新確認!"
-  }
-  else { 
-    $("#updateModal").modal("hide");
-    var form = document.getElementById("updateForm");
-    form.submit();
-  }
-  // }
-}
+// function submitUpdateForm() {
+//   if (pic_msg.textContent != "") {
+//     $("#updateModal").modal("show");
+//     submit_msg.textContent = "資料有誤，請重新確認!"
+//   }
+//   else { 
+//     $("#updateModal").modal("hide");
+//     var form = document.getElementById("updateForm");
+//     form.submit();
+//   }
+//   }
+// }

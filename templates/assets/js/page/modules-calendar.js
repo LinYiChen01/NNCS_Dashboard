@@ -33,10 +33,11 @@ $("#myEvent").fullCalendar({
   },
 
   eventClick: function (event) {
-    $('#leaveDayDate').val(event.start.format('YYYY-MM-DD'));
+    $('#fc_leaveDayDate').val(event.start.format('YYYY-MM-DD'));
     var selectedTitile = event.title.split('\n');
-    $('#leaveDayClassroom').val(selectedTitile[0]);  // 更新课程名称
-    $('#leaveDayClasstime').val(selectedTitile[1]);  // 更新课程名称
+    $('#fc_leaveDayClassroom').val(selectedTitile[0]);
+    $('#fc_leaveDayClasstime').val(selectedTitile[1]);
+    $('#fc_attend_id').val(event['attend_id']);
     $('#fc_leaveButton').click();
   },
   events: event_data,

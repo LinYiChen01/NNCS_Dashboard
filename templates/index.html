@@ -218,9 +218,9 @@
 
                     <!-- 日曆 fullCalendar -->
                     <div id="myEvent"></div>
-                    <button type="button" class="btn btn-danger" id="fc_scheduleButton" style="display: none;"></button>  <!--dayclick-->
-                    <button type="button" class="btn btn-danger" id="fc_leaveButton" style="display: none;"></button>  <!--evenclick-->
-                    <button type="button" class="btn btn-danger" id="FilterModalButton" style="display: none;"></button>  <!--篩選日期按鈕-->
+                    <button type="button" id="fc_scheduleButton" style="display: none;"></button>  <!--dayclick-->
+                    <button type="button" id="fc_leaveButton" style="display: none;"></button>  <!--evenclick-->
+                    <button type="button" id="FilterModalButton" style="display: none;"></button>  <!--篩選日期按鈕-->
                     <script>
                       var event_data = {{event_data| tojson | safe}};
                     </script>

@@ -1,5 +1,6 @@
 import os
 import base64, re
+from datetime import datetime
 import filetype
 from flask import Flask, render_template, request, abort, session, redirect, url_for, make_response, jsonify
 from authlib.integrations.flask_client import OAuth
@@ -29,10 +30,6 @@ configuration = Configuration(access_token='ezTOh8SMwv3ATxslU3Wk4Bm5oAiP3cKadO+x
 handler = WebhookHandler('8c6f630875f7495650df8b1827587a24')
 
 # 資料庫
-# db_host = 'localhost'
-# db_user = 'root'
-# db_pwd = ''
-# db_name = 'nncs'
 def get_db_connection():
     return pymysql.connect(
         host='localhost',
@@ -120,62 +117,62 @@ def handle_message(event):
 
 # @app.route('/a', methods=['GET', 'POST'])
 # def a():
-    # img_data = None  # 初始化圖片資料變數
-    # msg = ''
-    # connection = get_db_connection()
-    # with connection.cursor() as cursor:
-    #     sql = "SELECT picture FROM users WHERE user_id = 1"
-    #     cursor.execute(sql)
-    #     result = cursor.fetchone()
-    #     kind = filetype.guess(result['picture'])
-    #     if result and result['picture']:
-    #         # 將圖片轉換為 base64 編碼格式
-    #         encoded_img = base64.b64encode(result['picture']).decode('utf-8')
-    #         img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
-    #     else:
-    #         msg = '您尚未上傳任何圖片!'
-    # connection.close()  # 確保連接被關閉
+#     img_data = None  # 初始化圖片資料變數
+#     msg = ''
+#     connection = get_db_connection()
+#     with connection.cursor() as cursor:
+#         sql = "SELECT picture FROM users WHERE user_id = 1"
+#         cursor.execute(sql)
+#         result = cursor.fetchone()
+#         kind = filetype.guess(result['picture'])
+#         if result and result['picture']:
+#             # 將圖片轉換為 base64 編碼格式
+#             encoded_img = base64.b64encode(result['picture']).decode('utf-8')
+#             img_data = f"data:{kind.mime};base64,{encoded_img}"  # 使用動態的 MIME 類型
+#         else:
+#             msg = '您尚未上傳任何圖片!'
+#     connection.close()  # 確保連接被關閉
 
-    # if request.method == 'POST':
-    #     file = request.files['file']
-    #     if file.filename != '':
-    #         file_size = request.content_length
-    #         if file_size > MAX_CONTENT_LENGTH:
-    #             msg = f'上傳圖片過大，圖片大小最大為 {MAX_CONTENT_LENGTH / 1024} KB。'
-    #             return render_template("a.html", msg=msg)
-    #         photo_data = file.read()  # 讀取圖片並將其轉換為二進位資料
-    #         # 使用 filetype 模块确定图片的类型
-    #         kind = filetype.guess(photo_data)
-    #         if kind is None or kind.extension not in ['jpg', 'jpeg', 'png', 'webp']:
-    #             msg = '僅能上傳圖片副檔名為: jpg、jpeg、png、webp'
-    #             return render_template("a.html", msg=msg)
+#     if request.method == 'POST':
+#         file = request.files['file']
+#         if file.filename != '':
+#             file_size = request.content_length
+#             if file_size > MAX_CONTENT_LENGTH:
+#                 msg = f'上傳圖片過大，圖片大小最大為 {MAX_CONTENT_LENGTH / 1024} KB。'
+#                 return render_template("a.html", msg=msg)
+#             photo_data = file.read()  # 讀取圖片並將其轉換為二進位資料
+#             # 使用 filetype 模块确定图片的类型
+#             kind = filetype.guess(photo_data)
+#             if kind is None or kind.extension not in ['jpg', 'jpeg', 'png', 'webp']:
+#                 msg = '僅能上傳圖片副檔名為: jpg、jpeg、png、webp'
+#                 return render_template("a.html", msg=msg)
             
-    #         mime_type = kind.mime  # 動態設置 MIME 類型
+#             mime_type = kind.mime  # 動態設置 MIME 類型
             
-    #         # connection = pymysql.connect(
-    #         #     host=db_host,
-    #         #     user=db_user,
-    #         #     password=db_pwd,
-    #         #     db=db_name,
-    #         #     cursorclass=pymysql.cursors.DictCursor
-    #         # )
-    #         connection = get_db_connection()
-    #         with connection.cursor() as cursor:
-    #             sql = "UPDATE `users` SET `picture` = %s WHERE `users`.`user_id` = 1;"
-    #             cursor.execute(sql, (photo_data,))
-    #             connection.commit()  # 確保插入操作被提交
+#             # connection = pymysql.connect(
+#             #     host=db_host,
+#             #     user=db_user,
+#             #     password=db_pwd,
+#             #     db=db_name,
+#             #     cursorclass=pymysql.cursors.DictCursor
+#             # )
+#             connection = get_db_connection()
+#             with connection.cursor() as cursor:
+#                 sql = "UPDATE `users` SET `picture` = %s WHERE `users`.`user_id` = 1;"
+#                 cursor.execute(sql, (photo_data,))
+#                 connection.commit()  # 確保插入操作被提交
 
-    #             # 提取剛剛上傳的圖片
-    #             sql = "SELECT picture FROM users WHERE user_id = 1"
-    #             cursor.execute(sql)
-    #             result = cursor.fetchone()
-    #             if result and result['picture']:
-    #                 # 將圖片轉換為 base64 編碼格式
-    #                 encoded_img = base64.b64encode(result['picture']).decode('utf-8')
-    #                 img_data = f"data:{mime_type};base64,{encoded_img}"  # 使用動態的 MIME 類型
-    #                 msg = ''
-    #         connection.close()  # 確保連接被關閉
-    # return render_template("a.html", **locals())
+#                 # 提取剛剛上傳的圖片
+#                 sql = "SELECT picture FROM users WHERE user_id = 1"
+#                 cursor.execute(sql)
+#                 result = cursor.fetchone()
+#                 if result and result['picture']:
+#                     # 將圖片轉換為 base64 編碼格式
+#                     encoded_img = base64.b64encode(result['picture']).decode('utf-8')
+#                     img_data = f"data:{mime_type};base64,{encoded_img}"  # 使用動態的 MIME 類型
+#                     msg = ''
+#             connection.close()  # 確保連接被關閉
+#     return render_template("a.html", **locals())
 
 # index 首頁
 @app.route("/")
@@ -249,41 +246,46 @@ def index():
         
         # 查詢用戶的參加課程信息
         with connection.cursor() as cursor:
-            cursor.execute("SELECT classtime_id, class_date FROM attend WHERE user_id=%s", (user_id,))
+            cursor.execute("SELECT attend_id, classtime_id, class_date, status FROM attend WHERE user_id=%s", (user_id,))
             attendances = cursor.fetchall()
 
         event_data = []
         
         # 查詢每個參加課程的詳細信息
         for attendance in attendances:
+            fc_attend_id = attendance['attend_id']
             fc_classtime_id = attendance['classtime_id']
             fc_class_date = attendance['class_date']
+            fc_status = attendance['status']
 
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT classroom_name, start_time, end_time FROM classroom_schedule WHERE classtime_id=%s", (fc_classtime_id,))
-                result = cursor.fetchone()
-                fc_classroom_name = result['classroom_name']
-                fc_start_time = str(result['start_time'])[:-3]
-                fc_end_time = str(result['end_time'])[:-3]
-                # print(fc_start_time, fc_end_time)
+            if fc_status != '2':
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT classroom_name, start_time, end_time FROM classroom_schedule WHERE classtime_id=%s", (fc_classtime_id,))
+                    result = cursor.fetchone()
+                    fc_classroom_name = result['classroom_name']
+                    fc_start_time = str(result['start_time'])[:-3]
+                    fc_end_time = str(result['end_time'])[:-3]
+                    # print(fc_start_time, fc_end_time)
 
-                # 構建日曆事件數據
-                event_data.append({
-                    'title': fc_classroom_name + "\n" + fc_start_time + '-' + fc_end_time,
-                    'start': fc_class_date,  # 日期
-                    'end': fc_class_date,
-                    'allDay': True,  # 整天事件
-                    'borderColor': "#6777ef",
-                    'backgroundColor': "#fff",
-                    'textColor': '#6777ef'
-                })
+
+                    # 構建日曆事件數據
+                    event_data.append({
+                        'attend_id': fc_attend_id,
+                        'title': fc_classroom_name + "\n" + fc_start_time + '-' + fc_end_time,
+                        'start': fc_class_date,  # 日期
+                        'end': fc_class_date,
+                        'allDay': True,  # 整天事件
+                        'borderColor': "#6777ef",
+                        'backgroundColor': "#fff",
+                        'textColor': '#6777ef'
+                    })
 
         connection.close()
         return render_template("index.html", **locals())
     else:
         return redirect(url_for('login'))
 
-
+# 單堂加課
 @app.route("/fc_scheduleButton", methods=['POST'])
 def fc_scheduleButton():
     if request.method == 'POST':
@@ -295,6 +297,14 @@ def fc_scheduleButton():
         class_week = fc_timeslotSelect[0][-1]
         start_time = fc_timeslotSelect[1][:5]
         end_time = fc_timeslotSelect[1][6:]
+
+        print('classroomDateSelect:', classroomDateSelect)
+        print('fc_classroomAreaSelect:', fc_classroomAreaSelect)
+        print('fc_classroomSelect:', fc_classroomSelect)
+        print('fc_timeslotSelect:', fc_timeslotSelect)
+        print('class_week:', class_week)
+        print('start_time:', start_time)
+        print('end_time:', end_time)
         
         try:
             connection = get_db_connection()
@@ -305,19 +315,57 @@ def fc_scheduleButton():
                     WHERE classroom_name=%s AND class_week=%s AND start_time=%s AND end_time=%s
                 """, (fc_classroomSelect, class_week, start_time, end_time))
                 result = cursor.fetchone()
-                if result:
-                    classtime_id = result['classtime_id']
-                
-                    # 插入數據到 attend 表
-                    cursor.execute("""
-                        INSERT INTO attend (user_id, classtime_id, class_date) 
-                        VALUES (%s, %s, %s)
-                    """, (user_id, classtime_id, classroomDateSelect))
+                classtime_id = result['classtime_id']
+            
+                # 插入數據到 attend 表
+                try:
+                    cursor.execute("SELECT attend_id FROM attend WHERE user_id=%s AND classtime_id=%s AND class_date=%s", 
+                                    (user_id, classtime_id, classroomDateSelect))
+                    result = cursor.fetchone()
+                    attend_id = result['attend_id']
+                    cursor.execute("UPDATE attend SET status='' WHERE attend_id=%s;", (attend_id,))
+                    connection.commit()
+                except:
+                    cursor.execute("INSERT INTO attend (user_id, classtime_id, class_date) VALUES (%s, %s, %s)", 
+                                   (user_id, classtime_id, classroomDateSelect))
                     connection.commit()
         finally:
             connection.close()
         return redirect(url_for('index'))
     return redirect(url_for('login'))
+
+# 單堂請假/全部退選
+@app.route("/fc_leaveButton", methods=['POST'])
+def fc_leaveButton():
+    if request.method == 'POST':
+        # user_id = session.get('user_id')
+        # fc_leaveDayDate = request.form['fc_leaveDayDate']
+        # fc_leaveWeek = datetime.strptime(fc_leaveDayDate, '%Y-%m-%d').weekday()
+        # fc_leaveDayClassroom = request.form['fc_leaveDayClassroom']
+        # fc_leaveDayClasstime = request.form['fc_leaveDayClasstime'].split('-')
+        # fc_leavestatus = request.form['fc_leavestatus']
+        # fc_attend_id = json.loads(request.form['fc_event_data'])
+        fc_attend_id = request.form['fc_attend_id']
+        # print('fc_attend_id:', fc_attend_id)
+
+        # weekday_zh = ['一', '二', '三', '四', '五', '六', '日']
+        # fc_leaveWeek = weekday_zh[fc_leaveWeek]
+
+        # print('user_id', user_id)
+        # print('fc_leaveDayDate', fc_leaveDayDate)
+        # print('fc_leaveDayClasstime', fc_leaveDayClasstime)
+        # print('fc_leavestatus', fc_leavestatus)
+        
+
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE attend SET status='2' WHERE attend_id=%s;", (fc_attend_id,))
+        connection.commit()
+        connection.close()
+            
+        return redirect(url_for('index'))
+    return redirect(url_for('login'))
+
 
 # 個人簡介
 @app.route("/profiles")
@@ -328,10 +376,10 @@ def profiles():
     if login_status == "True":
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            sql = "SELECT * FROM users WHERE user_id = %s;"
-            cursor.execute(sql, (user_id))
-            connection.commit()  # 確保插入操作被提交
+            cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id))
+            # connection.commit()  # 確保插入操作被提交
             result = cursor.fetchone()
+            
         name = result['name']
         address = result['address']
         phone1 = result['phone1']
@@ -346,6 +394,13 @@ def profiles():
             role = '管理員' 
         picture_data = result['picture']
 
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM students WHERE user_id = %s;", (user_id))
+            # connection.commit()  # 確保插入操作被提交
+            result = cursor.fetchone()
+        workplace = result['workplace']
+        profession = result['profession']
+
         # 確定圖片的 MIME 類型
         kind = filetype.guess(picture_data)
         mime_type = kind.mime
@@ -353,8 +408,28 @@ def profiles():
         encoded_img = base64.b64encode(picture_data).decode('utf-8')
         # 構建適用於前端的 Base64 數據 URL
         picture = f"data:{mime_type};base64,{encoded_img}"
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT semester FROM `attend` WHERE user_id=%s ORDER BY `semester` DESC LIMIT 1;", (user_id))
+            # connection.commit()  # 確保插入操作被提交
+            result = cursor.fetchone()
+            semester = result['semester']
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT count(attend_id) as leave_num FROM `attend` WHERE user_id=%s AND semester=%s AND status='2'", (user_id, semester))
+            # connection.commit()  # 確保插入操作被提交
+            result = cursor.fetchone()
+            leave_num = result['leave_num']
+        
+
+
+        
+        
         connection.close()  # 確保連接被關閉
+
+
         return render_template("profiles.html", **locals())
+    
     else:
         # 未登入狀態下的處理
         return redirect(url_for('login'))
@@ -365,14 +440,22 @@ def update_profile():
     user_id = session.get('user_id')
     
     if login_status == "True":
-        phone1 = request.form['phone1']
-        phone2 = request.form['phone2']
-        email = request.form['email']
-        address = request.form['address']
-        workplace = request.form['workplace']
-        profession = request.form['profession']
+        phone1 = request.form.get('phone1')
+        phone2 = request.form.get('phone2')
+        email = request.form.get('email')
+        address = request.form.get('address')
+        workplace = request.form.get('workplace')
+        profession = request.form.get('profession')
         # 處理圖片
-        picture = request.files['file']
+        picture = request.files.get('file')
+        print(phone1)
+        print(phone2)
+        print(email)
+        print(address)
+        print(workplace)
+        print(profession)
+        
+
         if picture.filename != '': # 有更新傳圖片
             picture = picture.read()
         else:
@@ -399,6 +482,7 @@ def update_profile():
         return redirect(url_for('profiles'))
     else:
         return redirect(url_for('login'))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
