@@ -180,6 +180,9 @@ def handle_message(event):
 def index():
     login_status = session.get('login_status')
     user_id = session.get('user_id')
+    class_num = 0
+    border_color = ""
+    text_color = ""
 
     if login_status == "True":
         connection = get_db_connection()
@@ -257,8 +260,33 @@ def index():
             fc_classtime_id = attendance['classtime_id']
             fc_class_date = attendance['class_date']
             fc_status = attendance['status']
+            
+            
 
             if fc_status != '2':
+                # 曠課(3) -> 紅色
+                if fc_status == '3':
+                    border_color = "#ef6767"
+                    text_color = '#ef6767'
+                    class_num += 1
+                # '' -> 藍色
+                elif fc_status == '':
+                    border_color = "#6777ef"
+                    text_color = '#6777ef'
+                # 上課(1) -> 藍色
+                elif fc_status == '1':
+                    border_color = "#aaadbf"
+                    text_color = '#aaadbf'
+                    class_num += 1
+                # 停課(4) -> 綠色
+                elif fc_status == '4':
+                    border_color = "#8bb690"
+                    text_color = '#8bb690'
+                    class_num += 1
+                # 繳費/教材費(4) -> 橘色
+                else:
+                    border_color = "#efa567"
+                    text_color = '#efa567'
                 with connection.cursor() as cursor:
                     cursor.execute("SELECT classroom_name, start_time, end_time FROM classroom_schedule WHERE classtime_id=%s", (fc_classtime_id,))
                     result = cursor.fetchone()
@@ -267,17 +295,17 @@ def index():
                     fc_end_time = str(result['end_time'])[:-3]
                     # print(fc_start_time, fc_end_time)
 
-
                     # 構建日曆事件數據
                     event_data.append({
                         'attend_id': fc_attend_id,
+                        'status': fc_status,
                         'title': fc_classroom_name + "\n" + fc_start_time + '-' + fc_end_time,
                         'start': fc_class_date,  # 日期
                         'end': fc_class_date,
                         'allDay': True,  # 整天事件
-                        'borderColor': "#6777ef",
-                        'backgroundColor': "#fff",
-                        'textColor': '#6777ef'
+                            'borderColor': border_color,
+                            'backgroundColor': "#fff",
+                            'textColor': text_color
                     })
 
         connection.close()
@@ -375,9 +403,10 @@ def profiles():
     
     if login_status == "True":
         connection = get_db_connection()
+        
+        # 查user資料
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id))
-            # connection.commit()  # 確保插入操作被提交
             result = cursor.fetchone()
             
         name = result['name']
@@ -394,12 +423,19 @@ def profiles():
             role = '管理員' 
         picture_data = result['picture']
 
+        # 查students資料
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM students WHERE user_id = %s;", (user_id))
-            # connection.commit()  # 確保插入操作被提交
+            cursor.execute("SELECT * FROM students WHERE st_id = %s;", (user_id))
             result = cursor.fetchone()
         workplace = result['workplace']
         profession = result['profession']
+        course_id = result['course_id']
+
+        # 查course_id 對應的course_name
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT name FROM courses WHERE course_id = %s;", (course_id))
+            result = cursor.fetchone()
+        course_name = result['name']
 
         # 確定圖片的 MIME 類型
         kind = filetype.guess(picture_data)
@@ -420,6 +456,13 @@ def profiles():
             # connection.commit()  # 確保插入操作被提交
             result = cursor.fetchone()
             leave_num = result['leave_num']
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT count(attend_id) as class_num FROM `attend` WHERE user_id=%s AND semester=%s AND (status='1' OR status='3')", (user_id, semester))
+            # connection.commit()  # 確保插入操作被提交
+            result = cursor.fetchone()
+            class_num = result['class_num']
+        
         
 
 
@@ -474,7 +517,7 @@ def update_profile():
 
         # Update the students table
         cursor = connection.cursor()
-        sql = " UPDATE students SET workplace = %s, profession = %s WHERE user_id = %s;"
+        sql = " UPDATE students SET workplace = %s, profession = %s WHERE st_id = %s;"
         cursor.execute(sql, (workplace, profession, user_id))
         connection.commit()
         connection.close()

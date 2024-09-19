@@ -100,13 +100,22 @@ if (window.location.pathname === "/index") {
       <div class="form-group" id="classroomSelectGroup">
         <label for="classroomSelect">上課教室</label>
         <select class="form-control" id="classroomSelect">
-          <option value="" disabled selected>請先選擇上課地點</option>
         </select>
       </div>
       <div class="form-group" id="timeslotSelectGroup">
         <label for="timeslotSelect">上課時段</label>
         <select class="form-control" id="timeslotSelect">
-          <option value="">請先選擇上課教室</option>
+        </select>
+      </div>
+      <div class="form-group" id="classNumSelectGroup">
+        <label for="classNumSelect">上課堂數</label>
+        <select class="form-control" id="classNumSelect">
+          <option value="" disabled selected>請選擇上課堂數</option>
+          <option value="0">補完剩下堂數</option>
+          <option value="4">4</option>
+          <option value="8">8</option>
+          <option value="12">12</option>
+          <option value="16">16</option>
         </select>
       </div>
     </form>
@@ -122,20 +131,37 @@ if (window.location.pathname === "/index") {
         },
       },
       {
-        text: "確認排課",
+        text: "確認",
         class: "btn btn-btn btn-primary",
         handler: function (modal) {
           const classroomAreaSelect = $("#classroomAreaSelect").val();
           const classroomSelect = $("#classroomSelect").val();
           const timeslotSelect = $("#timeslotSelect").val();
+          var classNumSelect = $("#classNumSelect").val();
+          if ($("#classNumSelect").val() === "0") { 
+            classNumSelect = 20 - class_num;
+          }
+          
 
           // 檢查是否有空的欄位
-          if (!classroomAreaSelect || !classroomSelect || !timeslotSelect) {
+          if (!classroomAreaSelect || !classroomSelect || !timeslotSelect || !classNumSelect) {
             $("#scheduleMessage").html(
               '<span style="color:red;">請選擇完整的排課資料</span>'
             );
             return;
+          } else { 
+            if (classNumSelect + class_num <= 2) {
+              $("#scheduleForm").submit();
+            } else { 
+              $("#scheduleMessage").html(
+                `<span style="color:red;">您目前安排上課堂數為${class_num}堂，剩下${20-class_num}堂可以安排上課!</span>`
+              );
+              return;
+            }
+
+            
           }
+
           modal.modal("hide");
         },
       },
@@ -172,10 +198,13 @@ $("#classroomAreaSelect").on("change", function () {
       '<option value="" disabled selected>請選擇上課時段</option>'
     );
     $("#timeslotSelectGroup").hide();
+    $("#classNumSelectGroup").hide();
   } else {
     // Hide classroom select and timeslot select
     $("#classroomSelectGroup").hide();
     $("#timeslotSelectGroup").hide();
+    $("#classNumSelectGroup").hide();
+    
   }
 });
 
@@ -207,11 +236,35 @@ $("#classroomSelect").on("change", function () {
 
     // Show the timeslot select group
     $("#timeslotSelectGroup").show();
+    $("#classNumSelectGroup").hide();
   } else {
     // Hide the timeslot select group if no classroom is selected
     $("#timeslotSelectGroup").hide();
+    $("#classNumSelectGroup").hide();
   }
 });
+
+$("#timeslotSelect").on("change", function () {
+  if ($(this).val()) {
+    // Show class number select when a timeslot is selected
+    $("#classNumSelectGroup").show();
+
+  } else {
+    // Hide class number select if no timeslot is selected
+    $("#classNumSelectGroup").hide();
+  }
+});
+
+// $("#classNumSelect").on("change", function () {
+//   const selectedClassNum = $(this).val();
+
+//   if (selectedClassNum) {
+//     $("#classNumSelectGroup").show();
+//   } else {
+//     // Hide the timeslot select group if no classroom is selected
+//     $("#classNumSelectGroup").hide();
+//   }
+// });
 
 // 清空排課表單內容函式
 function clearScheduleForm() {
@@ -220,7 +273,11 @@ function clearScheduleForm() {
   $("#classroomSelectGroup").hide(); // 隱藏上課教室選擇
   $("#timeslotSelect").empty(); // 清空上課時段選擇
   $("#timeslotSelectGroup").hide(); // 隱藏上課時段選擇
+  $("#classNumSelect").val(""); // 清空上課堂數選擇
+  $("#classNumSelectGroup").hide();
   $("#scheduleMessage").html(""); // 清空訊息
+  
+
 }
 
 // 先清空表單再顯示視窗
@@ -276,9 +333,8 @@ if (window.location.pathname === '/index') {
         },
       },
       {
-        text: "確認排課",
+        text: "確認",
         class: "btn btn-primary",
-        submit: true,
         handler: function (modal) {
           const classroomDateSelect = $("#classroomDateSelect").val();
           const fc_classroomAreaSelect = $("#fc_classroomAreaSelect").val();
@@ -297,27 +353,36 @@ if (window.location.pathname === '/index') {
             return;
           } else { 
             // 如果排課資料完整，將事件添加到日曆中
-            const event = {
-              title: `${
-                fc_classroomSelect + "\n" + fc_timeslotSelect.split(" ")[1]
-              }`,
-              start: classroomDateSelect, // 日期
-              end: classroomDateSelect,
-              allDay: true, // 是否整天事件
-              borderColor: "#6777ef",
-              backgroundColor: "#fff",
-              textColor: "#6777ef",
-            };
+            // const event = {
+            //   title: `${
+            //     fc_classroomSelect + "\n" + fc_timeslotSelect.split(" ")[1]
+            //   }`,
+            //   start: classroomDateSelect, // 日期
+            //   end: classroomDateSelect,
+            //   allDay: true, // 是否整天事件
+            //   borderColor: "#6777ef",
+            //   backgroundColor: "#fff",
+            //   textColor: "#6777ef",
+            // };
             
-            // 取得現有的 events 資料，將新的事件添加到其中
-            const eventData = JSON.parse(
-              document.getElementById("eventData").getAttribute("data-events")
-            );
-            eventData.push(event);
+            // // 取得現有的 events 資料，將新的事件添加到其中
+            // const eventData = JSON.parse(
+            //   document.getElementById("eventData").getAttribute("data-events")
+            // );
+            // eventData.push(event);
 
-            // 儲存回 HTML 元素
-            document.getElementById("eventData").setAttribute("data-events", JSON.stringify(eventData));
-            $("#fc_scheduleForm").submit(); // 確保這行代碼執行
+            // // 儲存回 HTML 元素
+            // document.getElementById("eventData").setAttribute("data-events", JSON.stringify(eventData));
+            if (class_num <= 20) {
+              $("#fc_scheduleForm").submit(); // 確保這行代碼執行
+            }
+            else { 
+              $("#fc_scheduleMessage").html(
+                '<span style="color:red;">您所安排的課程已超過上課次數20堂!</span>'
+              );
+              return;
+            }
+            
           }
         },
       },
@@ -504,7 +569,7 @@ $("#fc_leaveButton").fireModal({
       },
     },
     {
-      text: "確認請假",
+      text: "請假",
       class: "btn btn-primary",
       submit: true,
       id: "fc_saveLleave",

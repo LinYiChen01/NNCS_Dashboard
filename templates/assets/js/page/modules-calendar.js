@@ -38,7 +38,9 @@ $("#myEvent").fullCalendar({
     $('#fc_leaveDayClassroom').val(selectedTitile[0]);
     $('#fc_leaveDayClasstime').val(selectedTitile[1]);
     $('#fc_attend_id').val(event['attend_id']);
-    $('#fc_leaveButton').click();
+    if (event['status'] === '') {
+      $('#fc_leaveButton').click();
+  }
   },
   events: event_data,
 });
