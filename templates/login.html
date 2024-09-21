@@ -80,6 +80,7 @@
                     </div>
                   </div>
                 </div>
+                <button type="button" id="loginFailure" style="display: none;"></button>
               </div>
             </div>
           </div>
@@ -88,41 +89,24 @@
     </section>
   </div>
 
-  <!-- Modal for Login Failure -->
-  <div class="modal fade" id="loginFailureModal" tabindex="-1" role="dialog" aria-labelledby="loginFailureModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="loginFailureModalLabel" style="color: #f36969;">登入失敗</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          請確認帳號或密碼是否輸入正確
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- General JS Scripts -->
   <script src="assets/modules/jquery.min.js"></script>
-  <script src="assets/modules/popper.js"></script>
   <script src="assets/modules/bootstrap/js/bootstrap.min.js"></script>
+  <script src="assets/js/stisla.js"></script>
+
+  <!-- Page Specific JS File -->
+  <script src="assets/js/page/bootstrap-modal.js"></script>
 
 
 
-  <!-- Custom JS for Login Failure Modal -->
+  <!-- Login Failure Modal -->
   {% if session['login_status'] == "False" %}
   <script>
       $(document).ready(function () {
-          $('#loginFailureModal').modal('show');
+          $('#loginFailure').click();
       });
   </script>
   {% endif %}
-
-  <!-- {{session}} -->
 
   <!-- Google OAuth2.0 Scripts -->
   <!-- <button id="google_login" class="btn btn-large btn-primary">GOOGLE 登入</button>

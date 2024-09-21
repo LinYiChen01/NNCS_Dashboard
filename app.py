@@ -1,6 +1,6 @@
 import os
 import base64, re
-from datetime import datetime
+from datetime import datetime, timedelta
 import filetype
 from flask import Flask, render_template, request, abort, session, redirect, url_for, make_response, jsonify
 from authlib.integrations.flask_client import OAuth
@@ -251,17 +251,18 @@ def index():
         with connection.cursor() as cursor:
             cursor.execute("SELECT attend_id, classtime_id, class_date, status FROM attend WHERE user_id=%s", (user_id,))
             attendances = cursor.fetchall()
+            # start_class_date = sorted(attendances['class_date'])
 
         event_data = []
-        
+        start_class_date = []
+
         # 查詢每個參加課程的詳細信息
         for attendance in attendances:
             fc_attend_id = attendance['attend_id']
             fc_classtime_id = attendance['classtime_id']
             fc_class_date = attendance['class_date']
             fc_status = attendance['status']
-            
-            
+            start_class_date.append(attendance['class_date'])
 
             if fc_status != '2':
                 # 曠課(3) -> 紅色
@@ -308,6 +309,9 @@ def index():
                             'textColor': text_color
                     })
 
+        start_class_date = min(start_class_date)
+        end_class_date = start_class_date + timedelta(days=168)
+
         connection.close()
         return render_template("index.html", **locals())
     else:
@@ -325,14 +329,6 @@ def fc_scheduleButton():
         class_week = fc_timeslotSelect[0][-1]
         start_time = fc_timeslotSelect[1][:5]
         end_time = fc_timeslotSelect[1][6:]
-
-        print('classroomDateSelect:', classroomDateSelect)
-        print('fc_classroomAreaSelect:', fc_classroomAreaSelect)
-        print('fc_classroomSelect:', fc_classroomSelect)
-        print('fc_timeslotSelect:', fc_timeslotSelect)
-        print('class_week:', class_week)
-        print('start_time:', start_time)
-        print('end_time:', end_time)
         
         try:
             connection = get_db_connection()
@@ -345,17 +341,25 @@ def fc_scheduleButton():
                 result = cursor.fetchone()
                 classtime_id = result['classtime_id']
             
+
+                # 查詢這是第幾學期
+                cursor.execute("SELECT count(attend_id) as semester FROM attend WHERE user_id=%s AND (status='1' OR status='3')", 
+                                (user_id))
+                result = cursor.fetchone()
+                semester = result['semester'] // 20 + 1
+
                 # 插入數據到 attend 表
                 try:
-                    cursor.execute("SELECT attend_id FROM attend WHERE user_id=%s AND classtime_id=%s AND class_date=%s", 
+                    # 把請假的課程 重新加入
+                    cursor.execute("SELECT attend_id FROM attend WHERE user_id=%s AND classtime_id=%s AND class_date=%s AND status='2'", 
                                     (user_id, classtime_id, classroomDateSelect))
                     result = cursor.fetchone()
                     attend_id = result['attend_id']
                     cursor.execute("UPDATE attend SET status='' WHERE attend_id=%s;", (attend_id,))
                     connection.commit()
                 except:
-                    cursor.execute("INSERT INTO attend (user_id, classtime_id, class_date) VALUES (%s, %s, %s)", 
-                                   (user_id, classtime_id, classroomDateSelect))
+                    cursor.execute("INSERT INTO attend (user_id, semester, classtime_id, class_date) VALUES (%s, %s, %s, %s)", 
+                                   (user_id, semester, classtime_id, classroomDateSelect))
                     connection.commit()
         finally:
             connection.close()
@@ -366,25 +370,7 @@ def fc_scheduleButton():
 @app.route("/fc_leaveButton", methods=['POST'])
 def fc_leaveButton():
     if request.method == 'POST':
-        # user_id = session.get('user_id')
-        # fc_leaveDayDate = request.form['fc_leaveDayDate']
-        # fc_leaveWeek = datetime.strptime(fc_leaveDayDate, '%Y-%m-%d').weekday()
-        # fc_leaveDayClassroom = request.form['fc_leaveDayClassroom']
-        # fc_leaveDayClasstime = request.form['fc_leaveDayClasstime'].split('-')
-        # fc_leavestatus = request.form['fc_leavestatus']
-        # fc_attend_id = json.loads(request.form['fc_event_data'])
         fc_attend_id = request.form['fc_attend_id']
-        # print('fc_attend_id:', fc_attend_id)
-
-        # weekday_zh = ['一', '二', '三', '四', '五', '六', '日']
-        # fc_leaveWeek = weekday_zh[fc_leaveWeek]
-
-        # print('user_id', user_id)
-        # print('fc_leaveDayDate', fc_leaveDayDate)
-        # print('fc_leaveDayClasstime', fc_leaveDayClasstime)
-        # print('fc_leavestatus', fc_leavestatus)
-        
-
         connection = get_db_connection()
         with connection.cursor() as cursor:
             cursor.execute("UPDATE attend SET status='2' WHERE attend_id=%s;", (fc_attend_id,))
@@ -451,23 +437,33 @@ def profiles():
             result = cursor.fetchone()
             semester = result['semester']
 
+        # 總共請假幾次
         with connection.cursor() as cursor:
             cursor.execute("SELECT count(attend_id) as leave_num FROM `attend` WHERE user_id=%s AND semester=%s AND status='2'", (user_id, semester))
-            # connection.commit()  # 確保插入操作被提交
             result = cursor.fetchone()
             leave_num = result['leave_num']
 
+        # 總共上了多少課(含曠課)
         with connection.cursor() as cursor:
             cursor.execute("SELECT count(attend_id) as class_num FROM `attend` WHERE user_id=%s AND semester=%s AND (status='1' OR status='3')", (user_id, semester))
-            # connection.commit()  # 確保插入操作被提交
             result = cursor.fetchone()
             class_num = result['class_num']
         
-        
+        attend_data = []
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM `attend_view` WHERE user_id=%s AND semester=%s", (user_id, semester))
+            result = cursor.fetchall()
+        for i in result:
+            attend_data.append(
+                {
+                'class_date': i['class_date'],
+                'classroom_name': i['classroom_name'],
+                'start_time': str(i['start_time'])[:-3],
+                'end_time': str(i['end_time'])[:-3],
+                'status': i['status'] 
+                }
+            )
 
-
-        
-        
         connection.close()  # 確保連接被關閉
 
 
@@ -491,14 +487,7 @@ def update_profile():
         profession = request.form.get('profession')
         # 處理圖片
         picture = request.files.get('file')
-        print(phone1)
-        print(phone2)
-        print(email)
-        print(address)
-        print(workplace)
-        print(profession)
         
-
         if picture.filename != '': # 有更新傳圖片
             picture = picture.read()
         else:
@@ -527,8 +516,10 @@ def update_profile():
         return redirect(url_for('login'))
 
 
+# 登入
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    session['login_status'] = ""
     if request.method == 'POST':
         login_method = request.form.get('login_method')
         if login_method == "google":
@@ -607,7 +598,7 @@ def login():
     return render_template("login.html")
 
 
-
+# 登出
 @app.route('/logout')
 def logout():
     session.clear()  # 清除会话

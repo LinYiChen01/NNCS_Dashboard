@@ -26,10 +26,21 @@ $("#myEvent").fullCalendar({
     }
   },
   dayClick: function (date) {
-    // 紀錄選擇的日期
-    $('#classroomDateSelect').val(date.format('YYYY-MM-DD'));
-    $('#fc_scheduleButton').click();
-    
+    const today = moment().format('YYYY-MM-DD');
+    const classroomDateSelect = date.format('YYYY-MM-DD');
+    end_class_date = moment(end_class_date).format('YYYY-MM-DD');
+    if (classroomDateSelect <= today) {  // 不可以選擇之前的日期進行排課
+      $('#fc_scheduleError_1').click();
+      
+    }
+    else {
+      if (classroomDateSelect > end_class_date) {
+        $('#fc_scheduleError_2').click();
+      } else { 
+        $('#classroomDateSelect').val(classroomDateSelect);
+        $('#fc_scheduleButton').click(); // 彈出排課選單
+      } 
+    }
   },
 
   eventClick: function (event) {
@@ -43,8 +54,8 @@ $("#myEvent").fullCalendar({
   }
   },
   events: event_data,
+  eventOrder: 'title.split("\n")[1]'
 });
-
 
 // $('#confirmLeave').on('click', function () { 
 //   const leaveDate = $('#leaveDate').val(); // 获取选择的日期
@@ -104,7 +115,7 @@ $(document).ready(function () {
 });
 
 // 填充年份选择框
-for (let year = currentYear - 10; year <= currentYear + 10; year++) {
+for (let year = currentYear - 3; year <= currentYear + 3; year++) {
   $('#modalYearSelect').append(`<option value="${year}">${year}</option>`);
 }
 for (let month = 0; month < 12; month++) {

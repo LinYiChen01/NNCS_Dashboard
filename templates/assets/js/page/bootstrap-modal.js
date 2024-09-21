@@ -352,28 +352,28 @@ if (window.location.pathname === '/index') {
             );
             return;
           } else { 
-            // 如果排課資料完整，將事件添加到日曆中
-            // const event = {
-            //   title: `${
-            //     fc_classroomSelect + "\n" + fc_timeslotSelect.split(" ")[1]
-            //   }`,
-            //   start: classroomDateSelect, // 日期
-            //   end: classroomDateSelect,
-            //   allDay: true, // 是否整天事件
-            //   borderColor: "#6777ef",
-            //   backgroundColor: "#fff",
-            //   textColor: "#6777ef",
-            // };
-            
-            // // 取得現有的 events 資料，將新的事件添加到其中
-            // const eventData = JSON.parse(
-            //   document.getElementById("eventData").getAttribute("data-events")
-            // );
-            // eventData.push(event);
-
-            // // 儲存回 HTML 元素
-            // document.getElementById("eventData").setAttribute("data-events", JSON.stringify(eventData));
             if (class_num <= 20) {
+              let day_event = [];
+              // 檢查當天的事件，並存入 day_event 中
+              for (let i = 0; i < event_data.length; i++) {
+                const formattedEventDate = moment(event_data[i]['start']).format('YYYY-MM-DD');
+                if (formattedEventDate === classroomDateSelect) {
+                    day_event.push(i);
+                }
+              }
+              // 檢查時間衝突
+              for (let i of day_event) {
+                  const day_time = event_data[i]['title'].split('\n')[1].split('-'); // 獲取開始和結束時間
+                  const select_time = fc_timeslotSelect.split(' ')[1].split('-'); // 獲取選擇的時間段
+                  // 如果開始時間相同，則判定為衝突
+                  if (day_time[0] === select_time[0]) {
+                      $("#fc_scheduleMessage").html(
+                          '<span style="color:red;">與您目前的課程衝堂，無法加選!</span>'
+                      );
+                      return; // 退出函數，停止加選
+                  }
+              }
+          
               $("#fc_scheduleForm").submit(); // 確保這行代碼執行
             }
             else { 
@@ -562,9 +562,6 @@ $("#fc_leaveButton").fireModal({
       id: "fc_dropCourse",
       handler: function (modal) {
         $("#fc_leavestatus").val("dropCourse");
-        // $('#fc_attend_id').val('');
-        // $('#fc_event_data').val(JSON.stringify(event_data));
-
         modal.modal("hide");
       },
     },
@@ -686,6 +683,29 @@ function clearupdateForm() {
   $("#uploadedImage").attr("src", picture);
   $("#uploadedImage").show();
 };
+
+
+$('#fc_scheduleError_1').fireModal({ 
+  title: '<span style="color:#f36969;">警告⚠️<span style="color:red;">',
+  body: '只能選擇今天以後的日期來進行排課!' 
+});
+
+if (window.location.pathname === '/index') {
+  $('#fc_scheduleError_2').fireModal({
+    title: '<span style="color:#f36969;">警告⚠️<span style="color:red;">',
+    body: `只能選擇${moment(end_class_date).format('YYYY-MM-DD')}前的日期進行排課!`
+  });
+}
+
+$('#loginFailure').fireModal({ 
+  title: '<span style="color:#f36969;">登入失敗❌<span style="color:red;">',
+  body: '請確認帳號或密碼是否輸入正確!' 
+});
+
+
+$("#modal-1").fireModal({ body: "Modal body text goes here." });
+
+
 
 $("#modal-1").fireModal({ body: "Modal body text goes here." });
 

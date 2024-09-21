@@ -218,12 +218,18 @@
 
                     <!-- 日曆 fullCalendar -->
                     <div id="myEvent"></div>
+                    <br>
+                    <span>上課期間為 {{start_class_date}} - {{end_class_date}}</span>
                     <button type="button" id="fc_scheduleButton" style="display: none;"></button>  <!--dayclick-->
                     <button type="button" id="fc_leaveButton" style="display: none;"></button>  <!--evenclick-->
+                    <button type="button" id="fc_scheduleError_1" style="display: none;"></button>  <!--fc_scheduleError 不可以選之期的日期進行排課-->
+                    <button type="button" id="fc_scheduleError_2" style="display: none;"></button>  <!--fc_scheduleError 不可以選之期的日期進行排課-->
                     <button type="button" id="FilterModalButton" style="display: none;"></button>  <!--篩選日期按鈕-->
                     <script>
                       var event_data = {{event_data| tojson | safe}};
                       var class_num = {{class_num| tojson | safe}};
+                      var end_class_date = {{end_class_date| tojson | safe}};
+                      
                     </script>
                     <div id="eventData" data-events='[]'></div>
                   </div>
