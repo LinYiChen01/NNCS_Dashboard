@@ -451,9 +451,18 @@ def profiles():
         
         attend_data = []
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM `attend_view` WHERE user_id=%s AND semester=%s", (user_id, semester))
+            cursor.execute("SELECT * FROM `attend_view` WHERE user_id=%s AND semester=%s AND status != '' ORDER BY class_date ASC;", (user_id, semester))
             result = cursor.fetchall()
         for i in result:
+            if i['status'] == '1':
+                i['status'] = '上課'
+            elif i['status'] == '2':
+                i['status'] = '請假'
+            elif i['status'] == '3':
+                i['status'] = '曠課'
+            elif i['status'] == '4':
+                i['status'] = '停課'
+            
             attend_data.append(
                 {
                 'class_date': i['class_date'],

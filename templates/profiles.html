@@ -224,7 +224,7 @@
           </div>
 
           <div class="row">
-            <div class="col-lg-8 col-md-12 col-12 col-sm-12">
+            <div class="col-lg-6 col-md-12 col-12 col-sm-12">
               <div class="card">
                 <div class="card-header">
                   <h4>出席紀錄</h4>
@@ -312,26 +312,29 @@
                 </div>
               </div>
             </div> -->
-            <div class="col-lg-4">
+            <div class="col-lg-6">
               <div class="card" style="height: calc(100% - 30px);">
                 <div class="card-header">
                   <h4>出席明細</h4>
                   <div class="card-header-action dropdown">
-                    <a href="#" data-toggle="dropdown" class="btn btn-danger dropdown-toggle">全部</a>
-                    <ul class="dropdown-menu dropdown-menu-sm dropdown-menu-right">
+                    <a data-toggle="dropdown" class="btn btn-danger dropdown-toggle" id="dropdownMenuButton" 
+                    style="color: white;">全部</a>
+                    <ul class="dropdown-menu dropdown-menu-sm dropdown-menu-right" aria-labelledby="dropdownMenuButton">
                       <li class="dropdown-title">選擇類別</li>
-                      <li><a href="#" class="dropdown-item">上課</a></li>
-                      <li><a href="#" class="dropdown-item">請假</a></li>
-                      <li><a href="#" class="dropdown-item active">曠課</a></li>
+                      <li><a class="dropdown-item active" onclick="updateDropdown(this, '全部')">全部</a></li>
+                      <li><a class="dropdown-item" onclick="updateDropdown(this, '上課')">上課</a></li>
+                      <li><a class="dropdown-item" onclick="updateDropdown(this, '請假')">請假</a></li>
+                      <li><a class="dropdown-item" onclick="updateDropdown(this, '曠課')">曠課</a></li>
+                      <li><a class="dropdown-item" onclick="updateDropdown(this, '停課')">停課</a></li>
                     </ul>
                   </div>
                 </div>
-                <div class="card-body" id="top-5-scroll">
+                <div class="card-body" id="top-5-scroll" style="padding-top: inherit;">
                   <script>
                     attend_data = {{attend_data| tojson | safe}};
                     console.log(attend_data);
                   </script>
-                  <ul class="list-unstyled list-unstyled-border">
+                  <!-- <ul class="list-unstyled list-unstyled-border">
                     <li class="media">
                       <img class="mr-3 rounded" width="55" src="assets/img/products/product-4-50.png" alt="product">
                       <div class="media-body">
@@ -349,7 +352,26 @@
                         </div>
                       </div>
                     </li>
-                  </ul>
+                  </ul> -->
+                  <!-- <ul id="attend-list" class="list-unstyled list-unstyled-border"> -->
+                    <!-- 用JS顯示篩選後的出席紀錄 -->
+                  <!-- </ul> -->
+                  <table class="table table-striped" id="attend-table">
+                    <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
+                      <tr>
+                        <th>日期</th>
+                        <th>教室</th>
+                        <th>時間</th>
+                        <th>狀態</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- 用JS顯示篩選後的出席紀錄 -->
+                    </tbody>
+                  </table>
+                </div>
+                <div class="card-footer" id="attendance-footer">
+                  <div class="text-muted">本學期累積次數：<span id="attendance-count">0</span> 次</div>
                 </div>
               </div>
             </div>

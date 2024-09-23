@@ -85,21 +85,60 @@ document.getElementById("file").addEventListener("change", async function () {
   }
 });
 
-// // 监听模态框关闭事件以移除背景虚化
-// $("#updateModal").on("hidden.bs.modal", function () {
-//   removeBlur();
-// });
 
-// 提交表单的处理（可选）
-// function submitUpdateForm() {
-//   if (pic_msg.textContent != "") {
-//     $("#updateModal").modal("show");
-//     submit_msg.textContent = "資料有誤，請重新確認!"
-//   }
-//   else { 
-//     $("#updateModal").modal("hide");
-//     var form = document.getElementById("updateForm");
-//     form.submit();
-//   }
-//   }
-// }
+// 更新出席紀錄表格
+function updateAttendTable(selectedStatus) {
+  const tableBody = document.querySelector("#attend-table tbody");
+  tableBody.innerHTML = ""; // 清空表格
+
+  const filteredData = attend_data.filter(function(item) {
+    if (selectedStatus === "全部") {
+      return true;
+    }
+    return item.status === selectedStatus;
+  });
+  const attendanceCounts = {
+    "上課": 0,
+    "請假": 0,
+    "曠課": 0,
+    "停課": 0
+  };
+
+  filteredData.forEach(function (item) {
+    attendanceCounts[item.status] = (attendanceCounts[item.status] || 0) + 1;
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${moment(item.class_date).format('YYYY-MM-DD')}</td>
+      <td>${item.classroom_name}</td>
+      <td>${item.start_time} - ${item.end_time}</td>
+      <td>${item.status}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+  // 更新 footer 顯示內容
+  if (selectedStatus === "全部") {
+    document.getElementById("attendance-footer").innerHTML = `
+      本學期累計: 上課: ${attendanceCounts["上課"]}  請假: ${attendanceCounts["請假"]}  曠課: ${attendanceCounts["曠課"]}  停課: ${attendanceCounts["停課"]}，
+      剩餘上課次數: ${20 - attendanceCounts["上課"] - attendanceCounts["曠課"]}
+    `;
+  } else {
+    const count = filteredData.length;
+    document.getElementById("attendance-footer").textContent = `本學期累計: ${selectedStatus}：${count}`;
+  }
+}
+
+// 更新下拉選單和表格的內容
+window.updateDropdown = function(element, selectedStatus) {
+  document.getElementById("dropdownMenuButton").textContent = selectedStatus;
+
+  var items = document.querySelectorAll(".dropdown-item");
+  items.forEach(function(item) {
+    item.classList.remove("active");
+  });
+  element.classList.add("active");
+
+  updateAttendTable(selectedStatus);
+};
+
+// 初始時顯示所有出席紀錄
+updateAttendTable("全部");
