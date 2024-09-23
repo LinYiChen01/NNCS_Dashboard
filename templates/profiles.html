@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="assets/css/components.css">
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
   <!-- 加载 Google API 客户端库 -->
   <script src="https://apis.google.com/js/api.js"></script>
 
@@ -225,38 +226,18 @@
 
           <div class="row">
             <div class="col-lg-6 col-md-12 col-12 col-sm-12">
-              <div class="card">
+              <div class="card" style="height: calc(100% - 30px);">
                 <div class="card-header">
                   <h4>出席紀錄</h4>
                 </div>
                 <div class="card-body">
-                  <canvas id="myChart" height="182"></canvas>
-                  <div class="statistic-details mt-sm-4">
-                    <div class="statistic-details-item">
-                      <span class="text-muted"><span class="text-primary"><i class="fas fa-caret-up"></i></span>
-                        7%</span>
-                      <div class="detail-value">$243</div>
-                      <div class="detail-name">Today's Sales</div>
-                    </div>
-                    <div class="statistic-details-item">
-                      <span class="text-muted"><span class="text-danger"><i class="fas fa-caret-down"></i></span>
-                        23%</span>
-                      <div class="detail-value">$2,902</div>
-                      <div class="detail-name">This Week's Sales</div>
-                    </div>
-                    <div class="statistic-details-item">
-                      <span class="text-muted"><span class="text-primary"><i
-                            class="fas fa-caret-up"></i></span>9%</span>
-                      <div class="detail-value">$12,821</div>
-                      <div class="detail-name">This Month's Sales</div>
-                    </div>
-                    <div class="statistic-details-item">
-                      <span class="text-muted"><span class="text-primary"><i class="fas fa-caret-up"></i></span>
-                        19%</span>
-                      <div class="detail-value">$92,142</div>
-                      <div class="detail-name">This Year's Sales</div>
-                    </div>
-                  </div>
+                  <script>
+                    var class_num = {{class_num | tojson | safe}}
+                    var start_class_date = {{start_class_date | tojson | safe}}
+                    var end_class_date = {{end_class_date | tojson | safe}}
+                    
+                  </script>
+                  <canvas id="myChart"></canvas>
                 </div>
               </div>
             </div>
@@ -332,7 +313,6 @@
                 <div class="card-body" id="top-5-scroll" style="padding-top: inherit;">
                   <script>
                     attend_data = {{attend_data| tojson | safe}};
-                    console.log(attend_data);
                   </script>
                   <!-- <ul class="list-unstyled list-unstyled-border">
                     <li class="media">
@@ -966,7 +946,9 @@
 
   <!-- JS Libraies -->
   <script src="assets/modules/simple-weather/jquery.simpleWeather.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js"></script>
   <script src="assets/modules/chart.min.js"></script>
+
   <script src="assets/modules/jqvmap/dist/jquery.vmap.min.js"></script>
   <script src="assets/modules/jqvmap/dist/maps/jquery.vmap.world.js"></script>
   <script src="assets/modules/summernote/summernote-bs4.js"></script>

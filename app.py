@@ -251,7 +251,6 @@ def index():
         with connection.cursor() as cursor:
             cursor.execute("SELECT attend_id, classtime_id, class_date, status FROM attend WHERE user_id=%s", (user_id,))
             attendances = cursor.fetchall()
-            # start_class_date = sorted(attendances['class_date'])
 
         event_data = []
         start_class_date = []
@@ -453,6 +452,9 @@ def profiles():
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM `attend_view` WHERE user_id=%s AND semester=%s AND status != '' ORDER BY class_date ASC;", (user_id, semester))
             result = cursor.fetchall()
+        start_class_date = result[0]['class_date']
+        end_class_date = start_class_date + timedelta(days=168)
+        
         for i in result:
             if i['status'] == '1':
                 i['status'] = '上課'
