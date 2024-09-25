@@ -316,6 +316,8 @@ def index():
     else:
         return redirect(url_for('login'))
 
+
+
 # 單堂加課
 @app.route("/fc_scheduleButton", methods=['POST'])
 def fc_scheduleButton():
@@ -365,14 +367,112 @@ def fc_scheduleButton():
         return redirect(url_for('index'))
     return redirect(url_for('login'))
 
+
+@app.route("/scheduleButton", methods=['POST'])
+def scheduleButton():
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+        classroomAreaSelect = request.form['classroomAreaSelect']
+        classroomSelect = request.form['classroomSelect']
+        timeslotSelect = request.form['timeslotSelect'].split()
+        classNumSelect = request.form['classNumSelect']
+        class_week = timeslotSelect[0][-1]
+        start_time = timeslotSelect[1][:5]
+        end_time = timeslotSelect[1][6:]
+        today = datetime.now().date().strftime("%Y-%m-%d")
+        today_week = datetime.now().weekday()
+        weekdays = ['一', '二', '三', '四', '五', '六', '日']
+        today_week = weekdays[today_week]
+
+        print('classroomAreaSelect', classroomAreaSelect)
+        print('classroomSelect', classroomSelect)
+        print('timeslotSelect', timeslotSelect)
+        print('classNumSelect', classNumSelect)
+        print('class_week', class_week)
+        print('start_time', start_time)
+        print('end_time', end_time)
+        print('today', today)
+        print('today_week', today_week)
+        
+        
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT count(attend_id) as semester FROM attend WHERE user_id=%s AND (status='1' OR status='3')", 
+                                (user_id))
+            result = cursor.fetchone()
+            semester = result['semester'] // 20 + 1
+        
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT classtime_id FROM classroom_schedule WHERE classroom_name=%s AND class_week=%s AND start_time=%s AND end_time=%s;", 
+                                (classroomSelect, class_week, start_time, end_time))
+            result = cursor.fetchone()
+            classtime_id = result['classtime_id']
+
+        
+        # with connection.cursor() as cursor:
+        #     cursor.execute("INSERT INTO `attend`(`semester`, `user_id`, `classtime_id`, `class_date`) VALUES (%s, %s, %s, %s)", 
+        #     semester = result['semester'] // 20 + 1
+        #                         (semester, user_id, classtime_id, class_date))
+        # try:
+        #     connection = get_db_connection()
+        #     with connection.cursor() as cursor:
+        #         # 使用檢視表一次查詢所需數據
+        #         cursor.execute("""
+        #             SELECT classtime_id FROM classroom_schedule 
+        #             WHERE classroom_name=%s AND class_week=%s AND start_time=%s AND end_time=%s
+        #         """, (fc_classroomSelect, class_week, start_time, end_time))
+        #         result = cursor.fetchone()
+        #         classtime_id = result['classtime_id']
+            
+
+        #         # 查詢這是第幾學期
+        #         cursor.execute("SELECT count(attend_id) as semester FROM attend WHERE user_id=%s AND (status='1' OR status='3')", 
+        #                         (user_id))
+        #         result = cursor.fetchone()
+        #         semester = result['semester'] // 20 + 1
+
+        #         # 插入數據到 attend 表
+        #         try:
+        #             # 把請假的課程 重新加入
+        #             cursor.execute("SELECT attend_id FROM attend WHERE user_id=%s AND classtime_id=%s AND class_date=%s AND status='2'", 
+        #                             (user_id, classtime_id, classroomDateSelect))
+        #             result = cursor.fetchone()
+        #             attend_id = result['attend_id']
+        #             cursor.execute("UPDATE attend SET status='' WHERE attend_id=%s;", (attend_id,))
+        #             connection.commit()
+        #         except:
+        #             cursor.execute("INSERT INTO attend (user_id, semester, classtime_id, class_date) VALUES (%s, %s, %s, %s)", 
+        #                            (user_id, semester, classtime_id, classroomDateSelect))
+        #             connection.commit()
+        # finally:
+        #     connection.close()
+        return redirect(url_for('index'))
+    return redirect(url_for('login'))
+
+
+
+
 # 單堂請假/全部退選
 @app.route("/fc_leaveButton", methods=['POST'])
 def fc_leaveButton():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
     if request.method == 'POST':
         fc_attend_id = request.form['fc_attend_id']
+        fc_leavestatus = request.form['fc_leavestatus']
+
         connection = get_db_connection()
-        with connection.cursor() as cursor:
-            cursor.execute("UPDATE attend SET status='2' WHERE attend_id=%s;", (fc_attend_id,))
+        if fc_leavestatus == 'saveLleave': # 單堂請假
+            with connection.cursor() as cursor:
+                cursor.execute("UPDATE attend SET status='2' WHERE attend_id=%s;", (fc_attend_id,))
+        elif fc_leavestatus == 'dropCourse': # 退選
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT semester, classtime_id FROM attend WHERE attend_id=%s;", (fc_attend_id,))
+                result = cursor.fetchone()
+                semester = result['semester']
+                classtime_id = result['classtime_id']
+                cursor.execute("DELETE FROM `attend` WHERE semester=%s AND user_id=%s AND classtime_id=%s AND status='';", (semester, user_id, classtime_id,))
+        
         connection.commit()
         connection.close()
             
@@ -391,7 +491,7 @@ def profiles():
         
         # 查user資料
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id))
+            cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id,))
             result = cursor.fetchone()
             
         name = result['name']
@@ -525,6 +625,129 @@ def update_profile():
         return redirect(url_for('profiles'))
     else:
         return redirect(url_for('login'))
+
+@app.route("/certificate")
+def certificate():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+    
+    if login_status == "True":
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            sql = "SELECT * FROM users WHERE user_id = %s"
+            cursor.execute(sql, (user_id))
+            result = cursor.fetchone()
+            name= result['name']
+            picture_data = result['picture']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT cert_name, cert_program, cert_date, cert_status FROM cert_view WHERE user_id = %s ORDER BY `cert_date` ASC;", (user_id))
+                result = cursor.fetchall()
+                cert_record = []
+
+                for i in result:
+                    cert_record.append({
+                        'cert_name': i['cert_name'],
+                        'cert_program': i['cert_program'],
+                        'cert_date': i['cert_date'],
+                        'cert_status': i['cert_status']
+                        
+                    })
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM `certs`")
+                result = cursor.fetchall()
+                cert_data = []
+                
+                for i in result:
+                    cert_data.append({
+                        'cert_name': i['name'],
+                        'cert_program': i['program'],
+                        'cert_difficulty': i['difficulty'],
+                    })
+                names = sorted(set(str(i['cert_name']) for i in cert_data))
+                programs = sorted(set(str(i['cert_program']) for i in cert_data))
+            
+
+        return render_template("certificate.html", **locals())
+    else:
+        return redirect(url_for('login'))
+
+@app.route("/cert_updateDataButton", methods=['POST'])
+def cert_updateDataButton():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+    
+    if login_status == "True":
+        cert_name = request.form.get('cert_name_hidden')
+        cert_program = request.form.get('cert_program_hidden')
+        certDate = datetime.strptime(request.form.get('cert_date'), '%Y-%m-%d')
+        picture = request.files.get('file')
+        picture = picture.read()
+        print('!!!!!!!!!!!!!!!!!')
+        # print('picture_data', picture_data)
+        print('!!!!!!!!!!!!!!!!!')
+
+        # Update the users table
+        connection = get_db_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT cert_id FROM certs WHERE name=%s AND program=%s", (cert_name, cert_program))
+                result = cursor.fetchone()
+                cert_id = result['cert_id']
+        except:
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO certs (name, program) VALUES (%s, %s)", (cert_name, cert_program))
+                connection.commit()
+
+                cursor.execute("SELECT cert_id FROM certs WHERE name=%s AND program=%s", (cert_name, cert_program))
+                result = cursor.fetchone()
+                cert_id = result['cert_id']
+        
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO certrecords (user_id, cert_id, cert_pic, cert_date, status) VALUES (%s, %s, %s, %s, %s)",
+                (user_id, cert_id, picture, certDate, 2)
+            )
+            connection.commit()
+
+        return redirect(url_for('certificate'))
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route("/leaveButton", methods=['POST'])
+def leaveButton():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+    
+    if login_status == "True":
+        leaveDate = datetime.strptime(request.form.get('leaveDate'), '%Y-%m-%d')
+        endDate = datetime.strptime(request.form.get('endDate'), '%Y-%m-%d')
+
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+                cursor.execute("SELECT semester FROM `attend` WHERE user_id=%s ORDER BY `semester` DESC LIMIT 1;", (user_id,))
+                result = cursor.fetchone()
+                semester = result['semester']
+
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE `attend` SET `status`=2 WHERE semester=%s AND class_date BETWEEN %s AND %s;",
+                (semester, leaveDate, endDate)
+            )
+            connection.commit()
+
+        return redirect(url_for('index'))
+    else:
+        return redirect(url_for('login'))
+
 
 
 # 登入

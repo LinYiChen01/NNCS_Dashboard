@@ -86,178 +86,101 @@ document.getElementById("file").addEventListener("change", async function () {
 });
 
 
-var statistics_chart = document.getElementById('myChart').getContext('2d');
-
-// // 計算時間相關的數據
+// 計算時間相關的數據
 var totalDays = 168;  // 總天數
 var today = moment(); // 獲取當前日期
-var start_class_date = moment('2024/9/02'); // 設定開始日期
 var daysElapsed = today.diff(start_class_date, 'days') + 2; // 計算經過的天數
 var remainingDays = totalDays; // 剩餘天數
 
-//     datasets: [
-//       {
-//         label: '總上課堂數',  // 總課堂數數據
-//         data: [class_num],  // 總堂數
-//         magrin : '10px',
-//         backgroundColor: 'rgba(255, 206, 86, 0.7)',  // 總堂數的顏色
-//         borderColor: 'rgba(255, 206, 86, 1)',
-//         borderWidth: 2.5,
-//         // stack: '2',
-//       },
-//       {
-//       label: '累計天數',  // 上課堂數數據
-//       data: [daysElapsed],  // 目前已上課的堂數
-//       backgroundColor: 'rgba(54, 162, 235, 0.7)',  // 已上課部分顏色
-//       borderColor: 'rgba(54, 162, 235, 1)',
-//       borderWidth: 2.5,
-//       // stack: '0',
-//       }, {
-//         label: '剩餘堂數',  // 剩餘堂數數據
-//         data: [168 - daysElapsed],  // 剩餘堂數
-//         backgroundColor: 'rgba(254, 86, 83, 0.7)',  // 剩餘部分顏色
-//         borderColor: 'rgba(254, 86, 83, 1)',
-//         borderWidth: 2.5,
-//         // stack: '0',
-//       }, ]
-//   },
-//   options: {
-//     scales: {
-//       xAxes: [{
-//         stacked: false,  // 啟用堆疊
-//         gridLines: {
-//           drawBorder: false,
-//           color: '#f2f2f2',
-//         },
-//         ticks: {
-//           beginAtZero: true,
-//           stepSize: 16,
-//         },
-//         // categoryPercentage: 1  // 條形之間的間隔，數值越小間隔越大
-//       }],
-//       yAxes: [{
-//         stacked: false,  // 啟用堆疊
-//         gridLines: {
-//           display: false
-//         },
-//         ticks: {
-//           display: true
-//         }
-//       }]
-//     },
-//     legend: {
-//       display: false,  // 顯示圖例
-//       position: 'bottom',
-//     },
-//     tooltips: {
-//       enabled: true,  // 啟用工具提示
-//       mode: 'index',  // 顯示所有相關數據
-//       intersect: false,  // 不必在條形上交錯
-//     },
-//   }
-// });
-
-
-var statistics_chart = document.getElementById('myChart').getContext('2d');
-var myChart = new Chart(statistics_chart, {  
-  type: 'horizontalBar',  // 使用 2.7.1 的橫向柱狀圖類型
+var statistics_chart = document.getElementById('myChart_1').getContext('2d');  // JavaScript 對應的 id
+var myChart_1 = new Chart(statistics_chart, {
+  type: 'horizontalBar',
   data: {
-    labels: ["已累計上課數", '000'],  // 類別標籤
-    datasets: [{
-      label: '已上課堂數',  // 上課堂數數據
-      data: [class_num, null],  // 目前已上課的堂數
-      backgroundColor: 'rgba(54, 162, 235, 0.7)',  // 已上課部分顏色
-      borderColor: 'rgba(54, 162, 235, 1)',
-      borderWidth: 2.5,
-    }, {
-      label: '剩餘堂數',  // 剩餘堂數數據
-      data: [20 - class_num, 7],  // 總堂數 - 已上課堂數
-      backgroundColor: 'rgba(254, 86, 83, 0.7)',  // 剩餘部分顏色
-      borderColor: 'rgba(254, 86, 83, 1)',
-      borderWidth: 2.5,
-    }]
+    labels: ["累計上課堂數", '累計上課天數', '剩餘上課天數'],
+    datasets: [
+      {
+        data: [class_num, daysElapsed, 168 - daysElapsed],
+        backgroundColor: ['#6777ef', '#ffc264', '#fe8886'],
+        borderColor: ['#6777ef', '#ffc264', '#fe8886'],
+        borderWidth: 2.5,
+      }
+    ]
   },
   options: {
     scales: {
-      xAxes: [{  // X 軸顯示數據
-        stacked: true,  // 啟用堆疊
+      xAxes: [{
+        stacked: false,
         gridLines: {
           drawBorder: false,
           color: '#f2f2f2',
         },
         ticks: {
-          beginAtZero: true,  // X 軸從 0 開始
-          // stepSize: 150  // 可選擇每多少個刻度
-        }
+          beginAtZero: true,
+          stepSize: 16,
+        },
       }],
-      yAxes: [{  // Y 軸顯示類別
-        stacked: true,  // 啟用堆疊
+      yAxes: [{
+        stacked: false,
         gridLines: {
-          display: false  // 隱藏 Y 軸的網格線
+          display: false,
         },
         ticks: {
-          display: true  // 顯示 Y 軸的類別標籤
+          display: true,
         }
       }]
     },
     legend: {
-      display: true,  // 如果你想要顯示圖例
-      position: 'bottom',
-    }
+      display: false,
+    },
   }
 });
 
+var ctx2 = document.getElementById('myChart_2').getContext('2d');
+var myChart_2 = new Chart(ctx2, {
+    type: 'bar',  // 第二個圖表使用折線圖
+    data: {
+        labels: ['上課', '請假', '曠課', '停課'],
+        datasets: [{
+            label: '堂數',
+            data: [attendanceCounts["上課"], attendanceCounts["請假"], attendanceCounts["曠課"], attendanceCounts["停課"]],
+            backgroundColor: '#6777ef',
+            borderColor: '#6777ef',
+            borderWidth: 1
+        }]
+    },
+    options: {
+      scales: {
+        xAxes: [{
+          stacked: false,
+          gridLines: {
+            drawBorder: false,
+            color: '#f2f2f2',
+          },
+          ticks: {
+            beginAtZero: true,
+            // stepSize: 1,
+          },
+        }],
+        yAxes: [{
+          stacked: false,
+          gridLines: {
+            display: false,
+          },
+          ticks: {
+            display: true,
+            beginAtZero: true, // 從 0 開始
+            stepSize: 1,       // 確保每次增量為 1
+            precision: 0,      // 設定小數點位數為 0（即無小數點）
+          }
+        }]
+      },
+      legend: {
+        display: false,
+      },
+    }
+  });
 
-
-
-
-// 更新出席紀錄表格
-// var ctx = document.getElementById("myChart").getContext('2d');
-// var myChart = new Chart(ctx, {
-//   type: 'horizontalBar',
-//   data: {
-//     labels: ["已上課堂數", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],  // 標籤
-//     datasets: [{
-//       label: '每月天數',
-//       data: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],  // 每個月的天數
-//       borderWidth: 2,
-//       backgroundColor: 'rgba(254,86,83,.7)',  // 顏色
-//       borderColor: 'rgba(254,86,83,.7)',
-//       borderWidth: 2.5,
-//       pointBackgroundColor: '#ffffff',
-//       pointRadius: 4
-//     }]
-//   },
-//   options: {
-//     legend: {
-//       display: false
-//     },
-//     scales: {
-//       yAxes: [{
-//         gridLines: {
-//           drawBorder: false,
-//           color: '#f2f2f2',
-//         },
-//         ticks: {
-//           beginAtZero: true,
-//           stepSize: 5  // 根據需求調整步長
-//         }
-//       }],
-//       xAxes: [{
-//         gridLines: {
-//           display: false
-//         },
-//         ticks: {
-//           beginAtZero: true,
-//           stepSize: 10  // 根據需求調整步長
-//         }
-//       }]
-//     },
-//   }
-// });
-
-
-
+  
 function updateAttendTable(selectedStatus) {
   const tableBody = document.querySelector("#attend-table tbody");
   tableBody.innerHTML = ""; // 清空表格
@@ -268,15 +191,8 @@ function updateAttendTable(selectedStatus) {
     }
     return item.status === selectedStatus;
   });
-  const attendanceCounts = {
-    "上課": 0,
-    "請假": 0,
-    "曠課": 0,
-    "停課": 0
-  };
 
   filteredData.forEach(function (item) {
-    attendanceCounts[item.status] = (attendanceCounts[item.status] || 0) + 1;
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${moment(item.class_date).format('YYYY-MM-DD')}</td>
@@ -289,7 +205,7 @@ function updateAttendTable(selectedStatus) {
   // 更新 footer 顯示內容
   if (selectedStatus === "全部") {
     document.getElementById("attendance-footer").innerHTML = `
-      本學期累計: 上課: ${attendanceCounts["上課"]}  請假: ${attendanceCounts["請假"]}  曠課: ${attendanceCounts["曠課"]}  停課: ${attendanceCounts["停課"]}，
+      本學期累計: 上課: ${attendanceCounts["上課"] || 0}  請假: ${attendanceCounts["請假"] || 0}  曠課: ${attendanceCounts["曠課"] || 0}  停課: ${attendanceCounts["停課"] || 0}，
       剩餘上課次數: ${20 - attendanceCounts["上課"] - attendanceCounts["曠課"]}
     `;
   } else {

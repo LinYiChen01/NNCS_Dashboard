@@ -11,14 +11,14 @@ $("#leaveButton").on("click", function () {
 $("#leaveButton").fireModal({
   title: "請假",
   body: `
-    <form>
+    <form id="leaveForm" method="POST" action="/leaveButton">
       <div class="form-group">
         <label for="leaveDate">開始日期</label>
-        <input type="date" class="form-control" id="leaveDate">
+        <input type="date" class="form-control" id="leaveDate" name="leaveDate">
       </div>
       <div class="form-group">
         <label for="endDate">結束日期</label>
-        <input type="date" class="form-control" id="endDate">
+        <input type="date" class="form-control" id="endDate" name="endDate">
       </div>
     </form>
     <div id="leaveMessage"></div>
@@ -36,9 +36,10 @@ $("#leaveButton").fireModal({
       text: "確認請假",
       class: "btn btn-danger",
       handler: function (modal) {
-        // 確認請假時的處理邏輯
         const leaveDate = $("#leaveDate").val();
         const endDate = $("#endDate").val();
+        const today = new Date();  // 今天的日期
+        today.setHours(0, 0, 0, 0);  // 將時間部分設置為 0，確保只比較日期部分
 
         // 檢查是否有空的欄位
         if (!leaveDate || !endDate) {
@@ -48,20 +49,32 @@ $("#leaveButton").fireModal({
           return;
         }
 
+        const leaveDateObj = new Date(leaveDate);
+        const endDateObj = new Date(endDate);
+
+        // 檢查開始日期和結束日期是否大於今天（不含今天）
+        if (leaveDateObj > today || endDateObj > today) {
+          $("#leaveMessage").html(
+            `<span style="color:red;">請假日期只能是${moment(today).format('YYYY-MM-DD')}以後！</span>`
+          );
+          return;
+        }
+
         // 檢查結束日期是否早於開始日期
-        if (new Date(endDate) < new Date(leaveDate)) {
+        if (endDateObj < leaveDateObj) {
           $("#leaveMessage").html(
             '<span style="color:red;">結束日期不能早於開始日期！</span>'
           );
           return;
         }
 
-        // 正確填寫後顯示成功訊息
-        modal.modal("hide");
+        // 如果通過所有檢查，提交表單
+        $("#leaveForm").submit();
       },
     },
   ],
 });
+
 
 // 每次模態關閉後清空表單內容
 $(document).on("hide.bs.modal", "#leaveModal", function () {
@@ -87,10 +100,10 @@ if (window.location.pathname === "/index") {
   $("#scheduleButton").fireModal({
     title: "排課",
     body: `
-    <form id="scheduleForm">
+    <form id="scheduleForm" method="POST" action="/scheduleButton">
       <div class="form-group">
         <label for="classroomAreaSelect">上課地點</label>
-        <select class="form-control" id="classroomAreaSelect">
+        <select class="form-control" id="classroomAreaSelect" name="classroomAreaSelect">
           <option value="" disabled selected>請選擇上課地點</option>
           ${classroom_area
             .map((c) => `<option value="${c}">${c}</option>`)
@@ -99,19 +112,19 @@ if (window.location.pathname === "/index") {
       </div>
       <div class="form-group" id="classroomSelectGroup">
         <label for="classroomSelect">上課教室</label>
-        <select class="form-control" id="classroomSelect">
+        <select class="form-control" id="classroomSelect" name="classroomSelect">
         </select>
       </div>
       <div class="form-group" id="timeslotSelectGroup">
         <label for="timeslotSelect">上課時段</label>
-        <select class="form-control" id="timeslotSelect">
+        <select class="form-control" id="timeslotSelect" name="timeslotSelect">
         </select>
       </div>
       <div class="form-group" id="classNumSelectGroup">
         <label for="classNumSelect">上課堂數</label>
-        <select class="form-control" id="classNumSelect">
+        <select class="form-control" id="classNumSelect" name="classNumSelect">
           <option value="" disabled selected>請選擇上課堂數</option>
-          <option value="0">補完剩下堂數</option>
+          <option value="${20 - class_num}">補完剩下堂數</option>
           <option value="4">4</option>
           <option value="8">8</option>
           <option value="12">12</option>
@@ -138,9 +151,9 @@ if (window.location.pathname === "/index") {
           const classroomSelect = $("#classroomSelect").val();
           const timeslotSelect = $("#timeslotSelect").val();
           var classNumSelect = $("#classNumSelect").val();
-          if ($("#classNumSelect").val() === "0") { 
-            classNumSelect = 20 - class_num;
-          }
+          if (classNumSelect === "補完剩下堂數") { 
+            classNumSelect = 20 - class_num; // 使用剩下的課堂數
+        }
           
 
           // 檢查是否有空的欄位
@@ -150,7 +163,7 @@ if (window.location.pathname === "/index") {
             );
             return;
           } else { 
-            if (classNumSelect + class_num <= 2) {
+            if (parseInt(classNumSelect) + class_num <= 20) {
               $("#scheduleForm").submit();
             } else { 
               $("#scheduleMessage").html(
@@ -161,8 +174,7 @@ if (window.location.pathname === "/index") {
 
             
           }
-
-          modal.modal("hide");
+          $("#scheduleForm").submit();
         },
       },
     ],
@@ -230,7 +242,7 @@ $("#classroomSelect").on("change", function () {
       .append('<option value="" disabled selected>請選擇上課時段</option>')
       .append(
         [...classTimes].map(
-          (time, index) => `<option value="timeslot${index}">${time}</option>`
+          (time) => `<option value="${time}">${time}</option>`
         )
       );
 
@@ -703,7 +715,152 @@ $('#loginFailure').fireModal({
 });
 
 
-$("#modal-1").fireModal({ body: "Modal body text goes here." });
+$("#cert_updateDataButton").fireModal({
+  title: "上傳證照",
+  body: `
+    <form id="updateForm" method="POST" action="/cert_updateDataButton" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="cert_name">認證單位<span style="color: red;">*</span></label>
+            <input type="text" id="cert_name_hidden" name="cert_name_hidden" style="display:none;">
+            <select class="form-control" id="cert_name" name="cert_name" onchange="toggleCustomCertName()">
+                <option value="" disabled selected>選擇認證單位</option>
+                ${names.map(name => `
+                  <option value="${name}">${name}</option>`).join('')}
+                <option value="其他">其他</option>
+            </select>
+            <input type="text" class="form-control mt-2" id="cert_name_other" name="cert_name_other" placeholder="請輸入認證單位" style="display:none;">
+        </div>
+        <div class="form-group">
+            <label for="cert_program">認證科目<span style="color: red;">*</span></label>
+            <input type="text" id="cert_program_hidden" name="cert_program_hidden" style="display:none;">
+            <select class="form-control" id="cert_program" name="cert_program" onchange="toggleCustomCertProgram()">
+                <option value="" disabled selected>選擇認證科目</option>
+                ${programs.map(program => `
+                  <option value="${program}">${program}</option>`).join('')}
+                <option value="其他">其他</option>
+            </select>
+            <input type="text" class="form-control mt-2" id="cert_program_other" name="cert_program_other" placeholder="請輸入認證科目" style="display:none;">
+        </div>
+        <div class="form-group">
+            <label for="cert_date">考照日期<span style="color: red;">*</span></label>
+            <input type="date" class="form-control" id="cert_date" name="cert_date" value=''>
+        </div>
+        <div class="form-group">
+            <label for="file">證照圖片<span style="color: red;">*</span></label><br>
+            <img src='' id="uploadedImage" alt="上傳的圖片" style="max-width: 100px; margin-bottom: .5rem; display: none">
+            <span id="pic_msg" style="display: block; margin-bottom: .5rem;"></span>
+            <input type="file" name="file" id="file" style="display:none;" accept="image/png, image/jpeg, image/jpg, image/webp">
+            <button type="button" id="uploadButton" class="btn btn-primary">上傳照片</button>
+        </div>
+        <span id="submit_msg" style="display: block; margin-bottom: .5rem; color: red;"></span>
+    </form>
+    <div id="cert_updateDataMessage"></div>
+  `,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "送出",
+      class: "btn btn-primary",
+      handler: function (modal) {
+        const certName = document.getElementById('cert_name').value;
+        const certProgram = document.getElementById('cert_program').value;
+        const certDate = document.getElementById('cert_date').value;
+        const fileInput = document.getElementById('file');
+        
+        // 檢查必填欄位
+        if (!certName || (certName === '其他' && !document.getElementById('cert_name_other').value) ||
+            !certProgram || (certProgram === '其他' && !document.getElementById('cert_program_other').value) ||
+            !certDate ||
+          fileInput.files.length === 0)
+        {
+            $("#cert_updateDataMessage").html(
+              '<span style="color:red;">請輸入完整的證照資料!</span>'
+            );
+            return; // 結束函數，防止提交
+        }
+        
+        // 確保日期不超過今天
+        const today = new Date();
+        const selectedDate = new Date(certDate);
+        if (selectedDate > today) {
+            $("#cert_updateDataMessage").html(
+              '<span style="color:red;">考照日期格是錯誤!</span>'
+            );
+            return; // 結束函數，防止提交
+        }
+
+        // 檢查 "其他" 輸入是否與現有選項重複
+        let finalCertName = certName;
+        let finalCertProgram = certProgram;
+
+        if (certName === '其他') {
+          finalCertName = document.getElementById('cert_name_other').value;
+
+          // 檢查是否重複，忽略大小寫
+          const isDuplicateCertName = names.some(name => name.toLowerCase() === finalCertName.toLowerCase());
+          if (isDuplicateCertName) {
+              $("#cert_updateDataMessage").html(
+                '<span style="color:red;">此認證單位已存在，請從下拉選單中選擇!</span>'
+              );
+              return; // 結束函數，防止提交
+          }
+      }
+
+      if (certProgram === '其他') {
+          finalCertProgram = document.getElementById('cert_program_other').value;
+
+          // 檢查是否重複，忽略大小寫
+          const isDuplicateCertProgram = programs.some(program => program.toLowerCase() === finalCertProgram.toLowerCase());
+          if (isDuplicateCertProgram) {
+              $("#cert_updateDataMessage").html(
+                '<span style="color:red;">此認證科目已存在，請從下拉選單中選擇!</span>'
+              );
+              return; // 結束函數，防止提交
+          }
+      }
+
+      // 如果所有驗證都通過，進行提交
+      document.getElementById('cert_name_hidden').value = finalCertName;
+      document.getElementById('cert_program_hidden').value = finalCertProgram;
+      
+      // $("#updateForm").submit();
+    },
+  },
+],
+});
+
+// 控制自定義認證單位輸入框的顯示和隱藏
+function toggleCustomCertName() {
+  const selectElement = document.getElementById('cert_name');
+  const otherInput = document.getElementById('cert_name_other');
+  
+  if (selectElement.value === '其他') {
+    otherInput.style.display = 'block'; // 顯示輸入框
+    otherInput.value = ''; // 清空輸入框
+  } else {
+    otherInput.style.display = 'none'; // 隱藏輸入框
+  }
+}
+
+// 控制自定義認證科目輸入框的顯示和隱藏
+function toggleCustomCertProgram() {
+  const selectElement = document.getElementById('cert_program');
+  const otherInput = document.getElementById('cert_program_other');
+  
+  if (selectElement.value === '其他') {
+    otherInput.style.display = 'block'; // 顯示輸入框
+    otherInput.value = ''; // 清空輸入框
+  } else {
+    otherInput.style.display = 'none'; // 隱藏輸入框
+  }
+}
+
 
 
 
