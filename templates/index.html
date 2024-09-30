@@ -7,9 +7,6 @@
   <title>NNCS 補習班學生資訊系統</title>
   <link rel="icon" href="assets/img/NNCS_Matting.png" type="image/png type">
   
-
-
-
   <!-- General CSS Files -->
   <link rel="stylesheet" href="assets/modules/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="assets/modules/fontawesome/css/all.min.css">
@@ -140,6 +137,7 @@
                     <script>
                       var event_data = {{event_data| tojson | safe}};
                       var class_num = {{class_num| tojson | safe}};
+                      var sc_class_num = {{sc_class_num| tojson | safe}}
                       var end_class_date = {{end_class_date| tojson | safe}};
                       
                     </script>
@@ -159,7 +157,9 @@
                     var end_time = {{ end_time| tojson | safe }};
                     var classroom_area = {{ classroom_area| tojson | safe }};
                     var classroom_data = {{ classroom_data| tojson | safe }};
-                    
+                    var course_id = {{ course_id| tojson | safe }};
+                    var classroom_attend_data = {{ classroom_attend_data| tojson | safe }};
+                     
                   </script>
                   <h4>上課時段</h4>
                   <div class="card-header-action dropdown">

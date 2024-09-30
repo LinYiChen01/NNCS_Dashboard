@@ -109,6 +109,12 @@ $(function() {
     }).niceScroll();
   }
 
+  if($("#top-5-scroll_st_table").length) {
+    $("#top-5-scroll_st_table").css({
+      height: 450
+    }).niceScroll();
+  }
+
   $(".main-content").css({
     minHeight: $(window).outerHeight() - 95
   })

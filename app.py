@@ -180,7 +180,8 @@ def handle_message(event):
 def index():
     login_status = session.get('login_status')
     user_id = session.get('user_id')
-    class_num = 0
+    class_num = 0  # 已上課堂數
+    sc_class_num = 0 # 總選課堂數
     border_color = ""
     text_color = ""
 
@@ -194,6 +195,7 @@ def index():
         with connection.cursor() as cursor:
             sql = """
             SELECT
+                classtime.classtime_id,
                 classroom.name,
                 classtime.class_week,
                 classtime.start_time,
@@ -216,20 +218,22 @@ def index():
             class_week = []
             start_time = []
             end_time = []
-
             
-            for i in range(len(result)):
-                classroom_data.append({})
-                classroom_data[i]['classroom'] = result[i]['name']
-                classroom_data[i]['class_week'] = result[i]['class_week']
-                classroom_data[i]['start_time'] = str(result[i]['start_time'])[:-3]
-                classroom_data[i]['end_time'] = str(result[i]['end_time'])[:-3]
+            for i in result:
+                classroom_data.append({
+                    'classtime_id' : i['classtime_id'],
+                    'classroom' : i['name'],
+                    'class_week' : i['class_week'],
+                    'start_time' : str(i['start_time'])[:-3],
+                    'end_time' : str(i['end_time'])[:-3] 
+                })
 
-                classroom.append(result[i]['name'])
-                classroom_area.append(result[i]['name'][:2])
-                class_week.append(result[i]['class_week'])
-                start_time.append(str(result[i]['start_time'])[:-3])
-                end_time.append(str(result[i]['end_time'])[:-3])
+                classroom.append(i['name'])
+                classroom_area.append(i['name'][:2])
+                class_week.append(i['class_week'])
+                start_time.append(str(i['start_time'])[:-3])
+                end_time.append(str(i['end_time'])[:-3])
+            
             classroom_area = sorted(set(classroom_area))
 
         with connection.cursor() as cursor:
@@ -246,6 +250,11 @@ def index():
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
+        
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT course_id FROM student_schedule WHERE user_id = %s;", (user_id,))
+            result = cursor.fetchone()
+        course_id = result['course_id']
         
         # 查詢用戶的參加課程信息
         with connection.cursor() as cursor:
@@ -269,20 +278,22 @@ def index():
                     border_color = "#ef6767"
                     text_color = '#ef6767'
                     class_num += 1
+                    sc_class_num += 1
                 # '' -> 藍色
                 elif fc_status == '':
                     border_color = "#6777ef"
                     text_color = '#6777ef'
+                    sc_class_num += 1
                 # 上課(1) -> 藍色
                 elif fc_status == '1':
                     border_color = "#aaadbf"
                     text_color = '#aaadbf'
                     class_num += 1
+                    sc_class_num += 1
                 # 停課(4) -> 綠色
                 elif fc_status == '4':
                     border_color = "#8bb690"
                     text_color = '#8bb690'
-                    class_num += 1
                 # 繳費/教材費(4) -> 橘色
                 else:
                     border_color = "#efa567"
@@ -311,11 +322,89 @@ def index():
         start_class_date = min(start_class_date)
         end_class_date = start_class_date + timedelta(days=168)
 
+        
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM `classroom_attend_view`;")
+            result = cursor.fetchall()
+
+        classroom_attend_data = []
+        for i in  result:
+            # 額滿
+            if i['tr_max_st'] == '2':
+            # if i['st_num'] == i['tr_max_st'] or  i['st_num'] == i['classroom_max_st']:
+                classroom_attend_data.append({
+                    'class_date': i['class_date'].strftime('%Y-%m-%d'),
+                    'classtime_id': i['classtime_id'],
+                })
+
+
+
         connection.close()
         return render_template("index.html", **locals())
     else:
         return redirect(url_for('login'))
 
+
+@app.route('/ad_index', methods=['GET', 'POST'])
+def ad_index():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+
+    if login_status == "True":
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id))
+            result = cursor.fetchone()
+            name= result['name']
+            picture_data = result['picture']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+
+        st_data = []
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM `st_info`;")
+            result = cursor.fetchall()
+        for i in result:
+            picture_data = i['picture']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+
+            st_data.append({
+                'st_id' : i['user_id'],
+                'st_acc' : i['acc'],
+                'st_pwd' : i['pwd'],
+                'st_name' : i['name'],
+                'st_age' : i['age'],
+                'st_address' : i['address'],
+                'st_phone1' : i['phone1'],
+                'st_phone2' : i['phone2'],
+                'st_email' : i['email'],
+                'st_picture' : picture,
+                'st_create_date' : i['create_date'],
+                'st_workplace' : i['workplace'],
+                'st_profession' : i['profession'],
+                'st_parent' : i['parent'],
+                'st_tuition' : i['tuition'],
+                'st_pay_num' : i['pay_num'],
+                'st_course_id' : i['course_id'],
+                'st_note' : i['note'],
+            })
+
+        
+        return render_template("ad_index.html", **locals())
+    else:
+        return redirect(url_for('login'))
 
 
 # 單堂加課
@@ -344,7 +433,7 @@ def fc_scheduleButton():
             
 
                 # 查詢這是第幾學期
-                cursor.execute("SELECT count(attend_id) as semester FROM attend WHERE user_id=%s AND (status='1' OR status='3')", 
+                cursor.execute("SELECT count(attend_id) as semester FROM attend WHERE user_id=%s AND (status='1' OR status='3');", 
                                 (user_id))
                 result = cursor.fetchone()
                 semester = result['semester'] // 20 + 1
@@ -374,31 +463,16 @@ def scheduleButton():
         user_id = session.get('user_id')
         classroomAreaSelect = request.form['classroomAreaSelect']
         classroomSelect = request.form['classroomSelect']
+        class_date = datetime.strptime(request.form['classDate'], '%Y-%m-%d')
         timeslotSelect = request.form['timeslotSelect'].split()
-        classNumSelect = request.form['classNumSelect']
+        classNumSelect = int(request.form['classNumSelect'])
         class_week = timeslotSelect[0][-1]
         start_time = timeslotSelect[1][:5]
         end_time = timeslotSelect[1][6:]
-        today = datetime.now().date().strftime("%Y-%m-%d")
-        today_week = datetime.now().weekday()
-        weekdays = ['一', '二', '三', '四', '五', '六', '日']
-        today_week = weekdays[today_week]
 
-        print('classroomAreaSelect', classroomAreaSelect)
-        print('classroomSelect', classroomSelect)
-        print('timeslotSelect', timeslotSelect)
-        print('classNumSelect', classNumSelect)
-        print('class_week', class_week)
-        print('start_time', start_time)
-        print('end_time', end_time)
-        print('today', today)
-        print('today_week', today_week)
-        
-        
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            cursor.execute("SELECT count(attend_id) as semester FROM attend WHERE user_id=%s AND (status='1' OR status='3')", 
-                                (user_id))
+            cursor.execute("SELECT count(attend_id) as semester FROM attend WHERE user_id=%s AND (status='1' OR status='3')", (user_id))
             result = cursor.fetchone()
             semester = result['semester'] // 20 + 1
         
@@ -408,44 +482,12 @@ def scheduleButton():
             result = cursor.fetchone()
             classtime_id = result['classtime_id']
 
-        
-        # with connection.cursor() as cursor:
-        #     cursor.execute("INSERT INTO `attend`(`semester`, `user_id`, `classtime_id`, `class_date`) VALUES (%s, %s, %s, %s)", 
-        #     semester = result['semester'] // 20 + 1
-        #                         (semester, user_id, classtime_id, class_date))
-        # try:
-        #     connection = get_db_connection()
-        #     with connection.cursor() as cursor:
-        #         # 使用檢視表一次查詢所需數據
-        #         cursor.execute("""
-        #             SELECT classtime_id FROM classroom_schedule 
-        #             WHERE classroom_name=%s AND class_week=%s AND start_time=%s AND end_time=%s
-        #         """, (fc_classroomSelect, class_week, start_time, end_time))
-        #         result = cursor.fetchone()
-        #         classtime_id = result['classtime_id']
-            
-
-        #         # 查詢這是第幾學期
-        #         cursor.execute("SELECT count(attend_id) as semester FROM attend WHERE user_id=%s AND (status='1' OR status='3')", 
-        #                         (user_id))
-        #         result = cursor.fetchone()
-        #         semester = result['semester'] // 20 + 1
-
-        #         # 插入數據到 attend 表
-        #         try:
-        #             # 把請假的課程 重新加入
-        #             cursor.execute("SELECT attend_id FROM attend WHERE user_id=%s AND classtime_id=%s AND class_date=%s AND status='2'", 
-        #                             (user_id, classtime_id, classroomDateSelect))
-        #             result = cursor.fetchone()
-        #             attend_id = result['attend_id']
-        #             cursor.execute("UPDATE attend SET status='' WHERE attend_id=%s;", (attend_id,))
-        #             connection.commit()
-        #         except:
-        #             cursor.execute("INSERT INTO attend (user_id, semester, classtime_id, class_date) VALUES (%s, %s, %s, %s)", 
-        #                            (user_id, semester, classtime_id, classroomDateSelect))
-        #             connection.commit()
-        # finally:
-        #     connection.close()
+        for i in range(classNumSelect):
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO `attend`(`semester`, `user_id`, `classtime_id`, `class_date`) VALUES (%s, %s, %s, %s)", 
+                                (semester, user_id, classtime_id, class_date))
+            connection.commit()
+            class_date += timedelta(days=7)       
         return redirect(url_for('index'))
     return redirect(url_for('login'))
 
@@ -691,9 +733,6 @@ def cert_updateDataButton():
         certDate = datetime.strptime(request.form.get('cert_date'), '%Y-%m-%d')
         picture = request.files.get('file')
         picture = picture.read()
-        print('!!!!!!!!!!!!!!!!!')
-        # print('picture_data', picture_data)
-        print('!!!!!!!!!!!!!!!!!')
 
         # Update the users table
         connection = get_db_connection()
@@ -819,7 +858,20 @@ def login():
                     if result:
                         session['login_status'] = "True"
                         session['user_id'] = result['user_id']
-                        return redirect(url_for('index'))
+                        session['role'] = result['role']
+                        session['status'] = result['status']
+
+                        if session['status'] != '2': # 不可以是休學或離職的狀態 
+                            if session['role'] == '1': # 學生
+                                return redirect(url_for('index'))
+                                # return('st')
+                            
+                            elif session['role'] == '3': # 老師
+                                # return redirect(url_for('index'))
+                                return('tr')
+                            
+                            elif session['role'] == '4': # 管理員
+                                return redirect(url_for('ad_index'))         
                     else:
                         session['login_status'] = "False"
                         return render_template("login.html", error="憑證無效，請再試一次。")

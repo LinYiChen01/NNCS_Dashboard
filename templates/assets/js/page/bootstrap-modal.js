@@ -49,11 +49,11 @@ $("#leaveButton").fireModal({
           return;
         }
 
-        const leaveDateObj = new Date(leaveDate);
-        const endDateObj = new Date(endDate);
+        const leaveDateObj = moment(leaveDate); // 使用 moment 解析開始日期
+        const endDateObj = moment(endDate); // 使用 moment 解析結束日期
 
         // 檢查開始日期和結束日期是否大於今天（不含今天）
-        if (leaveDateObj > today || endDateObj > today) {
+        if (leaveDateObj <= today || endDateObj <= today) {
           $("#leaveMessage").html(
             `<span style="color:red;">請假日期只能是${moment(today).format('YYYY-MM-DD')}以後！</span>`
           );
@@ -115,6 +115,11 @@ if (window.location.pathname === "/index") {
         <select class="form-control" id="classroomSelect" name="classroomSelect">
         </select>
       </div>
+      <div class="form-group" id="classDateSelectGroup">
+        <label for="classDate">開始上課日期</label>
+        <input type="date" class="form-control" id="classDate" name="classDate">
+        </input>
+      </div>
       <div class="form-group" id="timeslotSelectGroup">
         <label for="timeslotSelect">上課時段</label>
         <select class="form-control" id="timeslotSelect" name="timeslotSelect">
@@ -124,7 +129,7 @@ if (window.location.pathname === "/index") {
         <label for="classNumSelect">上課堂數</label>
         <select class="form-control" id="classNumSelect" name="classNumSelect">
           <option value="" disabled selected>請選擇上課堂數</option>
-          <option value="${20 - class_num}">補完剩下堂數</option>
+          <option value="${20 - sc_class_num}">補完剩下堂數</option>
           <option value="4">4</option>
           <option value="8">8</option>
           <option value="12">12</option>
@@ -152,7 +157,7 @@ if (window.location.pathname === "/index") {
           const timeslotSelect = $("#timeslotSelect").val();
           var classNumSelect = $("#classNumSelect").val();
           if (classNumSelect === "補完剩下堂數") { 
-            classNumSelect = 20 - class_num; // 使用剩下的課堂數
+            classNumSelect = 20 - sc_class_num; // 使用剩下的課堂數
         }
           
 
@@ -163,18 +168,22 @@ if (window.location.pathname === "/index") {
             );
             return;
           } else { 
-            if (parseInt(classNumSelect) + class_num <= 20) {
-              $("#scheduleForm").submit();
+            if (sc_class_num < 20) {
+              if (parseInt(classNumSelect) + sc_class_num <= 20) {
+                $("#scheduleForm").submit();
+              } else {
+                $("#scheduleMessage").html(
+                  `<span style="color:red;">您目前安排上課堂數為${sc_class_num}堂，剩下${20 - sc_class_num}堂可以安排上課!${classNumSelect}</span>`
+                );
+                return;
+              }
             } else { 
               $("#scheduleMessage").html(
-                `<span style="color:red;">您目前安排上課堂數為${class_num}堂，剩下${20-class_num}堂可以安排上課!</span>`
+                `<span style="color:red;">您所安排的課程已超過上課次數20堂!</span>`
               );
               return;
             }
-
-            
           }
-          $("#scheduleForm").submit();
         },
       },
     ],
@@ -209,11 +218,13 @@ $("#classroomAreaSelect").on("change", function () {
     $("#timeslotSelect").html(
       '<option value="" disabled selected>請選擇上課時段</option>'
     );
+    $("#classDateSelectGroup").hide();
     $("#timeslotSelectGroup").hide();
     $("#classNumSelectGroup").hide();
   } else {
     // Hide classroom select and timeslot select
     $("#classroomSelectGroup").hide();
+    $("#classDateSelectGroup").hide();
     $("#timeslotSelectGroup").hide();
     $("#classNumSelectGroup").hide();
     
@@ -223,60 +234,84 @@ $("#classroomAreaSelect").on("change", function () {
 // When the classroom is selected
 $("#classroomSelect").on("change", function () {
   const selectedClassroom = $(this).val();
+  console.log('Selected Classroom:', selectedClassroom);
 
   if (selectedClassroom) {
-    // Create a Set to store unique time slots
-    const classTimes = new Set();
-
-    // Filter and process the data
-    classroom_data.forEach((item) => {
-      if (item.classroom === selectedClassroom) {
-        const classTime = `星期${item.class_week} ${item.start_time}-${item.end_time}`;
-        classTimes.add(classTime); // Add to Set to ensure uniqueness
-      }
-    });
-
-    // Populate the timeslot select element
-    $("#timeslotSelect")
-      .empty()
-      .append('<option value="" disabled selected>請選擇上課時段</option>')
-      .append(
-        [...classTimes].map(
-          (time) => `<option value="${time}">${time}</option>`
-        )
-      );
-
-    // Show the timeslot select group
-    $("#timeslotSelectGroup").show();
+    $("#classDateSelectGroup").show();
+    $("#timeslotSelectGroup").hide();
     $("#classNumSelectGroup").hide();
   } else {
     // Hide the timeslot select group if no classroom is selected
+    $("#classDateSelectGroup").hide()
     $("#timeslotSelectGroup").hide();
     $("#classNumSelectGroup").hide();
   }
 });
 
-$("#timeslotSelect").on("change", function () {
-  if ($(this).val()) {
-    // Show class number select when a timeslot is selected
-    $("#classNumSelectGroup").show();
+$("#classDate").on("change", function () {
+  const selectedDate = moment($(this).val()); // 使用 Moment.js 解析所選日期
+  const today = moment().startOf('day'); // 獲取今天的日期並設置為開始時間
 
-  } else {
-    // Hide class number select if no timeslot is selected
+  console.log('selectedDate', selectedDate.format('YYYY-MM-DD')); // 日誌顯示所選日期
+  console.log('today', today.format('YYYY-MM-DD')); // 日誌顯示今天的日期
+  
+  // 檢查所選日期是否小於或等於今天
+  if (selectedDate.isSameOrBefore(today)) {
+    $("#scheduleMessage").html('<span style="color:red;">日期不能是今天或過去的日期</span>');
     $("#classNumSelectGroup").hide();
+    $("#timeslotSelectGroup").hide();
+    return;
+  } else if (selectedDate.isAfter(moment(end_class_date))) {
+    $("#scheduleMessage").html(`<span style="color:red;">日期不能超過${moment(end_class_date).format('YYYY-MM-DD')}</span>`);
+    $("#classNumSelectGroup").hide();
+    $("#timeslotSelectGroup").hide();
+    return;
+  } else {
+    $("#scheduleMessage").html(""); // 清空錯誤信息
   }
+
+  const selectedWeekday = selectedDate.isoWeekday();  // 使用 isoWeekday() 獲取 ISO 周的星期幾
+  const weekdaysMap = ['一', '二', '三', '四', '五', '六', '日'];
+
+  // 篩選並顯示對應的時段
+   // 篩選並顯示對應的時段
+   const classTimes = classroom_data
+   .filter(item => {
+     return weekdaysMap[selectedWeekday - 1] === item.class_week && item.classroom === $("#classroomSelect").val();
+   })
+   .map(item => {
+     return {
+       time: `星期${item.class_week} ${item.start_time}-${item.end_time}`,
+       startTime: item.start_time
+     };
+   })
+   .sort((a, b) => {
+      return a.startTime.localeCompare(b.startTime); // 使用字串比對
+   });
+
+ if (classTimes.length > 0) {
+   $("#timeslotSelect")
+     .empty()
+     .append('<option value="" disabled selected>請選擇上課時段</option>')
+     .append(classTimes.map((time) => `<option value="${time.time}">${time.time}</option>`));
+   $("#timeslotSelectGroup").show();
+ } else {
+   $("#scheduleMessage").html('<span style="color:red;">當天沒有可用時段</span>');
+   $("#timeslotSelectGroup").hide();
+   return;
+ }
+
+ $("#classNumSelectGroup").hide(); // 等選擇時段後再顯示堂數選項
 });
 
-// $("#classNumSelect").on("change", function () {
-//   const selectedClassNum = $(this).val();
+$("#timeslotSelect").on("change", function () {
+ if ($(this).val()) {
+   $("#classNumSelectGroup").show(); // 顯示堂數選項
+ } else {
+   $("#classNumSelectGroup").hide();
+ }
+});
 
-//   if (selectedClassNum) {
-//     $("#classNumSelectGroup").show();
-//   } else {
-//     // Hide the timeslot select group if no classroom is selected
-//     $("#classNumSelectGroup").hide();
-//   }
-// });
 
 // 清空排課表單內容函式
 function clearScheduleForm() {
@@ -284,6 +319,8 @@ function clearScheduleForm() {
   $("#classroomSelect").empty(); // 清空上課教室選擇
   $("#classroomSelectGroup").hide(); // 隱藏上課教室選擇
   $("#timeslotSelect").empty(); // 清空上課時段選擇
+  $("#classDateSelectGroup").hide(); // 隱藏開始上課日期
+  $("#classDate").empty(); // 清空開始上課日期
   $("#timeslotSelectGroup").hide(); // 隱藏上課時段選擇
   $("#classNumSelect").val(""); // 清空上課堂數選擇
   $("#classNumSelectGroup").hide();
@@ -364,7 +401,7 @@ if (window.location.pathname === '/index') {
             );
             return;
           } else { 
-            if (class_num <= 20) {
+            if (sc_class_num < 20) {
               let day_event = [];
               // 檢查當天的事件，並存入 day_event 中
               for (let i = 0; i < event_data.length; i++) {
@@ -380,7 +417,8 @@ if (window.location.pathname === '/index') {
                   // 如果開始時間相同，則判定為衝突
                   if (day_time[0] === select_time[0]) {
                       $("#fc_scheduleMessage").html(
-                          '<span style="color:red;">與您目前的課程衝堂，無法加選!</span>'
+                          `<span style="color:red;">與您目前的課程衝堂，無法加選!</span>`
+                          
                       );
                       return; // 退出函數，停止加選
                   }
@@ -437,7 +475,7 @@ $("#fc_classroomAreaSelect").on("change", function () {
   }
 });
 
-// When the classroom is selected
+// 當選擇教室時
 $("#fc_classroomSelect").on("change", function () {
   const selectedClassroom = $(this).val();
   const selectedDate = new Date($("#classroomDateSelect").val());
@@ -447,30 +485,39 @@ $("#fc_classroomSelect").on("change", function () {
 
   // 建立一個對應的中文星期對照表
   const weekdayMap = {
-    0: "日", // 0 對應「日」
-    1: "一", // 1 對應「一」
-    2: "二", // 2 對應「二」
-    3: "三", // 3 對應「三」
-    4: "四", // 4 對應「四」
-    5: "五", // 5 對應「五」
-    6: "六", // 6 對應「六」
+    0: "日",
+    1: "一",
+    2: "二",
+    3: "三",
+    4: "四",
+    5: "五",
+    6: "六",
   };
 
   const selectedWeekdayChinese = weekdayMap[selectedWeekdayNumber];
 
   if (selectedClassroom && selectedWeekdayChinese) {
-    // 創建一個 Set 用來存儲唯一的上課時段
     const classTimes = [];
 
-    // 過濾並處理資料
     classroom_data.forEach((item) => {
-      // 確認教室符合，並且 class_week (中文「一、二、三...七」) 對應到選擇的日期
       if (
         item.classroom === selectedClassroom &&
         item.class_week === selectedWeekdayChinese
       ) {
-        const classTime = `星期${item.class_week} ${item.start_time}-${item.end_time}`;
-        classTimes.push(classTime); // 添加到 Set 中，確保唯一性
+
+        let currentAttendanceText = "";
+        const matchingRecord = classroom_attend_data.find(
+          (attend) =>
+            attend.classtime_id === item.classtime_id &&
+            attend.class_date === $("#classroomDateSelect").val()
+        );
+        
+        if (matchingRecord) {
+          currentAttendanceText = ` (額滿)`;
+      }
+
+        const classTime = `星期${item.class_week} ${item.start_time}-${item.end_time}${currentAttendanceText}`;
+        classTimes.push(classTime);
       }
     });
 
@@ -479,9 +526,11 @@ $("#fc_classroomSelect").on("change", function () {
       .empty()
       .append('<option value="" disabled selected>請選擇上課時段</option>')
       .append(
-        [...classTimes].map(
-          (time) => `<option value="${time}">${time}</option>`
-        )
+          classTimes.map((time) => {
+              // 判斷是否為額滿，然後根據條件添加樣式和 disabled
+              const isFull = time.includes('(額滿)'); // 檢查是否包含 "(額滿)"
+              return `<option value="${time}" style="${isFull ? 'color: red;' : ''}" ${isFull ? 'disabled' : ''}>${time}</option>`;
+          })
       );
 
     // 顯示時段選擇框
@@ -491,6 +540,7 @@ $("#fc_classroomSelect").on("change", function () {
     $("#fc_timeslotSelectGroup").hide();
   }
 });
+
 
 // 清空排課表單內容函式
 function fc_clearScheduleForm() {
