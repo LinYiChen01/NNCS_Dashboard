@@ -401,10 +401,64 @@ def ad_index():
                 'st_note' : i['note'],
             })
 
+        course_name_data = []
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT name FROM `courses`;")
+            result = cursor.fetchall()
+            course_name_data = result
+        
+
         
         return render_template("ad_index.html", **locals())
     else:
         return redirect(url_for('login'))
+
+@app.route('/st_insertDataButton', methods=['GET', 'POST'])
+def st_insertDataButton():
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+        name = request.form['name']
+        age = request.form['age']
+        email = request.form['email']
+        address = request.form['address']
+        tuition = request.form['tuition']
+        course_id = request.form['course_id']
+        parent = request.form['parent']
+        phone1 = request.form['phone1']
+        phone2 = request.form.get('phone2')
+        workplace = request.form['workplace']
+        profession = request.form['profession']
+        note = request.form['note'] 
+        # 預設圖片
+        with open('templates/assets/img/avatar/avatar-1.png', 'rb') as file:
+            picture = file.read()
+
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO users (name, age, address, phone1, phone2, email, picture, create_date, role, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+                                   (name, age, address, phone1, phone2, email, picture, datetime.today(), '1', '1'))
+            
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT user_id FROM users ORDER BY user_id DESC LIMIT 1;")
+            result = cursor.fetchone()
+            st_id = result['user_id']
+
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE users SET acc=%s, pwd=%s WHERE user_id=%s;", ('st'+str(st_id), 'st'+str(st_id), st_id))
+        
+        
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO students (st_id, workplace, profession, parent, tuition, pay_num, course_id, note) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", 
+                                   (st_id, workplace, profession, parent, tuition, 0, course_id, note))
+        
+        connection.commit() 
+        # return('GOOOD')
+        # return render_template("ad_index.html", **locals())
+        return redirect(url_for('ad_index'))
+    else:
+        return redirect(url_for('login'))
+
+
 
 
 # 單堂加課

@@ -38,8 +38,8 @@ $("#leaveButton").fireModal({
       handler: function (modal) {
         const leaveDate = $("#leaveDate").val();
         const endDate = $("#endDate").val();
-        const today = new Date();  // 今天的日期
-        today.setHours(0, 0, 0, 0);  // 將時間部分設置為 0，確保只比較日期部分
+        const today = new Date(); // 今天的日期
+        today.setHours(0, 0, 0, 0); // 將時間部分設置為 0，確保只比較日期部分
 
         // 檢查是否有空的欄位
         if (!leaveDate || !endDate) {
@@ -55,7 +55,9 @@ $("#leaveButton").fireModal({
         // 檢查開始日期和結束日期是否大於今天（不含今天）
         if (leaveDateObj <= today || endDateObj <= today) {
           $("#leaveMessage").html(
-            `<span style="color:red;">請假日期只能是${moment(today).format('YYYY-MM-DD')}以後！</span>`
+            `<span style="color:red;">請假日期只能是${moment(today).format(
+              "YYYY-MM-DD"
+            )}以後！</span>`
           );
           return;
         }
@@ -74,7 +76,6 @@ $("#leaveButton").fireModal({
     },
   ],
 });
-
 
 // 每次模態關閉後清空表單內容
 $(document).on("hide.bs.modal", "#leaveModal", function () {
@@ -156,28 +157,34 @@ if (window.location.pathname === "/index") {
           const classroomSelect = $("#classroomSelect").val();
           const timeslotSelect = $("#timeslotSelect").val();
           var classNumSelect = $("#classNumSelect").val();
-          if (classNumSelect === "補完剩下堂數") { 
+          if (classNumSelect === "補完剩下堂數") {
             classNumSelect = 20 - sc_class_num; // 使用剩下的課堂數
-        }
-          
+          }
 
           // 檢查是否有空的欄位
-          if (!classroomAreaSelect || !classroomSelect || !timeslotSelect || !classNumSelect) {
+          if (
+            !classroomAreaSelect ||
+            !classroomSelect ||
+            !timeslotSelect ||
+            !classNumSelect
+          ) {
             $("#scheduleMessage").html(
               '<span style="color:red;">請選擇完整的排課資料</span>'
             );
             return;
-          } else { 
+          } else {
             if (sc_class_num < 20) {
               if (parseInt(classNumSelect) + sc_class_num <= 20) {
                 $("#scheduleForm").submit();
               } else {
                 $("#scheduleMessage").html(
-                  `<span style="color:red;">您目前安排上課堂數為${sc_class_num}堂，剩下${20 - sc_class_num}堂可以安排上課!${classNumSelect}</span>`
+                  `<span style="color:red;">您目前安排上課堂數為${sc_class_num}堂，剩下${
+                    20 - sc_class_num
+                  }堂可以安排上課!${classNumSelect}</span>`
                 );
                 return;
               }
-            } else { 
+            } else {
               $("#scheduleMessage").html(
                 `<span style="color:red;">您所安排的課程已超過上課次數20堂!</span>`
               );
@@ -227,14 +234,13 @@ $("#classroomAreaSelect").on("change", function () {
     $("#classDateSelectGroup").hide();
     $("#timeslotSelectGroup").hide();
     $("#classNumSelectGroup").hide();
-    
   }
 });
 
 // When the classroom is selected
 $("#classroomSelect").on("change", function () {
   const selectedClassroom = $(this).val();
-  console.log('Selected Classroom:', selectedClassroom);
+  console.log("Selected Classroom:", selectedClassroom);
 
   if (selectedClassroom) {
     $("#classDateSelectGroup").show();
@@ -242,7 +248,7 @@ $("#classroomSelect").on("change", function () {
     $("#classNumSelectGroup").hide();
   } else {
     // Hide the timeslot select group if no classroom is selected
-    $("#classDateSelectGroup").hide()
+    $("#classDateSelectGroup").hide();
     $("#timeslotSelectGroup").hide();
     $("#classNumSelectGroup").hide();
   }
@@ -250,19 +256,25 @@ $("#classroomSelect").on("change", function () {
 
 $("#classDate").on("change", function () {
   const selectedDate = moment($(this).val()); // 使用 Moment.js 解析所選日期
-  const today = moment().startOf('day'); // 獲取今天的日期並設置為開始時間
+  const today = moment().startOf("day"); // 獲取今天的日期並設置為開始時間
 
-  console.log('selectedDate', selectedDate.format('YYYY-MM-DD')); // 日誌顯示所選日期
-  console.log('today', today.format('YYYY-MM-DD')); // 日誌顯示今天的日期
-  
+  console.log("selectedDate", selectedDate.format("YYYY-MM-DD")); // 日誌顯示所選日期
+  console.log("today", today.format("YYYY-MM-DD")); // 日誌顯示今天的日期
+
   // 檢查所選日期是否小於或等於今天
   if (selectedDate.isSameOrBefore(today)) {
-    $("#scheduleMessage").html('<span style="color:red;">日期不能是今天或過去的日期</span>');
+    $("#scheduleMessage").html(
+      '<span style="color:red;">日期不能是今天或過去的日期</span>'
+    );
     $("#classNumSelectGroup").hide();
     $("#timeslotSelectGroup").hide();
     return;
   } else if (selectedDate.isAfter(moment(end_class_date))) {
-    $("#scheduleMessage").html(`<span style="color:red;">日期不能超過${moment(end_class_date).format('YYYY-MM-DD')}</span>`);
+    $("#scheduleMessage").html(
+      `<span style="color:red;">日期不能超過${moment(end_class_date).format(
+        "YYYY-MM-DD"
+      )}</span>`
+    );
     $("#classNumSelectGroup").hide();
     $("#timeslotSelectGroup").hide();
     return;
@@ -270,48 +282,56 @@ $("#classDate").on("change", function () {
     $("#scheduleMessage").html(""); // 清空錯誤信息
   }
 
-  const selectedWeekday = selectedDate.isoWeekday();  // 使用 isoWeekday() 獲取 ISO 周的星期幾
-  const weekdaysMap = ['一', '二', '三', '四', '五', '六', '日'];
+  const selectedWeekday = selectedDate.isoWeekday(); // 使用 isoWeekday() 獲取 ISO 周的星期幾
+  const weekdaysMap = ["一", "二", "三", "四", "五", "六", "日"];
 
   // 篩選並顯示對應的時段
-   // 篩選並顯示對應的時段
-   const classTimes = classroom_data
-   .filter(item => {
-     return weekdaysMap[selectedWeekday - 1] === item.class_week && item.classroom === $("#classroomSelect").val();
-   })
-   .map(item => {
-     return {
-       time: `星期${item.class_week} ${item.start_time}-${item.end_time}`,
-       startTime: item.start_time
-     };
-   })
-   .sort((a, b) => {
+  // 篩選並顯示對應的時段
+  const classTimes = classroom_data
+    .filter((item) => {
+      return (
+        weekdaysMap[selectedWeekday - 1] === item.class_week &&
+        item.classroom === $("#classroomSelect").val()
+      );
+    })
+    .map((item) => {
+      return {
+        time: `星期${item.class_week} ${item.start_time}-${item.end_time}`,
+        startTime: item.start_time,
+      };
+    })
+    .sort((a, b) => {
       return a.startTime.localeCompare(b.startTime); // 使用字串比對
-   });
+    });
 
- if (classTimes.length > 0) {
-   $("#timeslotSelect")
-     .empty()
-     .append('<option value="" disabled selected>請選擇上課時段</option>')
-     .append(classTimes.map((time) => `<option value="${time.time}">${time.time}</option>`));
-   $("#timeslotSelectGroup").show();
- } else {
-   $("#scheduleMessage").html('<span style="color:red;">當天沒有可用時段</span>');
-   $("#timeslotSelectGroup").hide();
-   return;
- }
+  if (classTimes.length > 0) {
+    $("#timeslotSelect")
+      .empty()
+      .append('<option value="" disabled selected>請選擇上課時段</option>')
+      .append(
+        classTimes.map(
+          (time) => `<option value="${time.time}">${time.time}</option>`
+        )
+      );
+    $("#timeslotSelectGroup").show();
+  } else {
+    $("#scheduleMessage").html(
+      '<span style="color:red;">當天沒有可用時段</span>'
+    );
+    $("#timeslotSelectGroup").hide();
+    return;
+  }
 
- $("#classNumSelectGroup").hide(); // 等選擇時段後再顯示堂數選項
+  $("#classNumSelectGroup").hide(); // 等選擇時段後再顯示堂數選項
 });
 
 $("#timeslotSelect").on("change", function () {
- if ($(this).val()) {
-   $("#classNumSelectGroup").show(); // 顯示堂數選項
- } else {
-   $("#classNumSelectGroup").hide();
- }
+  if ($(this).val()) {
+    $("#classNumSelectGroup").show(); // 顯示堂數選項
+  } else {
+    $("#classNumSelectGroup").hide();
+  }
 });
-
 
 // 清空排課表單內容函式
 function clearScheduleForm() {
@@ -325,8 +345,6 @@ function clearScheduleForm() {
   $("#classNumSelect").val(""); // 清空上課堂數選擇
   $("#classNumSelectGroup").hide();
   $("#scheduleMessage").html(""); // 清空訊息
-  
-
 }
 
 // 先清空表單再顯示視窗
@@ -334,12 +352,10 @@ $("#fc_scheduleButton").on("click", function () {
   fc_clearScheduleForm();
 });
 
-
-
 // 只在index的時候作用
-if (window.location.pathname === '/index') {
-// fc_scheduleButton Modal
-    $("#fc_scheduleButton").fireModal({
+if (window.location.pathname === "/index") {
+  // fc_scheduleButton Modal
+  $("#fc_scheduleButton").fireModal({
     title: "排課",
     body: `
       <form id="fc_scheduleForm" method="POST" action="/fc_scheduleButton" enctype="multipart/form-data">
@@ -400,45 +416,46 @@ if (window.location.pathname === '/index') {
               '<span style="color:red;">請選擇完整的排課資料</span>'
             );
             return;
-          } else { 
+          } else {
             if (sc_class_num < 20) {
               let day_event = [];
               // 檢查當天的事件，並存入 day_event 中
               for (let i = 0; i < event_data.length; i++) {
-                const formattedEventDate = moment(event_data[i]['start']).format('YYYY-MM-DD');
+                const formattedEventDate = moment(
+                  event_data[i]["start"]
+                ).format("YYYY-MM-DD");
                 if (formattedEventDate === classroomDateSelect) {
-                    day_event.push(i);
+                  day_event.push(i);
                 }
               }
               // 檢查時間衝突
               for (let i of day_event) {
-                  const day_time = event_data[i]['title'].split('\n')[1].split('-'); // 獲取開始和結束時間
-                  const select_time = fc_timeslotSelect.split(' ')[1].split('-'); // 獲取選擇的時間段
-                  // 如果開始時間相同，則判定為衝突
-                  if (day_time[0] === select_time[0]) {
-                      $("#fc_scheduleMessage").html(
-                          `<span style="color:red;">與您目前的課程衝堂，無法加選!</span>`
-                          
-                      );
-                      return; // 退出函數，停止加選
-                  }
+                const day_time = event_data[i]["title"]
+                  .split("\n")[1]
+                  .split("-"); // 獲取開始和結束時間
+                const select_time = fc_timeslotSelect.split(" ")[1].split("-"); // 獲取選擇的時間段
+                // 如果開始時間相同，則判定為衝突
+                if (day_time[0] === select_time[0]) {
+                  $("#fc_scheduleMessage").html(
+                    `<span style="color:red;">與您目前的課程衝堂，無法加選!</span>`
+                  );
+                  return; // 退出函數，停止加選
+                }
               }
-          
+
               $("#fc_scheduleForm").submit(); // 確保這行代碼執行
-            }
-            else { 
+            } else {
               $("#fc_scheduleMessage").html(
                 '<span style="color:red;">您所安排的課程已超過上課次數20堂!</span>'
               );
               return;
             }
-            
           }
         },
       },
     ],
-    });
-};
+  });
+}
 
 $("#fc_classroomAreaSelect").on("change", function () {
   const selectedArea = $(this).val();
@@ -504,17 +521,16 @@ $("#fc_classroomSelect").on("change", function () {
         item.classroom === selectedClassroom &&
         item.class_week === selectedWeekdayChinese
       ) {
-
         let currentAttendanceText = "";
         const matchingRecord = classroom_attend_data.find(
           (attend) =>
             attend.classtime_id === item.classtime_id &&
             attend.class_date === $("#classroomDateSelect").val()
         );
-        
+
         if (matchingRecord) {
           currentAttendanceText = ` (額滿)`;
-      }
+        }
 
         const classTime = `星期${item.class_week} ${item.start_time}-${item.end_time}${currentAttendanceText}`;
         classTimes.push(classTime);
@@ -526,11 +542,13 @@ $("#fc_classroomSelect").on("change", function () {
       .empty()
       .append('<option value="" disabled selected>請選擇上課時段</option>')
       .append(
-          classTimes.map((time) => {
-              // 判斷是否為額滿，然後根據條件添加樣式和 disabled
-              const isFull = time.includes('(額滿)'); // 檢查是否包含 "(額滿)"
-              return `<option value="${time}" style="${isFull ? 'color: red;' : ''}" ${isFull ? 'disabled' : ''}>${time}</option>`;
-          })
+        classTimes.map((time) => {
+          // 判斷是否為額滿，然後根據條件添加樣式和 disabled
+          const isFull = time.includes("(額滿)"); // 檢查是否包含 "(額滿)"
+          return `<option value="${time}" style="${
+            isFull ? "color: red;" : ""
+          }" ${isFull ? "disabled" : ""}>${time}</option>`;
+        })
       );
 
     // 顯示時段選擇框
@@ -540,7 +558,6 @@ $("#fc_classroomSelect").on("change", function () {
     $("#fc_timeslotSelectGroup").hide();
   }
 });
-
 
 // 清空排課表單內容函式
 function fc_clearScheduleForm() {
@@ -634,8 +651,6 @@ $("#fc_leaveButton").fireModal({
       id: "fc_saveLleave",
       handler: function (modal) {
         $("#fc_leavestatus").val("saveLleave");
-        // $('#fc_event_data').val(JSON.stringify(event_data));
-        // $('#fc_attend_id').val('');
         modal.modal("hide");
       },
     },
@@ -646,7 +661,7 @@ $("#updateDataButton").on("click", function () {
   clearupdateForm();
 });
 
-if (window.location.pathname === '/profiles') {
+if (window.location.pathname === "/profiles") {
   // updateDataButton Modal
   $("#updateDataButton").fireModal({
     title: "更新資料",
@@ -736,7 +751,7 @@ if (window.location.pathname === '/profiles') {
       },
     ],
   });
-};
+}
 
 function clearupdateForm() {
   $("#updateForm")[0].reset();
@@ -744,38 +759,43 @@ function clearupdateForm() {
   $("#submit_msg").text("");
   $("#uploadedImage").attr("src", picture);
   $("#uploadedImage").show();
-};
+}
 
-
-$('#fc_scheduleError_1').fireModal({ 
+$("#fc_scheduleError_1").fireModal({
   title: '<span style="color:#f36969;">警告⚠️<span style="color:red;">',
-  body: '只能選擇今天以後的日期來進行排課!' 
+  body: "只能選擇今天以後的日期來進行排課!",
 });
 
-if (window.location.pathname === '/index') {
-  $('#fc_scheduleError_2').fireModal({
+if (window.location.pathname === "/index") {
+  $("#fc_scheduleError_2").fireModal({
     title: '<span style="color:#f36969;">警告⚠️<span style="color:red;">',
-    body: `只能選擇${moment(end_class_date).format('YYYY-MM-DD')}前的日期進行排課!`
+    body: `只能選擇${moment(end_class_date).format(
+      "YYYY-MM-DD"
+    )}前的日期進行排課!`,
   });
 }
 
-$('#loginFailure').fireModal({ 
+$("#loginFailure").fireModal({
   title: '<span style="color:#f36969;">登入失敗❌<span style="color:red;">',
-  body: '請確認帳號或密碼是否輸入正確!' 
+  body: "請確認帳號或密碼是否輸入正確!",
 });
 
-
-$("#cert_updateDataButton").fireModal({
-  title: "上傳證照",
-  body: `
+if (window.location.pathname === "/certificate") {
+  $("#cert_updateDataButton").fireModal({
+    title: "上傳證照",
+    body: `
     <form id="updateForm" method="POST" action="/cert_updateDataButton" enctype="multipart/form-data">
         <div class="form-group">
             <label for="cert_name">認證單位<span style="color: red;">*</span></label>
             <input type="text" id="cert_name_hidden" name="cert_name_hidden" style="display:none;">
             <select class="form-control" id="cert_name" name="cert_name" onchange="toggleCustomCertName()">
                 <option value="" disabled selected>選擇認證單位</option>
-                ${names.map(name => `
-                  <option value="${name}">${name}</option>`).join('')}
+                ${names
+                  .map(
+                    (name) => `
+                  <option value="${name}">${name}</option>`
+                  )
+                  .join("")}
                 <option value="其他">其他</option>
             </select>
             <input type="text" class="form-control mt-2" id="cert_name_other" name="cert_name_other" placeholder="請輸入認證單位" style="display:none;">
@@ -785,8 +805,12 @@ $("#cert_updateDataButton").fireModal({
             <input type="text" id="cert_program_hidden" name="cert_program_hidden" style="display:none;">
             <select class="form-control" id="cert_program" name="cert_program" onchange="toggleCustomCertProgram()">
                 <option value="" disabled selected>選擇認證科目</option>
-                ${programs.map(program => `
-                  <option value="${program}">${program}</option>`).join('')}
+                ${programs
+                  .map(
+                    (program) => `
+                  <option value="${program}">${program}</option>`
+                  )
+                  .join("")}
                 <option value="其他">其他</option>
             </select>
             <input type="text" class="form-control mt-2" id="cert_program_other" name="cert_program_other" placeholder="請輸入認證科目" style="display:none;">
@@ -806,6 +830,223 @@ $("#cert_updateDataButton").fireModal({
     </form>
     <div id="cert_updateDataMessage"></div>
   `,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
+      },
+      {
+        text: "送出",
+        class: "btn btn-primary",
+        handler: function (modal) {
+          const certName = document.getElementById("cert_name").value;
+          const certProgram = document.getElementById("cert_program").value;
+          const certDate = document.getElementById("cert_date").value;
+          const fileInput = document.getElementById("file");
+
+          // 檢查必填欄位
+          if (
+            !certName ||
+            (certName === "其他" &&
+              !document.getElementById("cert_name_other").value) ||
+            !certProgram ||
+            (certProgram === "其他" &&
+              !document.getElementById("cert_program_other").value) ||
+            !certDate ||
+            fileInput.files.length === 0
+          ) {
+            $("#cert_updateDataMessage").html(
+              '<span style="color:red;">請輸入完整的證照資料!</span>'
+            );
+            return; // 結束函數，防止提交
+          }
+
+          // 確保日期不超過今天
+          const today = new Date();
+          const selectedDate = new Date(certDate);
+          if (selectedDate > today) {
+            $("#cert_updateDataMessage").html(
+              '<span style="color:red;">考照日期格是錯誤!</span>'
+            );
+            return; // 結束函數，防止提交
+          }
+
+          // 檢查 "其他" 輸入是否與現有選項重複
+          let finalCertName = certName;
+          let finalCertProgram = certProgram;
+
+          if (certName === "其他") {
+            finalCertName = document.getElementById("cert_name_other").value;
+
+            // 檢查是否重複，忽略大小寫
+            const isDuplicateCertName = names.some(
+              (name) => name.toLowerCase() === finalCertName.toLowerCase()
+            );
+            if (isDuplicateCertName) {
+              $("#cert_updateDataMessage").html(
+                '<span style="color:red;">此認證單位已存在，請從下拉選單中選擇!</span>'
+              );
+              return; // 結束函數，防止提交
+            }
+          }
+
+          if (certProgram === "其他") {
+            finalCertProgram =
+              document.getElementById("cert_program_other").value;
+
+            // 檢查是否重複，忽略大小寫
+            const isDuplicateCertProgram = programs.some(
+              (program) =>
+                program.toLowerCase() === finalCertProgram.toLowerCase()
+            );
+            if (isDuplicateCertProgram) {
+              $("#cert_updateDataMessage").html(
+                '<span style="color:red;">此認證科目已存在，請從下拉選單中選擇!</span>'
+              );
+              return; // 結束函數，防止提交
+            }
+          }
+
+          // 如果所有驗證都通過，進行提交
+          document.getElementById("cert_name_hidden").value = finalCertName;
+          document.getElementById("cert_program_hidden").value =
+            finalCertProgram;
+
+          // $("#updateForm").submit();
+        },
+      },
+    ],
+  });
+}
+// 控制自定義認證單位輸入框的顯示和隱藏
+function toggleCustomCertName() {
+  const selectElement = document.getElementById("cert_name");
+  const otherInput = document.getElementById("cert_name_other");
+
+  if (selectElement.value === "其他") {
+    otherInput.style.display = "block"; // 顯示輸入框
+    otherInput.value = ""; // 清空輸入框
+  } else {
+    otherInput.style.display = "none"; // 隱藏輸入框
+  }
+}
+
+// 控制自定義認證科目輸入框的顯示和隱藏
+function toggleCustomCertProgram() {
+  const selectElement = document.getElementById("cert_program");
+  const otherInput = document.getElementById("cert_program_other");
+
+  if (selectElement.value === "其他") {
+    otherInput.style.display = "block"; // 顯示輸入框
+    otherInput.value = ""; // 清空輸入框
+  } else {
+    otherInput.style.display = "none"; // 隱藏輸入框
+  }
+}
+
+// 學生資料新增
+$("#st_insertDataButton").fireModal({
+  size: "modal-lg",
+  title: "學生資料新增",
+  body: `
+      <form id="studentDataForm" method="POST" action="/st_insertDataButton">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="name">學生姓名 <span style="color: red">*</span></label>
+              <input type="text" name="name" class="form-control" id="name" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="age">年齡 <span style="color: red">*</span></label>
+              <input type="text" name="age" class="form-control" id="age" required>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="email">Email <span style="color: red">*</span></label>
+              <input type="email" name="email" class="form-control" id="email" required>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="address">聯絡住址 <span style="color: red">*</span></label>
+              <input type="text" name="address" class="form-control" id="address" required>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="tuition">學費 <span style="color: red">*</span></label>
+              <input type="text" name="tuition" class="form-control" id="tuition" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="course_id">學習進度 <span style="color: red">*</span></label>
+              <select name="course_id" class="form-control" id="course_id" required>
+                <option value="" disabled selected>請選擇學習進度</option>
+                ${course_name_data.map(course => `<option value="${course.id}">${course.name}</option>`).join('')}
+              </select>
+            </div>
+          </div> 
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="parent">家長姓名 <span style="color: red">*</span></label>
+              <input type="text" name="parent" class="form-control" id="parent" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="phone1">連絡電話1 <span style="color: red">*</span></label>
+              <input type="text" name="phone1" class="form-control" id="phone1" required>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="phone2">連絡電話2</label>
+              <input type="text" name="phone2" class="form-control" id="phone2">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="workplace">就讀學校/就業公司 <span style="color: red">*</span></label>
+              <input type="text" name="workplace" class="form-control" id="workplace" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="profession">職業 <span style="color: red">*</span></label>
+              <input type="text" name="profession" class="form-control" id="profession" required>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="note">備註</label>
+              <input type="text" name="note" class="form-control" id="note">
+            </div>
+          </div>
+        </div>
+        <span id="st_insertDataMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
+      </form>
+  `,
   buttons: [
     {
       text: "取消",
@@ -818,101 +1059,55 @@ $("#cert_updateDataButton").fireModal({
       text: "送出",
       class: "btn btn-primary",
       handler: function (modal) {
-        const certName = document.getElementById('cert_name').value;
-        const certProgram = document.getElementById('cert_program').value;
-        const certDate = document.getElementById('cert_date').value;
-        const fileInput = document.getElementById('file');
-        
-        // 檢查必填欄位
-        if (!certName || (certName === '其他' && !document.getElementById('cert_name_other').value) ||
-            !certProgram || (certProgram === '其他' && !document.getElementById('cert_program_other').value) ||
-            !certDate ||
-          fileInput.files.length === 0)
-        {
-            $("#cert_updateDataMessage").html(
-              '<span style="color:red;">請輸入完整的證照資料!</span>'
-            );
-            return; // 結束函數，防止提交
+        const message = $("#st_insertDataMessage");
+        const userId = $("#name").val();
+        const age = $("#age").val();
+        const email = $("#email").val();
+        const phone1 = $("#phone1").val();
+        const tuition = $("#tuition").val();
+        const address = $("#address").val();
+        const parent = $("#parent").val();
+        const workplace = $("#workplace").val();
+        const profession = $("#profession").val();
+        const note = $("#note").val(); // 取得 note 欄位的值
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phonePattern = /^[0-9]{10}$/;
+        const tuitionPattern = /^[0-9]+$/;
+
+        // 清空之前的錯誤訊息
+        message.text("");
+
+        if (!emailPattern.test(email)) {
+          message.text("Email 格式錯誤!");
+          return;
+        }
+        if (!tuitionPattern.test(tuition)) {
+          message.text("學費格式錯誤!");
+          return;
+        }
+        if (!phonePattern.test(phone1)) {
+          message.text("電話號碼格式錯誤!");
+          return;
+        }
+        if (note.length > 100) { 
+          message.text("備註不能超過 100 字!");
+          return;
+        }
+
+        if (!userId || !age || !email || !phone1 || !tuition || !address || !parent || !workplace || !profession) {
+          message.text("請輸入完整資料!");
+          return;
         }
         
-        // 確保日期不超過今天
-        const today = new Date();
-        const selectedDate = new Date(certDate);
-        if (selectedDate > today) {
-            $("#cert_updateDataMessage").html(
-              '<span style="color:red;">考照日期格是錯誤!</span>'
-            );
-            return; // 結束函數，防止提交
-        }
 
-        // 檢查 "其他" 輸入是否與現有選項重複
-        let finalCertName = certName;
-        let finalCertProgram = certProgram;
-
-        if (certName === '其他') {
-          finalCertName = document.getElementById('cert_name_other').value;
-
-          // 檢查是否重複，忽略大小寫
-          const isDuplicateCertName = names.some(name => name.toLowerCase() === finalCertName.toLowerCase());
-          if (isDuplicateCertName) {
-              $("#cert_updateDataMessage").html(
-                '<span style="color:red;">此認證單位已存在，請從下拉選單中選擇!</span>'
-              );
-              return; // 結束函數，防止提交
-          }
-      }
-
-      if (certProgram === '其他') {
-          finalCertProgram = document.getElementById('cert_program_other').value;
-
-          // 檢查是否重複，忽略大小寫
-          const isDuplicateCertProgram = programs.some(program => program.toLowerCase() === finalCertProgram.toLowerCase());
-          if (isDuplicateCertProgram) {
-              $("#cert_updateDataMessage").html(
-                '<span style="color:red;">此認證科目已存在，請從下拉選單中選擇!</span>'
-              );
-              return; // 結束函數，防止提交
-          }
-      }
-
-      // 如果所有驗證都通過，進行提交
-      document.getElementById('cert_name_hidden').value = finalCertName;
-      document.getElementById('cert_program_hidden').value = finalCertProgram;
-      
-      // $("#updateForm").submit();
+        // 如果驗證通過，提交表單
+        $("#studentDataForm").submit();
+      },
     },
-  },
-],
+  ],
 });
 
-// 控制自定義認證單位輸入框的顯示和隱藏
-function toggleCustomCertName() {
-  const selectElement = document.getElementById('cert_name');
-  const otherInput = document.getElementById('cert_name_other');
-  
-  if (selectElement.value === '其他') {
-    otherInput.style.display = 'block'; // 顯示輸入框
-    otherInput.value = ''; // 清空輸入框
-  } else {
-    otherInput.style.display = 'none'; // 隱藏輸入框
-  }
-}
-
-// 控制自定義認證科目輸入框的顯示和隱藏
-function toggleCustomCertProgram() {
-  const selectElement = document.getElementById('cert_program');
-  const otherInput = document.getElementById('cert_program_other');
-  
-  if (selectElement.value === '其他') {
-    otherInput.style.display = 'block'; // 顯示輸入框
-    otherInput.value = ''; // 清空輸入框
-  } else {
-    otherInput.style.display = 'none'; // 隱藏輸入框
-  }
-}
-
-
-
+$("#editStudentModal").fireModal({ body: `<input type='text' id='a'>` });
 
 $("#modal-1").fireModal({ body: "Modal body text goes here." });
 

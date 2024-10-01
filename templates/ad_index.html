@@ -40,12 +40,11 @@
     color: rgb(170, 170, 170); /* 按鈕顏色 */
     font-size: 18px; /* 按鈕大小 */
     z-index: 2; /* 確保按鈕在輸入框上方 */
-}
+  }
 
-.clear-btn:hover {
-    color: #000; /* 懸停顏色 */
-}
-
+  .clear-btn:hover {
+      color: #000; /* 懸停顏色 */
+  }
 </style>
 
 </head>
@@ -118,9 +117,11 @@
                 </div>
                 <script>
                     var st_data = {{ st_data| tojson | safe}};
+                    var course_name_data = {{course_name_data| tojson | safe}};
+                    console.log(course_name_data);
                 </script>
                 <div class="card-body table-responsive p-0" id="top-5-scroll_st_table" style="padding-top: inherit;">
-
+                    <button type="button" id="editStudentModal" style="display: none;"></button>
                     <table class="table table-striped" id="studentTable">
                       <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
                         <tr>
@@ -138,7 +139,7 @@
                     </table>
                 </div>
                 <div class="card-footer text-right">
-                  <button class="btn btn-primary" id="cert_updateDataButton">新增學生</button>
+                  <button class="btn btn-primary" id="st_insertDataButton">新增學生</button>
                 </div>
               </div>
             </div>
@@ -173,6 +174,7 @@
   <script src="assets/modules/chocolat/dist/js/jquery.chocolat.min.js"></script>
 
   <!-- Page Specific JS File -->
+  <script src="assets/js/page/bootstrap-modal.js"></script>
   <script src="assets/js/page/components-table.js"></script>
   <script src="assets/js/page/ad_index.js"></script>
   
