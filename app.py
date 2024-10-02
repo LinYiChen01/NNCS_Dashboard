@@ -403,7 +403,7 @@ def ad_index():
 
         course_name_data = []
         with connection.cursor() as cursor:
-            cursor.execute("SELECT name FROM `courses`;")
+            cursor.execute("SELECT course_id, name FROM `courses`;")
             result = cursor.fetchall()
             course_name_data = result
         

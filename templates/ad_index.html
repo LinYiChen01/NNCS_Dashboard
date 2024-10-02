@@ -93,6 +93,8 @@
                   class="fas fa-child"></i><span>學生資訊管理</span></a></li>
             <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
               class="fas fa-home"></i><span>教室資訊管理</span></a></li>
+            <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
+              class="fas fa-box"></i><span>封存人員管理</span></a></li>
           </ul>
       </div>
 
@@ -118,7 +120,6 @@
                 <script>
                     var st_data = {{ st_data| tojson | safe}};
                     var course_name_data = {{course_name_data| tojson | safe}};
-                    console.log(course_name_data);
                 </script>
                 <div class="card-body table-responsive p-0" id="top-5-scroll_st_table" style="padding-top: inherit;">
                     <button type="button" id="editStudentModal" style="display: none;"></button>
@@ -130,7 +131,7 @@
                             <th>家長姓名</th>
                             <th>連絡電話1</th>
                             <th>連絡電話2</th>
-                            <th style="width: 115.09px;">操作</th>
+                            <th style="width: 142px;">操作</th>
                         </tr>
                       </thead>
                       <tbody id="studentTableBody">
@@ -148,11 +149,9 @@
       </div>
       <footer class="main-footer">
         <div class="footer-left">
-          Copyright &copy; 2018 <div class="bullet"></div> Design By <a href="https://nauval.in/">Muhamad Nauval Azhar</a>
+          組別: 113XXX 指導老師 : 林俊杰老師 &nbsp 專題組員: 11236001 林奕辰
         </div>
-        <div class="footer-right">
-          
-        </div>
+        <div class="footer-right"></div>
       </footer>
     </div>
   </div>

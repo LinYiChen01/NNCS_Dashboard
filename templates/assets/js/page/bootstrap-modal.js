@@ -963,7 +963,7 @@ $("#st_insertDataButton").fireModal({
           <div class="col-md-6">
             <div class="form-group">
               <label for="age">年齡 <span style="color: red">*</span></label>
-              <input type="text" name="age" class="form-control" id="age" required>
+              <input type="number" name="age" class="form-control" id="age" required>
             </div>
           </div>
         </div>
@@ -987,7 +987,7 @@ $("#st_insertDataButton").fireModal({
           <div class="col-md-6">
             <div class="form-group">
               <label for="tuition">學費 <span style="color: red">*</span></label>
-              <input type="text" name="tuition" class="form-control" id="tuition" required>
+              <input type="number" name="tuition" class="form-control" id="tuition" required>
             </div>
           </div>
           <div class="col-md-6">
@@ -995,7 +995,7 @@ $("#st_insertDataButton").fireModal({
               <label for="course_id">學習進度 <span style="color: red">*</span></label>
               <select name="course_id" class="form-control" id="course_id" required>
                 <option value="" disabled selected>請選擇學習進度</option>
-                ${course_name_data.map(course => `<option value="${course.id}">${course.name}</option>`).join('')}
+                ${course_name_data.map(course => `<option value="${course.course_id}">${course.name}</option>`).join('')}
               </select>
             </div>
           </div> 
@@ -1081,10 +1081,6 @@ $("#st_insertDataButton").fireModal({
           message.text("Email 格式錯誤!");
           return;
         }
-        if (!tuitionPattern.test(tuition)) {
-          message.text("學費格式錯誤!");
-          return;
-        }
         if (!phonePattern.test(phone1)) {
           message.text("電話號碼格式錯誤!");
           return;
@@ -1098,16 +1094,215 @@ $("#st_insertDataButton").fireModal({
           message.text("請輸入完整資料!");
           return;
         }
-        
-
-        // 如果驗證通過，提交表單
         $("#studentDataForm").submit();
       },
     },
   ],
 });
 
-$("#editStudentModal").fireModal({ body: `<input type='text' id='a'>` });
+  // 顯示模態視窗，並填充表單
+  $("#editStudentModal").fireModal({
+    size: "modal-lg",
+    title: `<span>學生資料【<span id="st_id"></span>】</span>`,
+    body: `
+    <form id="editStudentForm" method="POST" action="/editStudentModal">
+      <div class="form-group">
+        <img src="" id="st_picture" alt="上傳的圖片" style="max-width: 100px;">
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_name">學生姓名</label>
+            <input type="text" id="st_name" class="form-control">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_age">年齡</label>
+            <input type="number" id="st_age" class="form-control">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_acc">帳號</label>
+            <input type="text" id="st_acc" class="form-control">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_pwd">密碼</label>
+            <input type="text" id="st_pwd" class="form-control">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_course_name">學習進度</label>
+            <select type="select" id="st_course_name" class="form-control"></select>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_tuition">學費</label>
+            <input type="number" id="st_tuition" class="form-control">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_parent">家長姓名</label>
+            <input type="text" id="st_parent" class="form-control">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_phone1">連絡電話1</label>
+            <input type="text" id="st_phone1" class="form-control">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+              <label for="st_phone2">連絡電話2</label>
+              <input type="text" id="st_phone2" class="form-control">
+          </div>
+        </div>
+      </div>  
+      <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+              <label for="st_address">地址</label>
+              <input type="text" id="st_address" class="form-control">
+            </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+                <label for="st_email">Email</label>
+                <input type="email" id="st_email" class="form-control">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_workplace">工作地點</label>
+            <input type="text" id="st_workplace" class="form-control">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_profession">職業</label>
+            <input type="text" id="st_profession" class="form-control">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="st_note">備註</label>
+            <textarea id="st_note" class="form-control"></textarea>
+          </div>
+        </div>   
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="st_pay_num">繳費次數</label>
+            <input type="number" id="st_pay_num" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="st_create_date">入學日期</label>
+            <input type="text" id="st_create_date" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+          </div>
+        </div>
+      </div>
+      <span id="editStudenMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
+    </form>
+    `,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
+      },
+      {
+        text: "送出",
+        class: "btn btn-primary",
+        handler: function (modal) {
+          const Message = $('#editStudenMessage');
+          const stName = $('#st_name').val().trim();
+          const stAge = $('#st_age').val();
+          const stAcc = $('#st_acc').val().trim();
+          const stPwd = $('#st_pwd').val().trim();
+          const stTuition = $('#st_tuition').val();
+          const stParent = $('#st_parent').val().trim();
+          const stPhone1 = $('#st_phone1').val().trim();
+          const stEmail = $('#st_email').val().trim();
+          const stAddress = $('#st_address').val().trim();
+          const stWorkplace = $('#st_workplace').val().trim();
+          const stProfession = $('#st_profession').val().trim();
+          const stNote = $('#st_note').val().trim();
+          
+          Message.text(""); 
+          // 檢查所有必填字段
+          if (!stName || !stAge || !stAcc || !stPwd || !stTuition || !stParent || !stPhone1 || !stEmail || !stAddress || !stWorkplace || !stProfession) {
+            Message.text("所有欄位都必須填寫，除了連絡電話2！");
+            return;
+          }
+
+          // 驗證 email 格式
+          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailPattern.test(stEmail)) {
+            Message.text("請輸入有效的 Email 地址。");
+            return;
+          }
+
+          // 檢查備註字數
+          if (stNote.length > 100) {
+            Message.text("備註不能超過100字。");
+            return;
+          }
+          console.log("送出資料:", {
+            stName,
+            stAge,
+            stAcc,
+            stPwd,
+            stTuition,
+            stParent,
+            stPhone1,
+            stPhone2: $('#st_phone2').val().trim(),
+            stEmail,
+            stAddress,
+            stWorkplace,
+            stProfession,
+            stNote,
+            stPayNum: $('#st_pay_num').val(),
+            stCreateDate: $('#st_create_date').val(),
+          });
+
+          // 提交後關閉模態
+          modal.modal("hide");
+        },
+      },
+    ],
+});
+  
+  
+
+
 
 $("#modal-1").fireModal({ body: "Modal body text goes here." });
 
