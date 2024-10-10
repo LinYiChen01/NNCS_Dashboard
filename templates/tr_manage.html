@@ -87,12 +87,12 @@
           </div>
           <ul class="sidebar-menu">
             <li class="menu-header">資訊管理</li>
-            <li><a href="{{ url_for('tr_manage') }}" class="nav-link"><i
+            <li class=active><a href="{{ url_for('tr_manage') }}" class="nav-link"><i
                   class="fas fa-chalkboard-teacher"></i><span>老師資訊管理</span></a></li>
-            <li class=active><a href="{{ url_for('ad_index') }}" class="nav-link"><i
+            <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
                   class="fas fa-child"></i><span>學生資訊管理</span></a></li>
             <li><a href="{{ url_for('st_for_tr') }}" class="nav-link"><i
-                  class="fas fa-child"></i><span>學生與授課老師管理</span></a></li>      
+                  class="fas fa-child"></i><span>學生與授課老師管理</span></a></li>    
             <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
               class="fas fa-home"></i><span>教室資訊管理</span></a></li>
             <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
@@ -105,10 +105,10 @@
         <section class="section">
           <br>
           <div class="row">
-            <div class="col-lg-12">
-              <div class="card" style="height: calc(100% - 30px);">
+            <div class="col-12">
+              <div class="card">
                 <div class="card-header">
-                  <h4>學生資訊一覽</h4>
+                  <h4>老師資訊一覽</h4>
                   <div class="card-header-form">
                     <div class="input-group">
                           <span class="clear-btn" id="clearButton" onclick="clearInput()">&times;</span>
@@ -129,8 +129,8 @@
                     <table class="table table-striped" id="studentTable">
                       <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
                         <tr>
-                            <th>學號</th>
-                            <th>學生姓名</th>
+                            <th>編號</th>
+                            <th>老師姓名</th>
                             <th>家長姓名</th>
                             <th>連絡電話1</th>
                             <th>連絡電話2</th>

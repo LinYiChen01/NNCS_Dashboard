@@ -89,9 +89,9 @@
             <li class="menu-header">資訊管理</li>
             <li><a href="{{ url_for('tr_manage') }}" class="nav-link"><i
                   class="fas fa-chalkboard-teacher"></i><span>老師資訊管理</span></a></li>
-            <li class=active><a href="{{ url_for('ad_index') }}" class="nav-link"><i
+            <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
                   class="fas fa-child"></i><span>學生資訊管理</span></a></li>
-            <li><a href="{{ url_for('st_for_tr') }}" class="nav-link"><i
+            <li class=active><a href="{{ url_for('st_for_tr') }}" class="nav-link"><i
                   class="fas fa-child"></i><span>學生與授課老師管理</span></a></li>      
             <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
               class="fas fa-home"></i><span>教室資訊管理</span></a></li>
@@ -108,7 +108,7 @@
             <div class="col-lg-12">
               <div class="card" style="height: calc(100% - 30px);">
                 <div class="card-header">
-                  <h4>學生資訊一覽</h4>
+                  <h4>學生及授課老師資訊一覽</h4>
                   <div class="card-header-form">
                     <div class="input-group">
                           <span class="clear-btn" id="clearButton" onclick="clearInput()">&times;</span>
@@ -120,21 +120,22 @@
                   </div>
                 </div>
                 <script>
-                    var st_data = {{ st_data| tojson | safe}};
-                    var course_name_data = {{course_name_data| tojson | safe}};
+                  var st_data = {{ st_data| tojson | safe}};
+                  var course_data = {{ course_data| tojson | safe}};
+                  var tr_data = {{ tr_data| tojson | safe}};
+                  
                 </script>
                 <div class="card-body table-responsive p-0" id="top-5-scroll_st_table" style="padding-top: inherit;">
-                    <button type="button" id="editStudentButton" style="display: none;"></button>
-                    <button type="button" id="leaveStudentButton" style="display: none;"></button>
+                    <button type="button" id="edit_st_scheduleButton" style="display: none;"></button>
                     <table class="table table-striped" id="studentTable">
                       <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
                         <tr>
                             <th>學號</th>
                             <th>學生姓名</th>
-                            <th>家長姓名</th>
-                            <th>連絡電話1</th>
-                            <th>連絡電話2</th>
-                            <th style="width: 142px;">操作</th>
+                            <th>上課教室</th>
+                            <th>上課時段</th>
+                            <th>負責老師</th>
+                            <th style="width: 100px; padding-left: 31px;">操作</th>
                         </tr>
                       </thead>
                       <tbody id="studentTableBody">
@@ -143,7 +144,7 @@
                     </table>
                 </div>
                 <div class="card-footer text-right">
-                  <button class="btn btn-primary" id="st_insertDataButton">新增學生</button>
+                  <button class="btn btn-primary" id="st_scheduleButton">新增學生</button>
                 </div>
               </div>
             </div>
@@ -178,7 +179,7 @@
   <!-- Page Specific JS File -->
   <script src="assets/js/page/bootstrap-modal.js"></script>
   <script src="assets/js/page/components-table.js"></script>
-  <script src="assets/js/page/ad_index.js"></script>
+  <script src="assets/js/page/st_for_tr.js"></script>
   
   <!-- Template JS File -->
   <script src="assets/js/scripts.js"></script>

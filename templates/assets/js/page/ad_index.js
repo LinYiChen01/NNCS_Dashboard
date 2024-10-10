@@ -28,7 +28,7 @@ function populateTable(data) {
             <td>${student.st_phone2}</td>
             <td style="width: 142px;">
                 <a class="btn btn-primary btn-action mr-1 edit-btn" data-id="${student.st_id}"><i class="fas fa-pencil-alt"></i></a>
-                <a class="btn btn-danger btn-action"><i class="fas fa-share-square"></i></a>
+                <a class="btn btn-danger btn-action leave-btn" data-id="${student.st_id}"><i class="fas fa-share-square"></i></a>
             </td>
         `;
         tableBody.appendChild(row);
@@ -38,38 +38,48 @@ function populateTable(data) {
     button.addEventListener('click', function() {
         const studentId = this.getAttribute('data-id');
         const studentData = data.find(student => student.st_id == studentId);
-        $('#st_id').text(studentData.st_id); 
-        $('#st_acc').val(studentData.st_acc); 
-        $('#st_pwd').val(studentData.st_pwd); 
-        $('#st_name').val(studentData.st_name); 
-        $('#st_age').val(studentData.st_age); 
-        $('#st_address').val(studentData.st_address); 
-        $('#st_phone1').val(studentData.st_phone1); 
-        $('#st_phone2').val(studentData.st_phone2);
-        $('#st_email').val(studentData.st_email);
-        $('#st_picture').attr('src', studentData.st_picture);
-        $('#st_create_date').val(moment(studentData.st_create_date).format('YYYY-MM-DD'));
-        $('#st_workplace').val(studentData.st_workplace);
-        $('#st_profession').val(studentData.st_profession);
-        $('#st_parent').val(studentData.st_parent);
-        $('#st_tuition').val(studentData.st_tuition);
-        $('#st_pay_num').val(studentData.st_pay_num);
+        $('#st_id_edit').text(studentData.st_id); 
+        $('#st_acc_edit').val(studentData.st_acc); 
+        $('#st_pwd_edit').val(studentData.st_pwd); 
+        $('#st_name_edit').val(studentData.st_name); 
+        $('#st_age_edit').val(studentData.st_age); 
+        $('#st_address_edit').val(studentData.st_address); 
+        $('#st_phone1_edit').val(studentData.st_phone1); 
+        $('#st_phone2_edit').val(studentData.st_phone2);
+        $('#st_email_edit').val(studentData.st_email);
+        $('#st_picture_edit').attr('src', studentData.st_picture);
+        $('#st_create_date_edit').val(moment(studentData.st_create_date).format('YYYY-MM-DD'));
+        $('#st_workplace_edit').val(studentData.st_workplace);
+        $('#st_profession_edit').val(studentData.st_profession);
+        $('#st_parent_edit').val(studentData.st_parent);
+        $('#st_tuition_edit').val(studentData.st_tuition);
+        $('#st_pay_num_edit').val(studentData.st_pay_num);
         const currentCourseId = studentData.st_course_id;
         const currentCourseName = course_name_data.find(course => course.course_id === currentCourseId)?.name;
-        $('#st_course_name').html(`
+        $('#st_course_name_edit').html(`
             <option value="" disabled>請選擇學習進度</option>
             ${course_name_data.map(course => 
               `<option value="${course.course_id}" ${course.course_id === currentCourseId ? 'selected' : ''}>${course.name}</option>`).join('')}
           `);
 
-        $('#st_note').val(studentData.st_note);
-        const textarea = document.getElementById('st_note');
+        $('#st_note_edit').val(studentData.st_note);
+        const textarea = document.getElementById('st_note_edit');
 
         textarea.addEventListener('input', function () {
             // 設置高度並強制使用 !important
             this.setAttribute('style', `height: ${this.scrollHeight}px !important;`);
         });
-        $('#editStudentModal').click();
+        $('#editStudentButton').click();
+    });
+ });
+    
+ document.querySelectorAll('.leave-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const studentId = this.getAttribute('data-id');
+        const studentData = data.find(student => student.st_id == studentId);
+        $('#st_id_leave').text(studentData.st_id); 
+        $('#st_name_leave').text(studentData.st_name); 
+        $('#leaveStudentButton').click();
     });
 });
 }

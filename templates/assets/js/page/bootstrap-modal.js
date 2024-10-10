@@ -775,9 +775,14 @@ if (window.location.pathname === "/index") {
   });
 }
 
-$("#loginFailure").fireModal({
+$("#loginFailure1").fireModal({
   title: '<span style="color:#f36969;">登入失敗❌<span style="color:red;">',
   body: "請確認帳號或密碼是否輸入正確!",
+});
+
+$("#loginFailure2").fireModal({
+  title: '<span style="color:#f36969;">登入失敗❌<span style="color:red;">',
+  body: "您的帳號已被停權，如有疑問請與我們聯繫!",
 });
 
 if (window.location.pathname === "/certificate") {
@@ -948,10 +953,11 @@ function toggleCustomCertProgram() {
 }
 
 // 學生資料新增
-$("#st_insertDataButton").fireModal({
-  size: "modal-lg",
-  title: "學生資料新增",
-  body: `
+if (window.location.pathname === "/ad_index") {
+  $("#st_insertDataButton").fireModal({
+    size: "modal-lg",
+    title: "學生資料新增",
+    body: `
       <form id="studentDataForm" method="POST" action="/st_insertDataButton">
         <div class="row">
           <div class="col-md-6">
@@ -1029,7 +1035,7 @@ $("#st_insertDataButton").fireModal({
               <input type="text" name="workplace" class="form-control" id="workplace" required>
             </div>
           </div>
-          <div class="col-md-6">
+          <div class="col-6">
             <div class="form-group">
               <label for="profession">職業 <span style="color: red">*</span></label>
               <input type="text" name="profession" class="form-control" id="profession" required>
@@ -1037,89 +1043,97 @@ $("#st_insertDataButton").fireModal({
           </div>
         </div>
         <div class="row">
-          <div class="col-md-12">
+          <div class="col-12">
             <div class="form-group">
               <label for="note">備註</label>
-              <input type="text" name="note" class="form-control" id="note">
+              <textarea name="note" class="form-control" id="note" rows="1"></textarea>
             </div>
           </div>
         </div>
         <span id="st_insertDataMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
       </form>
   `,
-  buttons: [
-    {
-      text: "取消",
-      class: "btn btn-secondary",
-      handler: function (modal) {
-        modal.modal("hide");
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
       },
-    },
-    {
-      text: "送出",
-      class: "btn btn-primary",
-      handler: function (modal) {
-        const message = $("#st_insertDataMessage");
-        const userId = $("#name").val();
-        const age = $("#age").val();
-        const email = $("#email").val();
-        const phone1 = $("#phone1").val();
-        const tuition = $("#tuition").val();
-        const address = $("#address").val();
-        const parent = $("#parent").val();
-        const workplace = $("#workplace").val();
-        const profession = $("#profession").val();
-        const note = $("#note").val(); // 取得 note 欄位的值
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phonePattern = /^[0-9]{10}$/;
-        const tuitionPattern = /^[0-9]+$/;
+      {
+        text: "送出",
+        class: "btn btn-primary",
+        handler: function (modal) {
+          const message = $("#st_insertDataMessage");
+          const userId = $("#name").val();
+          const age = $("#age").val();
+          const email = $("#email").val();
+          const phone1 = $("#phone1").val();
+          const tuition = $("#tuition").val();
+          const address = $("#address").val();
+          const parent = $("#parent").val();
+          const workplace = $("#workplace").val();
+          const profession = $("#profession").val();
+          const note = $("#note").val(); // 取得 note 欄位的值
+          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const phonePattern = /^[0-9]{10}$/;
+          const tuitionPattern = /^[0-9]+$/;
 
-        // 清空之前的錯誤訊息
-        message.text("");
+          // 清空之前的錯誤訊息
+          message.text("");
 
-        if (!emailPattern.test(email)) {
-          message.text("Email 格式錯誤!");
-          return;
-        }
-        if (!phonePattern.test(phone1)) {
-          message.text("電話號碼格式錯誤!");
-          return;
-        }
-        if (note.length > 100) { 
-          message.text("備註不能超過 100 字!");
-          return;
-        }
+          if (!emailPattern.test(email)) {
+            message.text("Email 格式錯誤!");
+            return;
+          }
+          if (!phonePattern.test(phone1)) {
+            message.text("電話號碼格式錯誤!");
+            return;
+          }
+          if (note.length > 100) {
+            message.text("備註不能超過 100 字!");
+            return;
+          }
 
-        if (!userId || !age || !email || !phone1 || !tuition || !address || !parent || !workplace || !profession) {
-          message.text("請輸入完整資料!");
-          return;
-        }
-        $("#studentDataForm").submit();
+          if (!userId || !age || !email || !phone1 || !tuition || !address || !parent || !workplace || !profession) {
+            message.text("請輸入完整資料!");
+            return;
+          }
+          $("#studentDataForm").submit();
+        },
       },
-    },
-  ],
-});
+    ],
+  });
+}
 
-  // 顯示模態視窗，並填充表單
-  $("#editStudentModal").fireModal({
+if (window.location.pathname === "/ad_index") {
+  const textarea = document.getElementById('note');
+  textarea.addEventListener('input', function () {
+    // 設置高度並強制使用 !important
+    this.setAttribute('style', `height: ${this.scrollHeight}px !important;`);
+  });
+
+  $("#editStudentButton").fireModal({
     size: "modal-lg",
-    title: `<span>學生資料【<span id="st_id"></span>】</span>`,
+    title: `<span>學生資料【<span id="st_id_edit"></span>】</span>`,
     body: `
-    <form id="editStudentForm" method="POST" action="/editStudentModal">
+    <form id="editStudentForm" method="POST" action="/editStudentButton">
+      <input type="input" style="display: none;" id="st_id_input_edit" name="st_id">
       <div class="form-group">
-        <img src="" id="st_picture" alt="上傳的圖片" style="max-width: 100px;">
+        <img src="" id="st_picture_edit" alt="上傳的圖片" style="max-width: 100px;">
       </div>
       <div class="row">
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_name">學生姓名</label>
-            <input type="text" id="st_name" class="form-control">
+            <input type="text" id="st_name_edit" name="st_name" class="form-control">
           </div>
         </div>
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_age">年齡</label>
-            <input type="number" id="st_age" class="form-control">
+            <input type="number" id="st_age_edit" name="st_age" class="form-control">
           </div>
         </div>
       </div>
@@ -1127,13 +1141,13 @@ $("#st_insertDataButton").fireModal({
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_acc">帳號</label>
-            <input type="text" id="st_acc" class="form-control">
+            <input type="text" id="st_acc_edit" name="st_acc" class="form-control">
           </div>
         </div>
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_pwd">密碼</label>
-            <input type="text" id="st_pwd" class="form-control">
+            <input type="text" id="st_pwd_edit" name="st_pwd" class="form-control">
           </div>
         </div>
       </div>
@@ -1141,13 +1155,13 @@ $("#st_insertDataButton").fireModal({
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_course_name">學習進度</label>
-            <select type="select" id="st_course_name" class="form-control"></select>
+            <select type="select" id="st_course_name_edit" name="st_course_name" class="form-control"></select>
           </div>
         </div>
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_tuition">學費</label>
-            <input type="number" id="st_tuition" class="form-control">
+            <input type="number" id="st_tuition_edit" name="st_tuition" class="form-control">
           </div>
         </div>
       </div>
@@ -1155,13 +1169,13 @@ $("#st_insertDataButton").fireModal({
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_parent">家長姓名</label>
-            <input type="text" id="st_parent" class="form-control">
+            <input type="text" id="st_parent_edit" name="st_parent" class="form-control">
           </div>
         </div>
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_phone1">連絡電話1</label>
-            <input type="text" id="st_phone1" class="form-control">
+            <input type="text" id="st_phone1_edit" name="st_phone1" class="form-control">
           </div>
         </div>
       </div>
@@ -1169,7 +1183,7 @@ $("#st_insertDataButton").fireModal({
         <div class="col-md-6">
           <div class="form-group">
               <label for="st_phone2">連絡電話2</label>
-              <input type="text" id="st_phone2" class="form-control">
+              <input type="text" id="st_phone2_edit" name="st_phone2" class="form-control">
           </div>
         </div>
       </div>  
@@ -1177,7 +1191,7 @@ $("#st_insertDataButton").fireModal({
         <div class="col-md-12">
             <div class="form-group">
               <label for="st_address">地址</label>
-              <input type="text" id="st_address" class="form-control">
+              <input type="text" id="st_address_edit" name="st_address" class="form-control">
             </div>
         </div>
       </div>
@@ -1185,7 +1199,7 @@ $("#st_insertDataButton").fireModal({
         <div class="col-md-12">
           <div class="form-group">
                 <label for="st_email">Email</label>
-                <input type="email" id="st_email" class="form-control">
+                <input type="email" id="st_email_edit" name="st_email" class="form-control">
           </div>
         </div>
       </div>
@@ -1193,13 +1207,13 @@ $("#st_insertDataButton").fireModal({
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_workplace">工作地點</label>
-            <input type="text" id="st_workplace" class="form-control">
+            <input type="text" id="st_workplace_edit" name="st_workplace" class="form-control">
           </div>
         </div>
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_profession">職業</label>
-            <input type="text" id="st_profession" class="form-control">
+            <input type="text" id="st_profession_edit" name="st_profession" class="form-control">
           </div>
         </div>
       </div>
@@ -1207,7 +1221,7 @@ $("#st_insertDataButton").fireModal({
         <div class="col-md-12">
           <div class="form-group">
             <label for="st_note">備註</label>
-            <textarea id="st_note" class="form-control"></textarea>
+            <textarea id="st_note_edit" name="st_note" class="form-control"></textarea>
           </div>
         </div>   
       </div>
@@ -1215,7 +1229,7 @@ $("#st_insertDataButton").fireModal({
         <div class="col-md-12">
           <div class="form-group">
             <label for="st_pay_num">繳費次數</label>
-            <input type="number" id="st_pay_num" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+            <input type="number" id="st_pay_num_edit" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
           </div>
         </div>
       </div>
@@ -1223,7 +1237,7 @@ $("#st_insertDataButton").fireModal({
         <div class="col-md-12">
           <div class="form-group">
             <label for="st_create_date">入學日期</label>
-            <input type="text" id="st_create_date" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+            <input type="text" id="st_create_date_edit" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
           </div>
         </div>
       </div>
@@ -1243,23 +1257,25 @@ $("#st_insertDataButton").fireModal({
         class: "btn btn-primary",
         handler: function (modal) {
           const Message = $('#editStudenMessage');
-          const stName = $('#st_name').val().trim();
-          const stAge = $('#st_age').val();
-          const stAcc = $('#st_acc').val().trim();
-          const stPwd = $('#st_pwd').val().trim();
-          const stTuition = $('#st_tuition').val();
-          const stParent = $('#st_parent').val().trim();
-          const stPhone1 = $('#st_phone1').val().trim();
-          const stEmail = $('#st_email').val().trim();
-          const stAddress = $('#st_address').val().trim();
-          const stWorkplace = $('#st_workplace').val().trim();
-          const stProfession = $('#st_profession').val().trim();
-          const stNote = $('#st_note').val().trim();
+          $('#st_id_input_edit').val($('#st_id_edit').text());
+          const stName = $('#st_name_edit').val().trim();
+          const stAge = $('#st_age_edit').val();
+          const stAcc = $('#st_acc_edit').val().trim();
+          const stPwd = $('#st_pwd_edit').val().trim();
+          const stCourseId = $('#st_course_name_edit').val();
+          const stTuition = $('#st_tuition_edit').val();
+          const stParent = $('#st_parent_edit').val().trim();
+          const stPhone1 = $('#st_phone1_edit').val().trim();
+          const stEmail = $('#st_email_edit').val().trim();
+          const stAddress = $('#st_address_edit').val().trim();
+          const stWorkplace = $('#st_workplace_edit').val().trim();
+          const stProfession = $('#st_profession_edit').val().trim();
+          const stNote = $('#st_note_edit').val().trim();
           
-          Message.text(""); 
+          Message.text("");
           // 檢查所有必填字段
           if (!stName || !stAge || !stAcc || !stPwd || !stTuition || !stParent || !stPhone1 || !stEmail || !stAddress || !stWorkplace || !stProfession) {
-            Message.text("所有欄位都必須填寫，除了連絡電話2！");
+            Message.text("請輸入完整資料!");
             return;
           }
 
@@ -1275,32 +1291,89 @@ $("#st_insertDataButton").fireModal({
             Message.text("備註不能超過100字。");
             return;
           }
-          console.log("送出資料:", {
-            stName,
-            stAge,
-            stAcc,
-            stPwd,
-            stTuition,
-            stParent,
-            stPhone1,
-            stPhone2: $('#st_phone2').val().trim(),
-            stEmail,
-            stAddress,
-            stWorkplace,
-            stProfession,
-            stNote,
-            stPayNum: $('#st_pay_num').val(),
-            stCreateDate: $('#st_create_date').val(),
-          });
-
           // 提交後關閉模態
-          modal.modal("hide");
+          $("#editStudentForm").submit();
         },
       },
     ],
+  });
+} 
+
+if (window.location.pathname === "/ad_index") {
+  $("#leaveStudentButton").fireModal({
+    title: `<span>學生休學</span>`,
+    body: `
+  <form id="leaveStudentForm" method="POST" action="/leaveStudentButton" style="margin-bottom: -45px;">
+    <div style="margin-bottom: 15px;">
+      <label for="st_id_leave" style="font-weight: bold;">學號:</label>
+      <span id="st_id_leave" name="st_id"></span>
+    </div>
+    <div style="margin-bottom: 15px;">
+      <label for="st_name_leave" style="font-weight: bold;">姓名:</label>
+      <span id="st_name_leave"></span>
+    </div>
+    <input type="input" style="display: none" id="st_id_leave_input" name="st_id">
+  </form>
+  `,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
+      },
+      {
+        text: "確認",
+        class: "btn btn-danger",
+        handler: function (modal) {
+          $("#st_id_leave_input").val($("#st_id_leave").text())
+          $("#leaveStudentForm").submit();
+        },
+      },
+    ],
+  });
+}
+
+$("#st_scheduleButton").fireModal({ body: "Modal body text goes here." });
+
+$("#edit_st_scheduleButton").fireModal({
+  title: `<span>編輯學生資訊</span>`,
+  body: `
+    <form id="leaveStudentForm" method="POST" action="/leaveStudentButton" style="margin-bottom: -45px;">
+      <div style="margin-bottom: 15px;">
+        <label for="st_id_forTr" style="font-weight: bold;">學號:</label>
+        <span id="st_id_forTr"></span>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label for="st_name_forTr" style="font-weight: bold;">姓名:</label>
+        <span id="st_name_forTr"></span>
+      </div>
+      <div class="form-group">
+        <label for="st_classroom_name_forTr">上課時段</label>
+        <select class="form-control" id="st_classroom_name_forTr" name="st_classroom_name_forTr"></select>
+      </div>
+      <input type="input" style="display: none" id="st_id_leave_input" name="st_id">
+    </form>
+`,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "確認",
+      class: "btn btn-primary",
+      handler: function (modal) {
+        $("#st_id_leave_input").val($("#st_id_leave").text())
+        $("#leaveStudentForm").submit();
+      },
+    },
+  ],
 });
-  
-  
 
 
 

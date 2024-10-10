@@ -80,7 +80,8 @@
                     </div>
                   </div>
                 </div>
-                <button type="button" id="loginFailure" style="display: none;"></button>
+                <button type="button" id="loginFailure1" style="display: none;"></button>
+                <button type="button" id="loginFailure2" style="display: none;"></button>
               </div>
             </div>
           </div>
@@ -101,12 +102,24 @@
 
   <!-- Login Failure Modal -->
   {% if session['login_status'] == "False" %}
-  <script>
-      $(document).ready(function () {
-          $('#loginFailure').click();
-      });
-  </script>
-  {% endif %}
+    {% if session['status'] == "2" %}
+      <script>
+        $(document).ready(function () {
+            $('#loginFailure2').click();
+        });
+      </script>
+    {% else %}
+      <script>
+        $(document).ready(function () {
+            $('#loginFailure1').click();
+        });
+      </script>
+    {% endif %}
+{% endif %}
+
+
+
+
 
   <!-- Google OAuth2.0 Scripts -->
   <!-- <button id="google_login" class="btn btn-large btn-primary">GOOGLE 登入</button>
