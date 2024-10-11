@@ -1335,23 +1335,78 @@ if (window.location.pathname === "/ad_index") {
   });
 }
 
-$("#st_scheduleButton").fireModal({ body: "Modal body text goes here." });
+$("#st_scheduleButton").fireModal({
+  title: `<span>安排學生上課時段</span>`,
+  body: `
+    <form id="search_st_info" method="POST" action="/search_st_info">
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label for="search_st_id">學號:</label>
+        <div class="input-group">
+          <input type="text" class="form-control" id="search_st_id">
+          <div class="input-group-append">
+            <button id="searchStudentBtn" class="btn btn-primary" type="button">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+        <br>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="search_st_name">姓名:</label>
+          <label id="search_st_name"></label> <!-- 显示学生姓名的标签 -->
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="search_classtime_id">上課時段</label>
+        <select class="form-control" id="search_classtime_id" name="search_classtime_id">
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="search_tr_id">授課老師</label>
+        <select class="form-control" id="search_tr_id" name="search_tr_id"></select>
+      </div>
+      <input type="input" style="display: none" id="st_id_leave_input" name="st_id">
+    </form>
+  `,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "確認",
+      class: "btn btn-primary",
+      handler: function (modal) {
+        // 提交表单时，隐藏的学生 ID 会传递
+        $("#st_id_leave_input").val($("#search_st_id").val());
+        $("#scheduleForm").submit();
+      },
+    },
+  ],
+});
+
 
 $("#edit_st_scheduleButton").fireModal({
   title: `<span>編輯學生資訊</span>`,
   body: `
-    <form id="leaveStudentForm" method="POST" action="/leaveStudentButton" style="margin-bottom: -45px;">
-      <div style="margin-bottom: 15px;">
-        <label for="st_id_forTr" style="font-weight: bold;">學號:</label>
-        <span id="st_id_forTr"></span>
+    <form id="leaveStudentForm" method="POST" action="/leaveStudentButton">
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label for="st_id_forTr">學號:</label>
+        <label id="st_id_forTr"></label>
       </div>
-      <div style="margin-bottom: 15px;">
-        <label for="st_name_forTr" style="font-weight: bold;">姓名:</label>
-        <span id="st_name_forTr"></span>
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label for="st_name_forTr">姓名:</label>
+        <label id="st_name_forTr"></label>
       </div>
       <div class="form-group">
         <label for="st_classroom_name_forTr">上課時段</label>
         <select class="form-control" id="st_classroom_name_forTr" name="st_classroom_name_forTr"></select>
+      </div>
+      <div class="form-group">
+        <label for="st_tr_name_forTr">授課老師</label>
+        <select class="form-control" id="st_tr_name_forTr" name="st_tr_name_forTr"></select>
       </div>
       <input type="input" style="display: none" id="st_id_leave_input" name="st_id">
     </form>

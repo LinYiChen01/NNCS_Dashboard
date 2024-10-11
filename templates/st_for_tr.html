@@ -121,9 +121,7 @@
                 </div>
                 <script>
                   var st_data = {{ st_data| tojson | safe}};
-                  var course_data = {{ course_data| tojson | safe}};
-                  var tr_data = {{ tr_data| tojson | safe}};
-                  
+                  var course_data = {{ course_data| tojson | safe}}; 
                 </script>
                 <div class="card-body table-responsive p-0" id="top-5-scroll_st_table" style="padding-top: inherit;">
                     <button type="button" id="edit_st_scheduleButton" style="display: none;"></button>
@@ -144,7 +142,7 @@
                     </table>
                 </div>
                 <div class="card-footer text-right">
-                  <button class="btn btn-primary" id="st_scheduleButton">新增學生</button>
+                  <button class="btn btn-primary" id="st_scheduleButton">安排學生</button>
                 </div>
               </div>
             </div>

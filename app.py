@@ -470,7 +470,7 @@ def st_for_tr():
                 'st_start_time' : str(i['start_time'])[:-3],
                 'st_end_time' : str(i['end_time'])[:-3],
                 'st_course_id' : i['course_id'],
-                'st_course_name' : i['course_name'],
+                'st_course_name' : i['course_name']
             })
 
         course_data = [] # 儲存可以選的教室時段
@@ -492,7 +492,8 @@ def st_for_tr():
                 'classroom_name' : i['name'],
                 'class_week' : i['class_week'],
                 'start_time' : str(i['start_time'])[:-3],
-                'end_time' : str(i['end_time'])[:-3] 
+                'end_time' : str(i['end_time'])[:-3],
+                'trs' : []
             })
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -562,7 +563,19 @@ def st_for_tr():
 
         tr_data = [tr for tr in tr_data if tr['tr_id'] not in remove_tr_id]
 
-        
+        for course in course_data:
+            for tr in tr_data:
+                if tr['tr_classtime_id'] == course['classtime_id']:
+                    course['trs'].append({
+                        'tr_id': tr['tr_id'],
+                        'tr_name': tr['tr_name'],
+                        'tr_course_id' : tr['tr_course_id']
+                    })
+
+        course_data = [course for course in course_data if course['trs']]
+
+        for course in course_data:
+            print(course)
 
         
         return render_template("st_for_tr.html", **locals())
@@ -570,6 +583,30 @@ def st_for_tr():
         return redirect(url_for('login'))
 
 
+@app.route('/search_st_info', methods=['POST'])
+def search_st_info():
+    if request.method == 'POST':
+        st_id = request.json.get('search_st_id')
+
+        try:
+            connection = get_db_connection()
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT u.name, s.course_id FROM `users` u JOIN students s on s.st_id = u.user_id WHERE u.user_id=%s AND u.role='1';", (st_id,))
+                result = cursor.fetchone()
+                if result:
+                    return jsonify({
+                        'st_name': result['name'],
+                        'st_course_id': result['course_id']
+                        })
+                else:
+                    return jsonify({'st_name': '<span style="color: red">查無資料!</span>'})
+        except Exception as e:
+            # 记录错误信息（可选）
+            print(f"Database error: {e}")
+            return jsonify({'st_name': '<span style="color: red">查無資料!</span>'})
+
+        finally:
+            connection.close()  # 确保连接关闭
 
 @app.route('/st_insertDataButton', methods=['GET', 'POST'])
 def st_insertDataButton():
