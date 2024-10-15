@@ -215,7 +215,7 @@ document.getElementById('searchStudentBtn').addEventListener('click', function()
                 } else {
                     console.log('此教室没有可用老师。'); // 如果没有老师，记录到控制台
                 }
-
+                console.log(trSelect.html()); // 打印整个 select 的 HTML
             } else { 
                 // 判断课程是否包含对应的课程 ID
                 if (classroom.trs.some(tr => tr.tr_course_id === data.st_course_id)) {
@@ -283,41 +283,53 @@ document.getElementById('searchStudentBtn').addEventListener('click', function()
     });
 });
 
-// // 更新老师下拉框的函数
-// function updateTeacherOptions(classtimeId) {
-//     const trSelect = $('#search_tr_id'); // 选取老师的下拉框
-//     trSelect.empty(); // 先清空下拉框
+function updateTeacherOptions(classtimeId, studentCourseId) {
+    const trSelect = $('#search_tr_id'); // 选取老师的下拉框
+    trSelect.empty(); // 先清空下拉框
+    trSelect.append('<option value="" disabled selected>請選擇授課老師</option>'); // 添加默认选项
 
-//     // 根据选中的时段找到对应的课程数据
-//     const selectedCourse = course_data.find(course => course.classtime_id === classtimeId);
-//     selectedCourse.trs.forEach(tr => {
-//         // 直接添加老师选项到下拉框
-//         const option = `
-//             <option value="${tr.tr_id}">
-//                 ${tr.tr_teacher_name}
-//             </option>
-//         `;
-//         trSelect.append(option);
-//         console.log('已添加老师：', tr.tr_teacher_name); // 打印调试信息
-//     });
+    // 查找与选中时段ID匹配的课程
+    const selectedCourse = course_data.find(course => course.classtime_id == classtimeId);
+    
+    if (selectedCourse && selectedCourse.trs && selectedCourse.trs.length > 0) {
+        selectedCourse.trs.forEach(tr => {
+            let isDisabled = false; // 默认可选择
+            // 如果学生的 course_id > 10，需要检查老师的 course_id
+            if (studentCourseId > 10) {
+                // 判断老师是否符合条件
+                isDisabled = tr.tr_course_id !== studentCourseId;
+            }
+            
+            const option = `
+                <option value="${tr.tr_id}" ${isDisabled ? 'class="text-muted" disabled' : ''}>
+                    ${tr.tr_name}${isDisabled ? ' (無法選擇)' : ''}
+                </option>
+            `;
+            trSelect.append(option);
+            console.log('已添加老师：', tr.tr_name); // 打印调试信息
+        });
+    } else {
+        console.log('此时段没有可用的老师。'); // 如果没有找到老师，记录到控制台
+    }
+}
 
-// }
+
 
 
 // // 监听课程时段选择的变化
-// $('#search_classtime_id').on('change', function() {
-//     const selectedClasstimeId = $(this).val(); // 获取选中的时段 ID
-//     console.log('selectedClasstimeId', selectedClasstimeId)
-//     updateTeacherOptions(selectedClasstimeId);  // 更新对应的老师选项
-// });
+$('#search_classtime_id').on('change', function() {
+    const selectedClasstimeId = $(this).val(); // 获取选中的时段 ID
+    console.log('selectedClasstimeId', selectedClasstimeId)
+    updateTeacherOptions(selectedClasstimeId, data.st_course_id);  // 更新对应的老师选项
+});
 
 // // 页面加载时，确保下拉框的状态
-// $(document).ready(function() {
-//     const currentClasstimeId = $('#search_classtime_id').val(); // 获取当前选中的课程时段 ID
-//     if (currentClasstimeId) {
-//         updateTeacherOptions(currentClasstimeId);  // 初始化老师选项
-//     }
-// });
+$(document).ready(function() {
+    const currentClasstimeId = $('#search_classtime_id').val(); // 获取当前选中的课程时段 ID
+    if (currentClasstimeId) {
+        updateTeacherOptions(currentClasstimeId);  // 初始化老师选项
+    }
+});
 
 
 

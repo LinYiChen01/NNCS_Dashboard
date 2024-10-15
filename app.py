@@ -562,6 +562,9 @@ def st_for_tr():
                 check.add(t)
 
         tr_data = [tr for tr in tr_data if tr['tr_id'] not in remove_tr_id]
+        for i in tr_data:
+            print(i)
+            print('__________________')
 
         for course in course_data:
             for tr in tr_data:
@@ -576,6 +579,7 @@ def st_for_tr():
 
         for course in course_data:
             print(course)
+            print('!!!!!!!!!!!!')
 
         
         return render_template("st_for_tr.html", **locals())
@@ -997,13 +1001,21 @@ def profiles():
             cursor.execute("SELECT count(attend_id) as class_num FROM `attend` WHERE user_id=%s AND semester=%s AND (status='1' OR status='3')", (user_id, semester))
             result = cursor.fetchone()
             class_num = result['class_num']
+
+        # 找出這學期第一次上課的日期 去計算結束日期
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT class_date FROM `attend` WHERE user_id=%s AND semester=%s  ORDER BY class_date ASC LIMIT 1;", (user_id, semester))
+            result = cursor.fetchone()
+        # print(result)
+            start_class_date = result['class_date']
+            end_class_date = start_class_date + timedelta(days=168)
         
         attend_data = []
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM `attend_view` WHERE user_id=%s AND semester=%s AND status != '' ORDER BY class_date ASC;", (user_id, semester))
+            cursor.execute("SELECT * FROM `attend_view` WHERE st_id=%s AND semester=%s AND status != '' ORDER BY class_date ASC;", (user_id, semester))
             result = cursor.fetchall()
-        start_class_date = result[0]['class_date']
-        end_class_date = start_class_date + timedelta(days=168)
+        # start_class_date = result['class_date']
+        # end_class_date = start_class_date + timedelta(days=168)
         
         for i in result:
             if i['status'] == '1':
