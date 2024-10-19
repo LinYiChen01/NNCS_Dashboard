@@ -455,7 +455,7 @@ def st_for_tr():
                             WHERE 
                                 `status` = '' 
                             GROUP BY 
-                                `st_id`;
+                                `st_id`, `classtime_id`;
                            """)
             result = cursor.fetchall()
         for i in result:
