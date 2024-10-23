@@ -596,11 +596,23 @@ def search_st_info():
             connection = get_db_connection()
             with connection.cursor() as cursor:
                 cursor.execute("SELECT u.name, s.course_id FROM `users` u JOIN students s on s.st_id = u.user_id WHERE u.user_id=%s AND u.role='1';", (st_id,))
-                result = cursor.fetchone()
-                if result:
+                result1 = cursor.fetchone()
+                print(';;;;;;;;;;;;;;;', result1)
+                st_name = result1['name']
+                st_course_id = result1['course_id']
+            
+
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT classtime_id FROM `attend` WHERE user_id=%s AND status='';", (st_id,))
+                result2 = cursor.fetchall()
+                print('lllllllllllllllll',result2)
+                st_classtime_id = [int(i['classtime_id']) for i in result2]
+
+                if result1 and result2:
                     return jsonify({
-                        'st_name': result['name'],
-                        'st_course_id': result['course_id']
+                        'st_name': st_name,
+                        'st_course_id': st_course_id,
+                        'st_classtime_id': st_classtime_id
                         })
                 else:
                     return jsonify({'st_name': '<span style="color: red">查無資料!</span>'})

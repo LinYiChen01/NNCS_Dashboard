@@ -1353,7 +1353,7 @@ $("#st_scheduleButton").fireModal({
         <div class="form-group" style="margin-bottom: 15px;">
           <label for="search_st_name">姓名:</label>
           <label id="search_st_name"></label> <!-- 显示学生姓名的标签 -->
-          <input type="input" id="search_st_course_id">
+          <input type="input" style="display: none;" id="search_st_course_id">
         </div>
       </div>
       <div class="form-group">
@@ -1404,7 +1404,6 @@ $("#edit_st_scheduleButton").fireModal({
       <div class="form-group">
         <label for="st_classroom_name_forTr">上課時段</label>
         <select class="form-control" id="st_classroom_name_forTr" name="st_classroom_name_forTr"></select>
-        <input type="input" id="st_classroom_id_forTr">
       </div>
       <div class="form-group">
         <label for="st_tr_name_forTr">授課老師</label>

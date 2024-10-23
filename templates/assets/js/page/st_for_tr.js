@@ -18,9 +18,7 @@ function populateTable(data) {
     }</td>
             <td>${student.st_tr_name}</td>
             <td style="width: 100px;">
-                <a class="btn btn-primary btn-action mr-1 edit-btn" data-id="${
-                  student.st_id
-                }"><i class="fas fa-pencil-alt"></i></a>
+                <a class="btn btn-primary btn-action mr-1 edit-btn" data-id="${student.st_id} ${student.st_classtime_id}"><i class="fas fa-pencil-alt"></i></a>
             </td>
         `;
     tableBody.appendChild(row);
@@ -28,18 +26,21 @@ function populateTable(data) {
   // 編輯學生按鈕
   document.querySelectorAll(".edit-btn").forEach((button) => {
     button.addEventListener("click", function () {
-      const studentId = this.getAttribute("data-id");
-      const studentData = data.find((student) => student.st_id == studentId);
+      const dataId = this.getAttribute("data-id");
+      // 使用 split 将学号和时段 ID 分开
+      const [studentId, studentClasstimeId] = dataId.split(' ');
+      const studentData = data.find((student) => 
+        student.st_id == studentId && student.st_classtime_id == studentClasstimeId
+      );
       // 页面加载时，根据学生当前的时段初始化老师选项
       const currentClasstimeId = studentData.st_classtime_id; // 学生当前的课程时段 ID
       const studentCourseId = studentData.st_course_id; // 学生当前的课程时段 ID
-      console.log("klk", studentCourseId);
-      updateTeacherOptions(currentClasstimeId, studentCourseId); // 初始化老师选项
+      const studentTrId = studentData.st_tr_id;
+      updateTeacherOptions(currentClasstimeId, studentCourseId, studentTrId); // 初始化老师选项
       const classtimeSelect = $("#st_classroom_name_forTr");
       classtimeSelect
         .empty()
-        .append('<option value="" disabled selected>請選擇上課時段</option>'); // 添加默认选项
-
+        .append('<option value="" selected>請選擇上課時段</option>'); // 添加默认选项
       // 填充学生的相关信息
       $("#st_id_forTr").text(studentData.st_id);
       $("#st_name_forTr").text(studentData.st_name);
@@ -52,10 +53,9 @@ function populateTable(data) {
       $("#course_id_forTr").val(studentData.st_course_id);
       $("#course_name_forTr").val(studentData.st_course_name);
       $("#st_classroom_id_forTr").val(studentData.st_classtime_id);
-      console.log("id", studentData.st_classtime_id);
 
       // 清空教室下拉框的选项
-      $("#st_classroom_name_forTr").empty();
+      // $("#st_classroom_name_forTr").empty();
 
       currentClassroom = ""; // 用于追踪当前教室名称
 
@@ -63,23 +63,31 @@ function populateTable(data) {
       course_data.forEach((classroom) => {
         if (classroom.trs.length > 0) {
           if (studentCourseId <= 10) {
-            addClassroomOptions(classroom, classtimeSelect);
+            const studentClasstimeId = st_data
+            .filter(st => st.st_id === studentData.st_id)  // 筛选出符合 student_id 的项
+            .map(st => st.st_classtime_id);          // 提取所有 st_classtime_id
+            console.log('gtyuio', studentClasstimeId);
+            const isSelected = studentClasstimeId.includes(classroom.classtime_id);
+            addClassroomOptions_edit(classroom, classtimeSelect, isSelected, currentClasstimeId);
           } else {
             const filteredTeachers = classroom.trs.filter(
               (tr) => tr.tr_course_id === studentCourseId
             );
             if (filteredTeachers.length > 0) {
-              addClassroomOptions(classroom, classtimeSelect);
+              const studentClasstimeId = st_data
+              .filter(st => st.st_id === studentData.st_id)  // 筛选出符合 student_id 的项
+              .map(st => st.st_classtime_id);          // 提取所有 st_classtime_id
+              console.log('gtyuio', studentClasstimeId);
+              const isSelected = studentClasstimeId.includes(classroom.classtime_id);
+              addClassroomOptions_edit(classroom, classtimeSelect, isSelected, currentClasstimeId);
             }
           }
         }
       });
+      // $("#st_classroom_name_forTr").val(studentData.st_classroom_name);
 
       // 更新老师下拉框的函数
-      function updateTeacherOptions(classtimeId, studentCourseId) {
-        console.log("classtimeId", classtimeId);
-        console.log("studentCourseId", studentCourseId);
-
+      function updateTeacherOptions(classtimeId, studentCourseId, studentTrId) {
         const trSelect = $("#st_tr_name_forTr"); // 选取老师的下拉框
         trSelect
           .empty()
@@ -96,13 +104,10 @@ function populateTable(data) {
           selectedCourse.trs.length > 0
         ) {
           selectedCourse.trs.forEach((tr) => {
-            const isDisabled =
-              studentCourseId > 10 && tr.tr_course_id != studentCourseId; // 判断老师是否符合条件
-
+            const isDisabled = studentCourseId > 10 && tr.tr_course_id != studentCourseId; // 判断老师是否符合条件
+            const isSelected = studentTrId == tr.tr_id;
             const option = `
-                <option value="${tr.tr_id}" ${
-              isDisabled ? 'class="text-muted" disabled' : ""
-            }>
+                <option value="${tr.tr_id}" ${isSelected ? "selected" : ""}  ${isDisabled ? 'class="text-muted" disabled' : ""}>
                     ${tr.tr_name}${isDisabled ? " (無法選擇)" : ""}
                 </option>
             `;
@@ -202,6 +207,7 @@ function fetchStudentInfo(stId) {
 
 // 更新学生信息的函数
 function updateStudentInfo(data) {
+  console.log('data', data);
   document.getElementById("search_st_name").innerHTML = data.st_name || "";
 
   if (
@@ -210,14 +216,16 @@ function updateStudentInfo(data) {
   ) {
     return; // 如果没有找到学生信息，结束执行
   }
-
+  
   // 显示上课时段和授课老师的 div
   $("#search_classtime_id").closest(".form-group").show();
   $("#search_tr_id").closest(".form-group").show();
 
   document.getElementById("search_st_course_id").value = data.st_course_id;
+  // document.getElementById("search_st_name").innerHTML = data.st_classtime_id;
 
-  populateClasstimeSelect(data.st_course_id);
+
+  populateClasstimeSelect(data.st_course_id, data.st_classtime_id);
   currentClassroom = "";
 }
 
@@ -229,7 +237,7 @@ function handleError(error) {
 }
 
 // 动态填充上课时段的下拉框
-function populateClasstimeSelect(studentCourseId) {
+function populateClasstimeSelect(studentCourseId, studentClasstimeId) {
   const classtimeSelect = $("#search_classtime_id");
   classtimeSelect
     .empty()
@@ -238,13 +246,17 @@ function populateClasstimeSelect(studentCourseId) {
   course_data.forEach((classroom) => {
     if (classroom.trs.length > 0) {
       if (studentCourseId <= 10) {
-        addClassroomOptions(classroom, classtimeSelect);
+        const isSelected = studentClasstimeId.includes(classroom.classtime_id);
+        console.log('djklfjlfjl', studentClasstimeId);
+        addClassroomOptions(classroom, classtimeSelect, isSelected);
       } else {
         const filteredTeachers = classroom.trs.filter(
           (tr) => tr.tr_course_id === studentCourseId
         );
         if (filteredTeachers.length > 0) {
-          addClassroomOptions(classroom, classtimeSelect);
+          const isSelected = studentClasstimeId.includes(classroom.classtime_id);
+          console.log('djklfjlfjl', studentClasstimeId);
+          addClassroomOptions(classroom, classtimeSelect, isSelected);
         }
       }
     }
@@ -257,7 +269,43 @@ function populateClasstimeSelect(studentCourseId) {
 }
 
 // 添加课程时段选项的函数
-function addClassroomOptions(classroom, classtimeSelect) {
+function addClassroomOptions_edit(classroom, classtimeSelect, isSelected, currentClasstimeId) {
+  const classroomName = classroom.classroom_name;
+
+  // 只在教室名称变化时添加 optgroup
+  if (classroomName !== currentClassroom) {
+    classtimeSelect.append(`<optgroup label="${classroomName}"></optgroup>`);
+    currentClassroom = classroomName; // 更新当前教室名称
+  }
+  
+  let option = '';
+  if (currentClasstimeId == classroom.classtime_id) {
+    option = `
+    <option value="${classroom.classtime_id}" ${isSelected ? 'selected disabled="true" class="text-muted"' : ''}>
+      ${classroomName} 星期${classroom.class_week} ${classroom.start_time} - ${classroom.end_time}
+      ${isSelected ? "(已選擇)" : ""}
+    </option>
+  `;
+  }
+  else { 
+    option = `
+    <option value="${classroom.classtime_id}" ${isSelected ? 'disabled="true" class="text-muted"' : ''}>
+      ${classroomName} 星期${classroom.class_week} ${classroom.start_time} - ${classroom.end_time}
+      ${isSelected ? "(已選擇)" : ""}
+    </option>
+  `;
+  }
+
+  classtimeSelect.find(`optgroup[label="${classroomName}"]`).append(option);
+
+  // Populate teacher select only if needed
+  populateTeacherSelect(classroom.trs);
+}
+
+
+
+
+function addClassroomOptions(classroom, classtimeSelect, isSelected) {
   const classroomName = classroom.classroom_name;
 
   // 只在教室名称变化时添加 optgroup
@@ -266,12 +314,13 @@ function addClassroomOptions(classroom, classtimeSelect) {
     currentClassroom = classroomName; // 更新当前教室名称
   }
 
-  // 添加具体课程时段的选项，前面加上教室名称
   const option = `
-          <option value="${classroom.classtime_id}">
-              ${classroomName} 星期${classroom.class_week} ${classroom.start_time} - ${classroom.end_time}
-          </option>
-      `;
+    <option value="${classroom.classtime_id}" ${isSelected ? 'disabled="true" class="text-muted"' : ''}>
+      ${classroomName} 星期${classroom.class_week} ${classroom.start_time} - ${classroom.end_time}
+      ${isSelected ? "(已選擇)" : ""}
+    </option>
+  `;
+
   classtimeSelect.find(`optgroup[label="${classroomName}"]`).append(option);
 
   // Populate teacher select only if needed
