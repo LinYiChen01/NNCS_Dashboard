@@ -1,7 +1,5 @@
 "use strict";
 
-// var classroom_area = '';
-
 // 先清空表單再顯示視窗
 $("#leaveButton").on("click", function () {
   clearForm();
@@ -1335,14 +1333,20 @@ if (window.location.pathname === "/ad_index") {
   });
 }
 
+
+$("#st_scheduleButton").on("click", function () {
+  search_st_info_form();
+});
+
+
 $("#st_scheduleButton").fireModal({
   title: `<span>安排學生上課時段</span>`,
   body: `
-    <form id="search_st_info" method="POST" action="/search_st_info">
+    <form id="search_st_info" method="POST" action="/st_scheduleButton">
       <div class="form-group" style="margin-bottom: 15px;">
         <label for="search_st_id">學號:</label>
         <div class="input-group">
-          <input type="text" class="form-control" id="search_st_id">
+          <input type="text" class="form-control" id="search_st_id" name="search_st_id">
           <div class="input-group-append">
             <button id="searchStudentBtn" class="btn btn-primary" type="button">
               <i class="fas fa-search"></i>
@@ -1352,12 +1356,14 @@ $("#st_scheduleButton").fireModal({
         <br>
         <div class="form-group" style="margin-bottom: 15px;">
           <label for="search_st_name">姓名:</label>
-          <label id="search_st_name"></label> <!-- 显示学生姓名的标签 -->
+          <label id="search_st_name"></label>
           <input type="input" style="display: none;" id="search_st_course_id">
         </div>
       </div>
       <div class="form-group">
-        <label for="search_classtime_id">上課時段</label>
+        <label for="search_classtime_id">上課時段
+        <span id="addClassTime" class="btn btn-primary" style="height: 17px; position: absolute; right: 25px; line-height: 5px; cursor: pointer;" onclick="addClassTime()">+</span>
+        </label>
         <select class="form-control" id="search_classtime_id" name="search_classtime_id">
         </select>
       </div>
@@ -1365,7 +1371,9 @@ $("#st_scheduleButton").fireModal({
         <label for="search_tr_id">授課老師</label>
         <select class="form-control" id="search_tr_id" name="search_tr_id"></select>
       </div>
-      <input type="input" style="display: none" id="st_id_leave_input" name="st_id">
+      <span style="font-weight: 600; color: #34395e; font-size: 12px;">目前已選擇:</span><br>
+      <span id="currentSelection" style="font-weight: 600; color: #34395e; font-size: 12px;"></span>
+      <span id="currentSelection_val"></span>
     </form>
   `,
   buttons: [
@@ -1380,13 +1388,46 @@ $("#st_scheduleButton").fireModal({
       text: "確認",
       class: "btn btn-primary",
       handler: function (modal) {
-        // 提交表单时，隐藏的学生 ID 会传递
-        $("#st_id_leave_input").val($("#search_st_id").val());
-        $("#scheduleForm").submit();
-      },
+        const st_id = $("#search_st_id").val().trim();
+        const classtime_id = $("#search_classtime_id").val();
+        const teacher_id = $("#search_tr_id").val();
+
+        if (!st_id || !classtime_id || !teacher_id) {
+          $("#search_st_info_msg").text("請選擇完整資料！");
+        } else {
+          $("#search_st_info").submit();
+        }
+      }
     },
   ],
 });
+
+function addClassTime() {
+  const classtime = $("#search_classtime_id option:selected");
+  const teacher = $("#search_tr_id option:selected");
+
+  if (classtime.val() !=="" && teacher.val()!=='') {
+    // 获取当前已选择的内容
+    let currentSelections = $("#currentSelection").html();
+    currentSelections = currentSelections 
+    ? `${currentSelections}<br>${classtime.text()} ${teacher.text()}` 
+      : `${classtime.text()} ${teacher.text()}`;
+    
+    $("#currentSelection").html(currentSelections);
+
+  }
+}
+
+
+function search_st_info_form() {
+  $("#search_st_id").val("");
+  $("#search_st_name").text("");
+  $("#search_classtime_id").val("");
+  $("#search_tr_id").val("");
+  $("#search_st_info_msg").text("");
+  $("#search_classtime_id").closest(".form-group").hide(); // 隐藏上课时段的 div
+  $("#search_tr_id").closest(".form-group").hide(); // 隐藏授课老师的 div
+}
 
 
 $("#edit_st_scheduleButton").fireModal({

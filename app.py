@@ -70,11 +70,6 @@ def handle_message(event):
 
     # 連接到資料庫
     try:
-        # connection = pymysql.connect(host=db_host,
-        #                              user=db_user,
-        #                              password=db_pwd,
-        #                              db=db_name,
-        #                              cursorclass=pymysql.cursors.DictCursor)
         connection = get_db_connection()
         cursor = connection.cursor()
         
@@ -304,7 +299,6 @@ def index():
                     fc_classroom_name = result['classroom_name']
                     fc_start_time = str(result['start_time'])[:-3]
                     fc_end_time = str(result['end_time'])[:-3]
-                    # print(fc_start_time, fc_end_time)
 
                     # 構建日曆事件數據
                     event_data.append({
@@ -624,6 +618,22 @@ def search_st_info():
         finally:
             connection.close()  # 确保连接关闭
 
+@app.route('/st_scheduleButton', methods=['POST'])
+def st_scheduleButton():
+    if request.method == 'POST':
+        st_id = request.form['search_st_id']
+        classtime_id = request.form['search_classtime_id']
+        search_tr_id = request.form['search_tr_id']
+        
+        connection = get_db_connection()
+        # with connection.cursor() as cursor:
+        #     cursor.execute("INSERT INTO users (name, age, address, phone1, phone2, email, picture, create_date, role, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+        #                            (name, age, address, phone1, phone2, email, picture, datetime.today(), '1', '1'))
+        
+        return str((st_id, classtime_id, search_tr_id))
+
+
+
 @app.route('/st_insertDataButton', methods=['GET', 'POST'])
 def st_insertDataButton():
     if request.method == 'POST':
@@ -662,8 +672,6 @@ def st_insertDataButton():
                                    (st_id, workplace, profession, parent, tuition, 0, course_id, note))
         
         connection.commit() 
-        # return('GOOOD')
-        # return render_template("ad_index.html", **locals())
         return redirect(url_for('ad_index'))
     else:
         return redirect(url_for('login'))
