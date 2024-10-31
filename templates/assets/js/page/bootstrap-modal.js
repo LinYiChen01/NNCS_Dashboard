@@ -1334,13 +1334,13 @@ if (window.location.pathname === "/ad_index") {
 }
 
 
-$("#st_scheduleButton").on("click", function () {
-  search_st_info_form();
-});
+// $("#st_scheduleButton").on("click", function () {
+//   search_st_info_form();
+// });
 
 
 $("#st_scheduleButton").fireModal({
-  title: `<span>安排學生上課時段</span>`,
+  title: `<span>新增學生上課時段</span>`,
   body: `
     <form id="search_st_info" method="POST" action="/st_scheduleButton">
       <div class="form-group" style="margin-bottom: 15px;">
@@ -1371,9 +1371,14 @@ $("#st_scheduleButton").fireModal({
         <label for="search_tr_id">授課老師</label>
         <select class="form-control" id="search_tr_id" name="search_tr_id"></select>
       </div>
+      <div class="form-group">
+        <label for="search_date_start">起始日期</label>
+        <input type="date" class="form-control" id="search_date_start" name="search_date_start"></input>
+      </div>
       <span style="font-weight: 600; color: #34395e; font-size: 12px;">目前已選擇:</span><br>
-      <span id="currentSelection" style="font-weight: 600; color: #34395e; font-size: 12px;"></span>
-      <span id="currentSelection_val"></span>
+      <span id="currentSelection" style="font-weight: 600; color: #34395e; font-size: 12px;"></span><br>
+      <input id="currentSelection_val" name="currentSelection_val"></input>
+      <span id="search_st_info_msg" style="display: block; margin-bottom: .5rem; color: red;"></span>
     </form>
   `,
   buttons: [
@@ -1389,10 +1394,9 @@ $("#st_scheduleButton").fireModal({
       class: "btn btn-primary",
       handler: function (modal) {
         const st_id = $("#search_st_id").val().trim();
-        const classtime_id = $("#search_classtime_id").val();
-        const teacher_id = $("#search_tr_id").val();
-
-        if (!st_id || !classtime_id || !teacher_id) {
+        const currentSelection_val = $("#currentSelection_val").val();
+        const search_date_start = $("#search_date_start").val();
+        if (!st_id || !currentSelection_val || !search_date_start) {
           $("#search_st_info_msg").text("請選擇完整資料！");
         } else {
           $("#search_st_info").submit();
@@ -1406,17 +1410,48 @@ function addClassTime() {
   const classtime = $("#search_classtime_id option:selected");
   const teacher = $("#search_tr_id option:selected");
 
-  if (classtime.val() !=="" && teacher.val()!=='') {
-    // 获取当前已选择的内容
-    let currentSelections = $("#currentSelection").html();
-    currentSelections = currentSelections 
-    ? `${currentSelections}<br>${classtime.text()} ${teacher.text()}` 
-      : `${classtime.text()} ${teacher.text()}`;
-    
-    $("#currentSelection").html(currentSelections);
+  if (classtime.val() !== "" && teacher.val() !== '') {
+      // 获取当前已选择的内容
+      let currentSelections = $("#currentSelection").html();
+      let currentSelection_val = $("#currentSelection_val").val();
 
+      // 创建要添加的新条目
+      const newEntry = `${classtime.text()} ${teacher.text()}`;
+      const newEntryVal = `${classtime.val()} ${teacher.val()}`;
+
+      // 检查当前选择中是否已有相同的 classtime
+      const existingEntryRegex = new RegExp(`^${classtime.text()}\\s+.*?$`, 'gm'); // 用正则匹配当前的 classtime
+
+      if (existingEntryRegex.test(currentSelections)) {
+          // 如果已有相同的 classtime，替换成最新的 teacher
+          currentSelections = currentSelections.replace(existingEntryRegex, newEntry);
+      } else {
+          // 如果当前选择为空，直接添加
+          currentSelections = currentSelections 
+              ? `${currentSelections}<br>${newEntry}`  // 用逗号分隔
+              : newEntry;
+      }
+
+      // 更新 currentSelection_val，确保根据 classtime 和 teacher 的值进行更新
+      const existingValRegex = new RegExp(`^${classtime.val()}\\s+.*?$`, 'gm'); // 用正则匹配当前的 classtime ID
+
+      if (existingValRegex.test(currentSelection_val)) {
+          // 如果已有相同的 classtime ID，替换成最新的
+          currentSelection_val = currentSelection_val.replace(existingValRegex, newEntryVal);
+      } else {
+          currentSelection_val = currentSelection_val 
+              ? `${currentSelection_val}, ${newEntryVal}`  // 使用逗号分隔
+              : newEntryVal;
+      }
+
+      // 更新界面和隐藏输入框的值
+      $("#currentSelection").html(currentSelections);
+      $("#currentSelection_val").val(currentSelection_val);
   }
 }
+
+
+
 
 
 function search_st_info_form() {

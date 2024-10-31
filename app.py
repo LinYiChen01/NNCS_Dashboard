@@ -489,6 +489,10 @@ def st_for_tr():
                 'end_time' : str(i['end_time'])[:-3],
                 'trs' : []
             })
+        # print("+++++++++++++++")
+        # print(course_data)
+        # print("+++++++++++++++")
+        
         with connection.cursor() as cursor:
             cursor.execute("""
                             SELECT 
@@ -509,34 +513,47 @@ def st_for_tr():
         # 找出額滿的時段
         remove_classtime_id = set()
         for i in result:
-            if i['st_num'] == i['max_classroom'] and i['st_num'] == i['tr_max']:
+            if i['st_num'] == i['max_classroom'] or i['st_num'] == i['tr_max']:
                 print('st_num:', i['st_num'] , 'max_classroom:', i['max_classroom'], 'tr_max:', i['tr_max'])
                 remove_classtime_id.add(i['classtime_id'])
 
         # 留下有空位的時段
         course_data = [course for course in course_data if course['classtime_id'] not in remove_classtime_id]
+        print("-------------------")
+        print(course_data)
+        print("-------------------")
 
         # 查看有沒有老師可以教(這邊只有看人數)
         tr_data = []
         with connection.cursor() as cursor:
             cursor.execute('''
             SELECT 
-                t.tr_id, 
-                u.name,              
-                a.classtime_id,
-                COUNT(a.attend_id) AS st_num,
+                t.tr_id,
+                t.user_id, 
+                u.name,
+                t.classtime_id,
+                t.course_id,
                 t.st_num as tr_max,
-                t.course_id
+                COALESCE(subquery.st_num, 0) AS st_num
             FROM 
-                `attend` a
-            JOIN 
-                `teachers` t ON t.tr_id = a.tr_id
-            JOIN 
-                `users` u ON t.user_id = u.user_id               
-            WHERE 
-                a.status = ''        
-            GROUP BY 
-                a.class_date, t.tr_id;
+                teachers t
+            LEFT JOIN 
+            (
+                SELECT 
+                    t.tr_id, 
+                    a.classtime_id,
+                    COUNT(a.attend_id) AS st_num,
+                    t.st_num AS tr_max
+                FROM 
+                    attend a
+                JOIN 
+                    teachers t ON t.tr_id = a.tr_id
+                WHERE 
+                    a.status = ''        
+                GROUP BY 
+                    a.classtime_id, t.tr_id
+            ) subquery ON t.tr_id = subquery.tr_id
+            JOIN users u ON t.user_id = u.user_id;
             ''')
             result = cursor.fetchall()
 
@@ -556,9 +573,6 @@ def st_for_tr():
                 check.add(t)
 
         tr_data = [tr for tr in tr_data if tr['tr_id'] not in remove_tr_id]
-        for i in tr_data:
-            print(i)
-            print('__________________')
 
         for course in course_data:
             for tr in tr_data:
@@ -570,12 +584,7 @@ def st_for_tr():
                     })
 
         course_data = [course for course in course_data if course['trs']]
-
-        for course in course_data:
-            print(course)
-            print('!!!!!!!!!!!!')
-
-        
+  
         return render_template("st_for_tr.html", **locals())
     else:
         return redirect(url_for('login'))
@@ -591,7 +600,6 @@ def search_st_info():
             with connection.cursor() as cursor:
                 cursor.execute("SELECT u.name, s.course_id FROM `users` u JOIN students s on s.st_id = u.user_id WHERE u.user_id=%s AND u.role='1';", (st_id,))
                 result1 = cursor.fetchone()
-                print(';;;;;;;;;;;;;;;', result1)
                 st_name = result1['name']
                 st_course_id = result1['course_id']
             
@@ -599,17 +607,13 @@ def search_st_info():
             with connection.cursor() as cursor:
                 cursor.execute("SELECT classtime_id FROM `attend` WHERE user_id=%s AND status='';", (st_id,))
                 result2 = cursor.fetchall()
-                print('lllllllllllllllll',result2)
-                st_classtime_id = [int(i['classtime_id']) for i in result2]
+                st_classtime_id = [int(i['classtime_id']) for i in result2] if result2 else []
 
-                if result1 and result2:
-                    return jsonify({
-                        'st_name': st_name,
-                        'st_course_id': st_course_id,
-                        'st_classtime_id': st_classtime_id
-                        })
-                else:
-                    return jsonify({'st_name': '<span style="color: red">查無資料!</span>'})
+                return jsonify({
+                    'st_name': st_name,
+                    'st_course_id': st_course_id,
+                    'st_classtime_id': st_classtime_id
+                    })
         except Exception as e:
             # 记录错误信息（可选）
             print(f"Database error: {e}")
@@ -622,15 +626,71 @@ def search_st_info():
 def st_scheduleButton():
     if request.method == 'POST':
         st_id = request.form['search_st_id']
-        classtime_id = request.form['search_classtime_id']
-        search_tr_id = request.form['search_tr_id']
+        currentSelection_val = request.form['currentSelection_val'].split(', ')
+        st_schedule = dict()
+        for i in range(len(currentSelection_val)):
+            c, t = currentSelection_val[i].split()
+            st_schedule[i] = {'classtime_id': c, 'tr_id': t, 'week': ''}
+        class_date_start = datetime.strptime(request.form['search_date_start'], '%Y-%m-%d')
+        print(class_date_start)
         
         connection = get_db_connection()
-        # with connection.cursor() as cursor:
-        #     cursor.execute("INSERT INTO users (name, age, address, phone1, phone2, email, picture, create_date, role, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
-        #                            (name, age, address, phone1, phone2, email, picture, datetime.today(), '1', '1'))
+        with connection.cursor() as cursor:
+            # 最後一次上課
+            cursor.execute(("SELECT semester FROM `attend` WHERE `user_id`=%s ORDER BY `semester` DESC, `class_date` DESC LIMIT 1;"), st_id)
+            result = cursor.fetchone()
+            st_semester = result['semester'] if result else 1
+            
+            # 查已經上了多少課
+            cursor.execute(("SELECT COUNT(attend_id) as taken_class_num FROM `attend` WHERE `semester`=%s AND user_id=%s AND (status='1' OR status='3') ORDER BY `class_date` DESC;"),
+                            (st_semester, st_id))
+            result = cursor.fetchone()
+            taken_class_num = result['taken_class_num']
+
+            cursor.execute(("DELETE FROM `attend` WHERE `user_id`=%s AND `status` = ''"), st_id)
+            connection.commit()
+
+            st_old_schedule = []
+            cursor.execute(("SELECT class_date FROM `attend` WHERE user_id=%s AND status != '';"),(st_id))
+            result = cursor.fetchall()
+            for i in result:
+                st_old_schedule.append(i['class_date'].strftime('%Y-%m-%d'))
+
+            week = ['一', '二', '三', '四', '五', '六', '日']
+            for i in st_schedule.keys():
+                cursor.execute(("SELECT class_week FROM `classtime` WHERE `classtime_id`=%s;"), st_schedule[i]['classtime_id'])
+                result = cursor.fetchone()
+                st_schedule[i]['week']=week.index(result['class_week'])
+            
+            num = 0
+            current_date = class_date_start
+            while num < 20 - taken_class_num:
+                for i in st_schedule.keys():
+                    # 计算下一个符合条件的日期
+                    if num >= 20 - taken_class_num:
+                        break
+                    days_ahead = (st_schedule[i]['week'] - current_date.weekday() + 7) % 7  # 确保是正数
+                    next_class_date = current_date + timedelta(days=days_ahead)
+                    if next_class_date.strftime('%Y-%m-%d') not in st_old_schedule:
+                        cursor.execute("INSERT INTO attend (semester, user_id, tr_id, classtime_id, class_date, status) VALUES (%s, %s, %s, %s, %s, %s)", 
+                            (st_semester, st_id, st_schedule[i]['tr_id'], st_schedule[i]['classtime_id'], next_class_date, '')
+                        )
+                        connection.commit()
+                        num += 1
+                # 更新 current_date 为下一周的开始
+                current_date += timedelta(weeks=1)
+
+            
+
+            
+
+        #     # for i in range(20 - taken_class_num):
+
+
+        #     # cursor.execute("INSERT INTO users (name, age, address, phone1, phone2, email, picture, create_date, role, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+        #     #                        (name, age, address, phone1, phone2, email, picture, datetime.today(), '1', '1'))
         
-        return str((st_id, classtime_id, search_tr_id))
+        return str((st_id))
 
 
 

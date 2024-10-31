@@ -178,7 +178,6 @@ document
   .getElementById("searchStudentBtn")
   .addEventListener("click", function () {
     const stId = document.getElementById("search_st_id").value.trim(); // 获取输入的学号并去掉前后空格
-
     // 清空之前的搜索结果
     clearSearchResults();
 
@@ -242,9 +241,8 @@ function updateStudentInfo(data) {
   // 显示上课时段和授课老师的 div
   $("#search_classtime_id").closest(".form-group").show();
   $("#search_tr_id").closest(".form-group").show();
-
   document.getElementById("search_st_course_id").value = data.st_course_id;
-  // document.getElementById("search_st_name").innerHTML = data.st_classtime_id;
+
 
   populateClasstimeSelect(data.st_course_id, data.st_classtime_id);
   currentClassroom = "";
