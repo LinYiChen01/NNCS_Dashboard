@@ -183,6 +183,9 @@ def index():
     if login_status == "True":
         connection = get_db_connection()
         with connection.cursor() as cursor:
+            cursor.execute("SELECT course_id, name FROM `attend` WHERE user_id=%s;")
+
+        with connection.cursor() as cursor:
             sql = "SELECT name FROM courses"
             cursor.execute(sql)
             courses = cursor.fetchall()
@@ -600,20 +603,33 @@ def search_st_info():
             with connection.cursor() as cursor:
                 cursor.execute("SELECT u.name, s.course_id FROM `users` u JOIN students s on s.st_id = u.user_id WHERE u.user_id=%s AND u.role='1';", (st_id,))
                 result1 = cursor.fetchone()
-                st_name = result1['name']
-                st_course_id = result1['course_id']
+                st_name = result1['name'] if result1 else ''
+                st_course_id = result1['course_id'] if result1 else ''
             
 
             with connection.cursor() as cursor:
-                cursor.execute("SELECT classtime_id FROM `attend` WHERE user_id=%s AND status='';", (st_id,))
+                cursor.execute("SELECT a.classtime_id, a.tr_id, ct.start_time, ct.end_time FROM `attend` a JOIN classtime ct ON a.classtime_id = ct.classtime_id WHERE user_id=%s AND status='';", (st_id,))
                 result2 = cursor.fetchall()
                 st_classtime_id = [int(i['classtime_id']) for i in result2] if result2 else []
+                st_tr_id = [int(i['tr_id']) for i in result2] if result2 else []
+                st_start_time = [str(i['start_time']) for i in result2] if result2 else []
+                st_end_time = [str(i['end_time']) for i in result2] if result2 else []
+                
+            if (st_name != '' and st_course_id != ''):
+                if st_classtime_id != []:
+                    return jsonify({
+                        'st_name': st_name,
+                        'st_course_id': st_course_id,
+                        'st_classtime_id': st_classtime_id,
+                        'st_tr_id': st_tr_id,
+                        'st_start_time': st_start_time,
+                        'st_end_time': st_end_time
+                        })
+                else:
+                    return jsonify({'st_name': '<span style="color: red">該生本期剩餘上課堂數為0!</span>'})
+            else:
+                return jsonify({'st_name': '<span style="color: red">查無資料!</span>'})
 
-                return jsonify({
-                    'st_name': st_name,
-                    'st_course_id': st_course_id,
-                    'st_classtime_id': st_classtime_id
-                    })
         except Exception as e:
             # 记录错误信息（可选）
             print(f"Database error: {e}")
@@ -626,13 +642,16 @@ def search_st_info():
 def st_scheduleButton():
     if request.method == 'POST':
         st_id = request.form['search_st_id']
+        old_classtime_id = request.form['old_classtime_id'].split(',')
         currentSelection_val = request.form['currentSelection_val'].split(', ')
         st_schedule = dict()
+        for i in range(len(old_classtime_id)):
+            c, t = old_classtime_id[i].split()
+            st_schedule[i] = {'classtime_id': c, 'tr_id': t, 'week': ''}
         for i in range(len(currentSelection_val)):
             c, t = currentSelection_val[i].split()
-            st_schedule[i] = {'classtime_id': c, 'tr_id': t, 'week': ''}
+            st_schedule[len(st_schedule) + i] = {'classtime_id': c, 'tr_id': t, 'week': ''}
         class_date_start = datetime.strptime(request.form['search_date_start'], '%Y-%m-%d')
-        print(class_date_start)
         
         connection = get_db_connection()
         with connection.cursor() as cursor:
@@ -647,7 +666,7 @@ def st_scheduleButton():
             result = cursor.fetchone()
             taken_class_num = result['taken_class_num']
 
-            cursor.execute(("DELETE FROM `attend` WHERE `user_id`=%s AND `status` = ''"), st_id)
+            cursor.execute(("DELETE FROM `attend` WHERE `user_id`=%s AND `status` = '' AND `class_date` >=%s"), (st_id, class_date_start))
             connection.commit()
 
             st_old_schedule = []
@@ -676,20 +695,10 @@ def st_scheduleButton():
                             (st_semester, st_id, st_schedule[i]['tr_id'], st_schedule[i]['classtime_id'], next_class_date, '')
                         )
                         connection.commit()
+                        print(next_class_date)
                         num += 1
                 # 更新 current_date 为下一周的开始
                 current_date += timedelta(weeks=1)
-
-            
-
-            
-
-        #     # for i in range(20 - taken_class_num):
-
-
-        #     # cursor.execute("INSERT INTO users (name, age, address, phone1, phone2, email, picture, create_date, role, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
-        #     #                        (name, age, address, phone1, phone2, email, picture, datetime.today(), '1', '1'))
-        
         return str((st_id))
 
 
@@ -1362,17 +1371,17 @@ def login():
                         session['role'] = result['role']
                         session['status'] = result['status']
 
-                        if session['status'] != '2':  # 不可以是休學或離職的狀態 
-                            if session['role'] == '1':  # 學生
-                                return redirect(url_for('index'))
-                                # return('st')
-                            
-                            elif session['role'] == '3':  # 老師
-                                # return redirect(url_for('index'))
-                                return('tr')
-                            
-                            elif session['role'] == '4':  # 管理員
-                                return redirect(url_for('ad_index')) 
+                        # if session['status'] != '2':  # 不可以是休學或離職的狀態 
+                        if session['role'] == '1':  # 學生
+                            return redirect(url_for('index'))
+                            # return('st')
+                        
+                        elif session['role'] == '3':  # 老師
+                            # return redirect(url_for('index'))
+                            return('tr')
+                        
+                        elif session['role'] == '4':  # 管理員
+                            return redirect(url_for('ad_index')) 
                     else:
                         # 用户被停权
                         session.clear()  # 清空会话

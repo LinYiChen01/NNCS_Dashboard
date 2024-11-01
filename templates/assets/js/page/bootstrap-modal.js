@@ -778,10 +778,10 @@ $("#loginFailure1").fireModal({
   body: "請確認帳號或密碼是否輸入正確!",
 });
 
-$("#loginFailure2").fireModal({
-  title: '<span style="color:#f36969;">登入失敗❌<span style="color:red;">',
-  body: "您的帳號已被停權，如有疑問請與我們聯繫!",
-});
+// $("#loginFailure2").fireModal({
+//   title: '<span style="color:#f36969;">登入失敗❌<span style="color:red;">',
+//   body: "請聯繫我們!",
+// });
 
 if (window.location.pathname === "/certificate") {
   $("#cert_updateDataButton").fireModal({
@@ -1375,9 +1375,12 @@ $("#st_scheduleButton").fireModal({
         <label for="search_date_start">起始日期</label>
         <input type="date" class="form-control" id="search_date_start" name="search_date_start"></input>
       </div>
-      <span style="font-weight: 600; color: #34395e; font-size: 12px;">目前已選擇:</span><br>
-      <span id="currentSelection" style="font-weight: 600; color: #34395e; font-size: 12px;"></span><br>
-      <input id="currentSelection_val" name="currentSelection_val"></input>
+      <div class="form-group" id="st_schedule_info">
+        <span style="font-weight: 600; color: #34395e; font-size: 12px;">目前已選擇:</span><br>
+        <span id="currentSelection" style="font-weight: 600; color: #34395e; font-size: 12px;"></span><br>
+        <input id="currentSelection_val" name="currentSelection_val"></input>
+        <input id="old_classtime_id" name="old_classtime_id"></input>
+      </div>
       <span id="search_st_info_msg" style="display: block; margin-bottom: .5rem; color: red;"></span>
     </form>
   `,
