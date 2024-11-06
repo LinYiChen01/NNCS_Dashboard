@@ -411,6 +411,88 @@ def ad_index():
         return redirect(url_for('login'))
 
 
+@app.route('/ad_money', methods=['GET', 'POST'])
+def ad_money():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+
+    if login_status == "True":
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id))
+            result = cursor.fetchone()
+            name= result['name']
+            picture_data = result['picture']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+
+        st_data = []
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM `st_info`;")
+            result = cursor.fetchall()
+        for i in result:
+            picture_data = i['picture']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+
+        #     st_data.append({
+        #         'st_id' : i['user_id'],
+        #         'st_acc' : i['acc'],
+        #         'st_pwd' : i['pwd'],
+        #         'st_name' : i['name'],
+        #         'st_age' : i['age'],
+        #         'st_address' : i['address'],
+        #         'st_phone1' : i['phone1'],
+        #         'st_phone2' : i['phone2'],
+        #         'st_email' : i['email'],
+        #         'st_picture' : picture,
+        #         'st_create_date' : i['create_date'],
+        #         'st_workplace' : i['workplace'],
+        #         'st_profession' : i['profession'],
+        #         'st_parent' : i['parent'],
+        #         'st_tuition' : i['tuition'],
+        #         'st_pay_num' : i['pay_num'],
+        #         'st_course_id' : i['course_id'],
+        #         'st_note' : i['note'],
+        #     })
+
+        # course_name_data = []
+        # with connection.cursor() as cursor:
+        #     cursor.execute("SELECT course_id, name FROM `courses`;")
+        #     result = cursor.fetchall()
+        #     course_name_data = result
+        return render_template("ad_money.html", **locals())
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route('/search_st_tuiton', methods=['POST'])
+def search_st_tuiton():
+    st_id = request.json.get('st_id')
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:  # dictionary=True 可使結果以字典形式返回
+            cursor.execute("SELECT tuition FROM students WHERE st_id=%s;", (st_id,))
+            result = cursor.fetchone()
+            if result:
+                return jsonify({"tuition": result['tuition']})
+            else:
+                return jsonify({"tuition": "查無資料"}), 404
+    except:
+        return jsonify({"tuition": "查無資料"})
+    
+
 @app.route('/st_for_tr', methods=['GET', 'POST'])
 def st_for_tr():
     login_status = session.get('login_status')

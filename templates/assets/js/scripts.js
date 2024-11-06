@@ -115,6 +115,12 @@ $(function() {
     }).niceScroll();
   }
 
+  if($("#top-5-scroll_money_table").length) {
+    $("#top-5-scroll_money_table").css({
+      height: 360
+    }).niceScroll();
+  }
+
   $(".main-content").css({
     minHeight: $(window).outerHeight() - 95
   })
