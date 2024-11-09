@@ -11,6 +11,7 @@ function populateTable(data) {
     const row = document.createElement("tr");
     row.innerHTML = `
             <td>${index + 1}</td>
+            <td>${student.st_semester}</td>
             <td>${student.st_id}</td>
             <td>${student.st_name}</td>
             <td>${student.st_classroom_name}</td>
@@ -46,18 +47,6 @@ function populateTable(data) {
       // 填充学生的相关信息
       $("#st_id_forTr").text(studentData.st_id);
       $("#st_name_forTr").text(studentData.st_name);
-      $("#tr_id_forTr").val(studentData.st_tr_id);
-      $("#tr_name_forTr").val(studentData.st_tr_name);
-      $("#classtime_id_forTr").val(studentData.st_classtime_id);
-      $("#st_classroom_name_forTr").val(studentData.st_classroom_name);
-      $("#start_time_forTr").val(studentData.st_start_time.slice(0, -3));
-      $("#end_time_forTr").val(studentData.st_end_time.slice(0, -3));
-      $("#course_id_forTr").val(studentData.st_course_id);
-      $("#course_name_forTr").val(studentData.st_course_name);
-      $("#st_classroom_id_forTr").val(studentData.st_classtime_id);
-
-      // 清空教室下拉框的选项
-      // $("#st_classroom_name_forTr").empty();
 
       currentClassroom = ""; // 用于追踪当前教室名称
 
@@ -144,6 +133,32 @@ function populateTable(data) {
       $("#edit_st_scheduleButton").click();
     });
   });
+  
+  document.querySelectorAll(".leave-btn").forEach((button) => {
+    button.addEventListener("click", function () {
+      const dataId = this.getAttribute("data-id");
+      // 使用 split 将学号和时段 ID 分开
+      const [studentId, studentClasstimeId] = dataId.split(" ");
+      const studentData = data.find(
+        (student) =>
+          student.st_id == studentId &&
+          student.st_classtime_id == studentClasstimeId
+      );
+      
+      
+      $("#semester_forTr_leave").val(studentData.st_semester);
+      $("#st_id_forTr_leave").text(studentData.st_id);
+      $("#st_name_forTr_leave").text(studentData.st_name);
+      $("#st_tr_name_forTr_leave").val(studentData.st_tr_name);
+      $("#classtime_id_forTr_leave").val(studentData.st_classtime_id);
+      $("#st_classroom_name_forTr_leave").val(studentData.st_classroom_name + " 禮拜" + studentData.st_week + " " + studentData.st_start_time + "-" + studentData.st_end_time);
+      
+      // 点击编辑按钮后显示编辑窗口
+      $("#leave_st_scheduleButton").click();
+      console.log(studentData.st_week);
+    });
+  });
+
 }
 
 document
@@ -452,21 +467,21 @@ function searchUpdateTeacherOptions(classtimeId, studentCourseId) {
 }
 
 
-document.addEventListener("DOMContentLoaded", function() {
-  document
-    .getElementById("addClassTime")
-    .addEventListener("click", function () {
-      const classtime = $("#search_classtime_id option:selected").val();
-      const teacher = $("#search_tr_id option:selected").val();
-      if (classtime !== "" && teacher !== "") { 
-        classSchedule.push([parseInt(classtime), teacher]);
-        console.log(classSchedule);
-        $("#search_classtime_id").val("");
-        $("#search_tr_id").val("")
-      }
+// document.addEventListener("DOMContentLoaded", function() {
+//   document
+//     .getElementById("addClassTime")
+//     .addEventListener("click", function () {
+//       const classtime = $("#search_classtime_id option:selected").val();
+//       const teacher = $("#search_tr_id option:selected").val();
+//       if (classtime !== "" && teacher !== "") { 
+//         classSchedule.push([parseInt(classtime), teacher]);
+//         console.log(classSchedule);
+//         $("#search_classtime_id").val("");
+//         $("#search_tr_id").val("")
+//       }
      
-    });
-});
+//     });
+// });
 
 
 // 點 X 清除搜尋框文字

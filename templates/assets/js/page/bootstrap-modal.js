@@ -1361,9 +1361,7 @@ $("#st_scheduleButton").fireModal({
         </div>
       </div>
       <div class="form-group">
-        <label for="search_classtime_id">上課時段
-        <span id="addClassTime" class="btn btn-primary" style="height: 17px; position: absolute; right: 25px; line-height: 5px; cursor: pointer;" onclick="addClassTime()">+</span>
-        </label>
+        <label for="search_classtime_id">上課時段</label>
         <select class="form-control" id="search_classtime_id" name="search_classtime_id">
         </select>
       </div>
@@ -1387,9 +1385,17 @@ $("#st_scheduleButton").fireModal({
   buttons: [
     {
       text: "取消",
-      class: "btn btn-secondary",
+      class: "btn btn-secondary btn-left", // 将取消按钮置左
       handler: function (modal) {
+        
         modal.modal("hide");
+      },
+    },
+    {
+      text: "新增",
+      class: "btn btn-outline-primary",
+      handler: function (modal) {
+        addClassTime();
       },
     },
     {
@@ -1450,6 +1456,9 @@ function addClassTime() {
       // 更新界面和隐藏输入框的值
       $("#currentSelection").html(currentSelections);
       $("#currentSelection_val").val(currentSelection_val);
+      $("#search_classtime_id").val("");
+      $("#search_tr_id").val("");
+
   }
 }
 
@@ -1471,7 +1480,7 @@ function search_st_info_form() {
 $("#edit_st_scheduleButton").fireModal({
   title: `<span>編輯學生資訊</span>`,
   body: `
-    <form id="leaveStudentForm" method="POST" action="/leaveStudentButton">
+    <form id="editStudentForm" method="POST" action="/editStudentButton">
       <div class="form-group" style="margin-bottom: 15px;">
         <label for="st_id_forTr">學號:</label>
         <label id="st_id_forTr"></label>
@@ -1488,7 +1497,7 @@ $("#edit_st_scheduleButton").fireModal({
         <label for="st_tr_name_forTr">授課老師</label>
         <select class="form-control" id="st_tr_name_forTr" name="st_tr_name_forTr"></select>
       </div>
-      <input type="input" style="display: none" id="st_id_leave_input" name="st_id">
+      <input type="input" style="display: none" id="st_id_edit_input" name="st_id">
     </form>
 `,
   buttons: [
@@ -1502,8 +1511,54 @@ $("#edit_st_scheduleButton").fireModal({
     {
       text: "確認",
       class: "btn btn-primary",
+      handler: function () {
+        $("#st_id_edit_input").val($("#st_id_edit").text())
+        $("#editStudentForm").submit();
+      },
+    },
+  ],
+});
+
+
+$("#leave_st_scheduleButton").fireModal({
+  title: `<span>刪除學生資訊</span>`,
+  body: `
+    <form id="leaveStudentForm" method="POST" action="/leave_st_scheduleButton">
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label for="st_id_forTr">學號:</label>
+        <label id="st_id_forTr_leave"></label>
+      </div>
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label for="st_name_forTr">姓名:</label>
+        <label id="st_name_forTr_leave"></label>
+      </div>
+      <div class="form-group">
+        <label for="st_classroom_name_forTr">上課時段</label>
+        <input class="form-control" id="st_classroom_name_forTr_leave" readonly style="pointer-events: none; background-color: #efeeee; border: none;"></input>
+      </div>
+      <div class="form-group">
+        <label for="st_tr_name_forTr">授課老師</label>
+        <input class="form-control" id="st_tr_name_forTr_leave" readonly style="pointer-events: none; background-color: #efeeee; border: none;"></input>
+      </div>
+      <input type="input"  id="semester_forTr_leave" name="semester_forTr_leave">
+      <input type="input"  id="st_id_forTr_leave_input" name="st_id_forTr_leave_input">
+      <input type="input"  id="classtime_id_forTr_leave" name="classtime_id_forTr_leave">
+      
+    </form>
+`,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
       handler: function (modal) {
-        $("#st_id_leave_input").val($("#st_id_leave").text())
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "刪除",
+      class: "btn btn btn-danger",
+      handler: function () {
+        $("#st_id_forTr_leave_input").val($("#st_id_forTr_leave").text());
         $("#leaveStudentForm").submit();
       },
     },

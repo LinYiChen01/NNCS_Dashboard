@@ -116,7 +116,7 @@ var myChart_1 = new Chart(statistics_chart, {
         },
         ticks: {
           beginAtZero: true,
-          stepSize: 16,
+          // stepSize: 16,
         },
       }],
       yAxes: [{
@@ -169,7 +169,7 @@ var myChart_2 = new Chart(ctx2, {
           ticks: {
             display: true,
             beginAtZero: true, // 從 0 開始
-            stepSize: 1,       // 確保每次增量為 1
+            // stepSize: 1,       // 確保每次增量為 1
             precision: 0,      // 設定小數點位數為 0（即無小數點）
           }
         }]
@@ -206,7 +206,7 @@ function updateAttendTable(selectedStatus) {
   if (selectedStatus === "全部") {
     document.getElementById("attendance-footer").innerHTML = `
       本學期累計: 上課: ${attendanceCounts["上課"] || 0}  請假: ${attendanceCounts["請假"] || 0}  曠課: ${attendanceCounts["曠課"] || 0}  停課: ${attendanceCounts["停課"] || 0}，
-      剩餘上課次數: ${20 - attendanceCounts["上課"] - attendanceCounts["曠課"]}
+      剩餘上課次數: ${20 - (attendanceCounts["上課"] || 0) - (attendanceCounts["曠課"] || 0)}
     `;
   } else {
     const count = filteredData.length;

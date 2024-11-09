@@ -3,6 +3,7 @@ import base64, re
 from datetime import datetime, timedelta
 import filetype
 from flask import Flask, render_template, request, abort, session, redirect, url_for, make_response, jsonify
+from apscheduler.schedulers.background import BackgroundScheduler
 from authlib.integrations.flask_client import OAuth
 import json
 import pymysql.cursors
@@ -43,6 +44,15 @@ MAX_CONTENT_LENGTH = 64 * 1024
 
 
 app = Flask(__name__, static_folder='templates/assets')
+scheduler = BackgroundScheduler()
+
+def print_ok():
+    print("Ok")
+
+# 設定定時任務：從今晚21:30開始，每5分鐘執行一次
+scheduler.add_job(print_ok, 'cron', day_of_week='0-6', hour=22, minute=15)
+scheduler.start()
+
 app.secret_key = os.urandom(24)  # 随机生成一个24字节的密钥
 
 # line webhook
@@ -182,8 +192,8 @@ def index():
 
     if login_status == "True":
         connection = get_db_connection()
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT course_id, name FROM `attend` WHERE user_id=%s;")
+        # with connection.cursor() as cursor:
+        #     cursor.execute("SELECT course_id, name FROM `attend` WHERE user_id=%s;", (user_id,))
 
         with connection.cursor() as cursor:
             sql = "SELECT name FROM courses"
@@ -518,6 +528,7 @@ def st_for_tr():
         with connection.cursor() as cursor:
             cursor.execute("""
                             SELECT 
+                                `semester`,
                                 `st_id`,
                                 `st_name`,
                                 `tr_id`,
@@ -539,6 +550,7 @@ def st_for_tr():
             result = cursor.fetchall()
         for i in result:
             st_data.append({
+                'st_semester' : i['semester'],
                 'st_id' : i['st_id'],
                 'st_name' : i['st_name'],
                 'st_tr_id' : i['tr_id'],
@@ -781,8 +793,66 @@ def st_scheduleButton():
                         num += 1
                 # 更新 current_date 为下一周的开始
                 current_date += timedelta(weeks=1)
-        return str((st_id))
+        return redirect(url_for('st_for_tr'))
+    else:
+        return redirect(url_for('login'))
 
+
+@app.route('/leave_st_scheduleButton', methods=['POST'])
+def leave_st_scheduleButton():
+    if request.method == 'POST':
+        st_id = request.form['st_id_forTr_leave_input']
+        classtime_id = request.form['classtime_id_forTr_leave']
+        semester = request.form['semester_forTr_leave']
+
+        connection = get_db_connection()
+        # 算出要刪除的時段有幾堂(未上)
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(attend_id) as leave_num FROM `attend` WHERE user_id=%s AND status = '' AND semester=%s AND classtime_id=%s", 
+                            (st_id, semester, classtime_id))
+            result = cursor.fetchone()
+            leave_num = result['leave_num']
+        # 刪除課程
+        # with connection.cursor() as cursor:
+        #     cursor.execute("DELETE FROM `attend` WHERE user_id=%s AND semester=%s AND classtime_id=%s AND status = '' AND adjust = 0", 
+        #                     (st_id, semester, classtime_id))
+            # connection.commit()
+        # 找出最後上課天
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT class_date FROM `attend` WHERE user_id=%s AND semester=%s AND status = '' AND adjust= 0 ORDER BY class_date DESC LIMIT 1;", 
+                        (st_id, semester))
+            result = cursor.fetchone()
+            class_end_date = result['class_date']
+        print('class_end_date', class_end_date)
+
+        week = ['一', '二', '三', '四', '五', '六', '日']
+        # 找出現在學生有哪些時段把他分配上去
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT classtime_id FROM `attend` WHERE user_id =%s AND status = '' AND semester=%s AND tr_id2 = 0 AND adjust = 0 GROUP by classtime_id;", 
+                            (st_id, semester))
+            result = cursor.fetchall()
+            current_classtime_id = dict()
+            
+            for i in result:
+                cursor.execute(("SELECT class_week FROM `classtime` WHERE `classtime_id`=%s;"), i['classtime_id'])
+                class_week = cursor.fetchone()
+                current_classtime_id[i['classtime_id']] = week.index(class_week['class_week'])
+
+        num = 0
+        while num < leave_num:
+            class_end_date += timedelta(days=1)  # 每次加一天
+            weekday = class_end_date.weekday()
+
+            for i in current_classtime_id.values():
+                if weekday == i:
+                    print(f"安排第 {num+1} 次课于 {class_end_date.strftime('%Y-%m-%d')} 星期{week[weekday]}")
+                    num += 1
+                    break
+
+        return str(st_id) +' classtime_id: '+ str(classtime_id) + " semester: " + str(semester)
+        # return redirect(url_for('st_for_tr'))
+    else:
+        return redirect(url_for('login'))
 
 
 @app.route('/st_insertDataButton', methods=['GET', 'POST'])
@@ -1501,5 +1571,8 @@ def add_header(response):
     return response
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    try:
+        app.run()
+    except (KeyboardInterrupt, SystemExit):
+        scheduler.shutdown()
