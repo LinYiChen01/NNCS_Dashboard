@@ -1333,12 +1333,6 @@ if (window.location.pathname === "/ad_index") {
   });
 }
 
-
-// $("#st_scheduleButton").on("click", function () {
-//   search_st_info_form();
-// });
-
-
 $("#st_scheduleButton").fireModal({
   title: `<span>新增學生上課時段</span>`,
   body: `
@@ -1462,10 +1456,6 @@ function addClassTime() {
   }
 }
 
-
-
-
-
 function search_st_info_form() {
   $("#search_st_id").val("");
   $("#search_st_name").text("");
@@ -1475,6 +1465,7 @@ function search_st_info_form() {
   $("#search_classtime_id").closest(".form-group").hide(); // 隐藏上课时段的 div
   $("#search_tr_id").closest(".form-group").hide(); // 隐藏授课老师的 div
 }
+
 
 
 $("#edit_st_scheduleButton").fireModal({

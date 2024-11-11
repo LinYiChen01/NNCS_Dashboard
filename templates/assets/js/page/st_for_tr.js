@@ -155,12 +155,12 @@ function populateTable(data) {
       
       // 点击编辑按钮后显示编辑窗口
       $("#leave_st_scheduleButton").click();
-      console.log(studentData.st_week);
     });
   });
 
 }
 
+// 點擊調整學生
 document
   .getElementById("st_scheduleButton")
   .addEventListener("click", function () {
@@ -178,17 +178,6 @@ document
     $("#search_date_start").closest(".form-group").hide();
     $("#st_schedule_info").hide();
   });
-
-document.addEventListener("DOMContentLoaded", function () {
-  populateTable(st_data);
-});
-
-// 安排學生
-// 一開始尚未查詢成功時，隐藏上课时段和授课老师的 div
-// document.addEventListener("DOMContentLoaded", function () {
-//   $("#search_classtime_id").closest(".form-group").hide(); // 隐藏上课时段的 div
-//   $("#search_tr_id").closest(".form-group").hide(); // 隐藏授课老师的 div
-// });
 
 // 如果重新輸入學號要查詢時，隐藏上课时段和授课老师的 div
 document.addEventListener("DOMContentLoaded", function () {
@@ -208,7 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-// 安排學生按鈕被點擊
+// 搜尋按鈕點擊
 document
   .getElementById("searchStudentBtn")
   .addEventListener("click", function () {
@@ -250,32 +239,37 @@ function fetchStudentInfo(stId) {
 // 更新学生信息的函数
 function updateStudentInfo(data) {
   document.getElementById("search_st_name").innerHTML = data.st_name || "";
-
-  if (
-    !data.st_name ||
+  // 學號格式不正確 or 非本期可安排的學生
+  if (!data.st_name ||
     data.st_name === `<span style="color: red">查無資料!</span>` ||
     data.st_name === `<span style="color: red">該生本期剩餘上課堂數為0!</span>`
-  ) {
-    return; // 如果没有找到学生信息，结束执行
+    ){ 
+    return;
   }
 
-  // 显示上课时段和授课老师的 div
-  $("#search_classtime_id").closest(".form-group").show();
-  $("#search_tr_id").closest(".form-group").show();
-  $("#search_date_start").closest(".form-group").show();
-  $("#st_schedule_info").show();
-  const old_classtime_id = new Set();
-
-  for (let i = 0; i < data.st_classtime_id.length; i++) {
-    // 将组合转换为字符串并加入 Set
-    old_classtime_id.add(`${data.st_classtime_id[i]} ${data.st_tr_id[i]}`);
+  if (data.first_time == true) {
+    document.getElementById("search_st_name").innerHTML += '123----';
+    return;
   }
-  // 将结果转换成数组，并赋值给元素
-  $("#old_classtime_id").val(Array.from(old_classtime_id));
-  document.getElementById("search_st_course_id").value = data.st_course_id;
+  else {  // 正常新增當期時段
+    // 显示上课时段和授课老师的 div
+    $("#search_classtime_id").closest(".form-group").show();
+    $("#search_tr_id").closest(".form-group").show();
+    $("#search_date_start").closest(".form-group").show();
+    $("#st_schedule_info").show();
+    const old_classtime_id = new Set();
 
-  populateClasstimeSelect(data.st_course_id, data.st_classtime_id, data.st_start_time, data.st_end_time);
-  currentClassroom = "";
+    for (let i = 0; i < data.st_classtime_id.length; i++) {
+      // 将组合转换为字符串并加入 Set
+      old_classtime_id.add(`${data.st_classtime_id[i]} ${data.st_tr_id[i]}`);
+    }
+    // 将结果转换成数组，并赋值给元素
+    $("#old_classtime_id").val(Array.from(old_classtime_id));
+    document.getElementById("search_st_course_id").value = data.st_course_id;
+
+    populateClasstimeSelect(data.st_course_id, data.st_classtime_id, data.st_start_time, data.st_end_time);
+    currentClassroom = "";
+  }
 }
 
 // 处理错误的函数
@@ -466,23 +460,10 @@ function searchUpdateTeacherOptions(classtimeId, studentCourseId) {
   }
 }
 
-
-// document.addEventListener("DOMContentLoaded", function() {
-//   document
-//     .getElementById("addClassTime")
-//     .addEventListener("click", function () {
-//       const classtime = $("#search_classtime_id option:selected").val();
-//       const teacher = $("#search_tr_id option:selected").val();
-//       if (classtime !== "" && teacher !== "") { 
-//         classSchedule.push([parseInt(classtime), teacher]);
-//         console.log(classSchedule);
-//         $("#search_classtime_id").val("");
-//         $("#search_tr_id").val("")
-//       }
-     
-//     });
-// });
-
+// 新增表格
+document.addEventListener("DOMContentLoaded", function () {
+  populateTable(st_data);
+});
 
 // 點 X 清除搜尋框文字
 function clearInput() {

@@ -708,10 +708,15 @@ def search_st_info():
                 st_tr_id = [int(i['tr_id']) for i in result2] if result2 else []
                 st_start_time = [str(i['start_time']) for i in result2] if result2 else []
                 st_end_time = [str(i['end_time']) for i in result2] if result2 else []
+
+                cursor.execute("SELECT pay_num FROM `students` WHERE st_id=%s;", (st_id,))
+                result3 = cursor.fetchone()
+                pay_num = result3['pay_num']
                 
             if (st_name != '' and st_course_id != ''):
                 if st_classtime_id != []: 
                     return jsonify({
+                        'first_time': False,
                         'st_name': st_name,
                         'st_course_id': st_course_id,
                         'st_classtime_id': st_classtime_id,
@@ -720,7 +725,17 @@ def search_st_info():
                         'st_end_time': st_end_time
                         })
                 else:
-                    return jsonify({'st_name': '<span style="color: red">該生本期剩餘上課堂數為0!</span>'})
+                    # return jsonify({'st_name': '<span style="color: red">該生本期剩餘上課堂數為0!</span>'})
+                    # 第一次排課
+                    if pay_num > 0:
+                        return jsonify({
+                                'first_time': True,
+                                'st_name': st_name,
+                                'st_course_id': st_course_id,
+                                })
+                    else:
+                        # 沒有繼續繳錢!
+                        return jsonify({'st_name': '<span style="color: red">該生本期剩餘上課堂數為0!</span>'})
             else:
                 return jsonify({'st_name': '<span style="color: red">查無資料!</span>'})
 
@@ -857,21 +872,14 @@ def leave_st_scheduleButton():
 
                 for k, v in current_schedule.items():
                     if weekday == v[0]:  # 假設 i[0] 是星期幾
-                        # classtime_id = i[1]
-                        # tr_id = i[0]
-                        # print('classtime_id++++++++++++', classtime_id)
                         cursor.execute(
                             "INSERT INTO `attend`(`semester`, `user_id`, `tr_id`, `classtime_id`, `class_date`) VALUES (%s, %s, %s, %s, %s)",
                             (semester, st_id, v[1], k, class_end_date)  # 這裡傳遞具體值
                         )
                         connection.commit()
-                        
-                        # print(f"安排第 {num+1} 次課於 {class_end_date.strftime('%Y-%m-%d')} 星期{week[weekday]} 老師代號 {i[1]}")
                         num += 1
                         break
-
-        return str(st_id) +' classtime_id: '+ str(classtime_id) + " semester: " + str(semester)
-        # return redirect(url_for('st_for_tr'))
+        return redirect(url_for('st_for_tr'))
     else:
         return redirect(url_for('login'))
 
@@ -1476,103 +1484,50 @@ def leaveButton():
 def login():
     session['login_status'] = ""
     if request.method == 'POST':
-        login_method = request.form.get('login_method')
-        if login_method == "google":
-            login_status = request.form.get("login_status")
-            access_token = request.form.get("access_token")
-            user_info = request.form.get("user_info")
+        acc = request.form['acc']
+        pwd = request.form['pwd']
 
-            # 初始化 session 變數
-            session['login_status'] = "False"
-            session['login_method'] = login_method
-            session['access_token'] = access_token
+        print('acc:'+acc+'!!!')
+        print(len(acc), 'acclen')
+        try:
+            connection = get_db_connection()
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM users WHERE acc=%s AND pwd=%s AND pwd !='' AND LENGTH(acc) = %s AND LENGTH(pwd) = %s;", (acc, pwd, len(acc), len(pwd)))
+                result = cursor.fetchone()
+            if result:
+                if result['status'] != '2':
+                    session['login_status'] = "True"
+                    session['user_id'] = result['user_id']
+                    session['role'] = result['role']
+                    session['status'] = result['status']
 
-            try:
-                user_info = json.loads(user_info)
-                names = user_info.get('names', [])
-                display_name = names[0].get('displayName', '') if names else ''
-                family_name = names[0].get('familyName', '') if names else ''
-                given_name = names[0].get('givenName', '') if names else ''
-                full_name = f"{given_name} {family_name}".strip() or display_name
-                session['name'] = display_name
-
-                photos = user_info.get('photos', [])
-                photo_url = photos[0].get('url', '') if photos else ''
-                session['picture'] = photo_url
-
-                email_addresses = user_info.get('emailAddresses', [])
-                email = email_addresses[0].get('value', '') if email_addresses else ''
-                session['email'] = email
-
-                # 連接到資料庫
-                connection = get_db_connection()
-                with connection.cursor() as cursor:
-                    # 檢查用戶是否存在
-                    cursor.execute("SELECT * FROM users WHERE acc=%s", (email,))
-                    result = cursor.fetchone()
-                    if result:
-                        session['login_status'] = "True"
-                    else:
-                        # 插入新用戶
-                        cursor.execute("INSERT INTO users (acc, name, email, picture) VALUES (%s, %s, %s, %s)",
-                                       (email, full_name, email, photo_url))
-                        connection.commit()
-                        session['login_status'] = "True"
-                connection.close()
-
-                if session['login_status'] == "True":
-                    return redirect(url_for('index'))
+                    if session['role'] == '1':  # 學生
+                        return redirect(url_for('index'))
+                    
+                    elif session['role'] == '3':  # 老師
+                        # return redirect(url_for('index'))
+                        return('tr')
+                    
+                    elif session['role'] == '4':  # 管理員
+                        return redirect(url_for('ad_index')) 
                 else:
-                    return render_template("login.html", **locals())
-            except Exception as e:
-                print(f"處理 Google 登入時出錯: {e}")
-                return render_template("login.html", error="登入失敗，請再試一次。")
-        
-        else:
-            acc = request.form['acc']
-            pwd = request.form['pwd']
-
-            try:
-                connection = get_db_connection()
-                with connection.cursor() as cursor:
-                    cursor.execute("SELECT * FROM users WHERE acc=%s AND pwd=%s AND pwd !=''", (acc, pwd))
-                    result = cursor.fetchone()
-                if result:
-                    if result['status'] != '2':
-                        session['login_status'] = "True"
-                        session['user_id'] = result['user_id']
-                        session['role'] = result['role']
-                        session['status'] = result['status']
-
-                        # if session['status'] != '2':  # 不可以是休學或離職的狀態 
-                        if session['role'] == '1':  # 學生
-                            return redirect(url_for('index'))
-                            # return('st')
-                        
-                        elif session['role'] == '3':  # 老師
-                            # return redirect(url_for('index'))
-                            return('tr')
-                        
-                        elif session['role'] == '4':  # 管理員
-                            return redirect(url_for('ad_index')) 
-                    else:
-                        # 用户被停权
-                        session.clear()  # 清空会话
-                        session['login_status'] = "False"
-                        session['status'] = "2"
-                        return render_template("login.html")  # 在此页面显示模态框
-
-                else:
-                    # 用户信息无效，显示模态框1
+                    # 用户被停权
                     session.clear()  # 清空会话
                     session['login_status'] = "False"
+                    session['status'] = "2"
                     return render_template("login.html")  # 在此页面显示模态框
 
-            except Exception as e:
-                print(f"資料庫錯誤: {e}")
-                return render_template("login.html", error="發生錯誤，請再試一次。")
-            finally:
-                connection.close()
+            else:
+                # 用户信息无效，显示模态框1
+                session.clear()  # 清空会话
+                session['login_status'] = "False"
+                return render_template("login.html")  # 在此页面显示模态框
+
+        except Exception as e:
+            print(f"資料庫錯誤: {e}")
+            return render_template("login.html", error="發生錯誤，請再試一次。")
+        finally:
+            connection.close()
     
     return render_template("login.html")
 
