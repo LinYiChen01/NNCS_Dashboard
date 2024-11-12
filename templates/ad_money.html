@@ -117,9 +117,9 @@
                     <thead>
                       <tr>
                           <th style="min-width: 160px; width: 20%;">學號</th>
-                          <th style="min-width: 130px; width: 20%;">學費</th>
+                          <th style="min-width: 205px; width: 20%;">繳費細項</th>
                           <th style="min-width: 120px; width: 20%;">期數</th>
-                          <th style="min-width: 200px; width: 20%;">繳費方式</th>
+                          <th style="min-width: 205px; width: 20%;">繳費方式</th>
                           <th style="min-width: 195px; width: 20%;">繳費日期</th>
                           <th style="width: 100px;">操作</th>
                       </tr>
@@ -127,14 +127,19 @@
                     <tbody>
                         <tr>
                           <td><input id="st_id" type="text" class="form-control"></input></td>
-                          <td><input id="st_tuition" type="text" readonly class="form-control" style="pointer-events: none; background-color: #efeeee; border: none;"></td>
+                          <td>
+                            <select class="form-control" id="st_pay">
+                              <option value="" disabled selected>請選擇繳費細項</option>
+                              <option value="0">學費</option>
+                              <option value="1">教材費</option>
+                            </select>
+                          </td>
                           <td><input id="st_pay_num" type="number" class="form-control"></td>
                           <td>
                             <select class="form-control" id="st_pay">
                               <option value="" disabled selected>請選擇繳費方式</option>
                               <option value="0">現金</option>
                               <option value="1">匯款</option>
-                              <option value="2">其他</option>
                             </select>
                           </td>
                           <td><input id="st_pay_date" type="date" class="form-control"></td>

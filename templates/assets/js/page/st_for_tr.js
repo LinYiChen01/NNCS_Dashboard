@@ -10,8 +10,7 @@ function populateTable(data) {
   data.forEach((student, index) => {
     const row = document.createElement("tr");
     row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${student.st_semester}</td>
+            <td>${student.st_semester}-${index + 1}</td>
             <td>${student.st_id}</td>
             <td>${student.st_name}</td>
             <td>${student.st_classroom_name}</td>
@@ -249,6 +248,30 @@ function updateStudentInfo(data) {
 
   if (data.first_time == true) {
     document.getElementById("search_st_name").innerHTML += '123----';
+    let selectElement = document.getElementById("search_semester");
+
+    // 建立新的 option
+    let option = document.createElement("option");
+    option.text = "1";
+    option.value = "";
+    option.disabled = true;
+    option.selected = true;
+
+    // 添加到 select 元素中
+    selectElement.add(option);
+
+    document.getElementById("search_semester_start_date").addEventListener("change", function() {
+      let startDate = new Date(this.value);
+      if (isNaN(startDate)) return;
+  
+      let endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 168);
+  
+      let formattedStartDate = startDate.toISOString().split("T")[0];
+      let formattedEndDate = endDate.toISOString().split("T")[0];
+  
+      document.getElementById("semester_range").innerText = "學期範圍: " + formattedStartDate + " - " + formattedEndDate;
+  });
     return;
   }
   else {  // 正常新增當期時段

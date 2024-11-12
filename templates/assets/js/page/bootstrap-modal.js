@@ -1355,6 +1355,16 @@ $("#st_scheduleButton").fireModal({
         </div>
       </div>
       <div class="form-group">
+        <label for="search_semester">上課學期</label>
+        <select class="form-control" id="search_semester" name="search_semester">
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="search_semester_start_date">學期起始日期</label>
+        <input type="date" class="form-control" id="search_semester_start_date" name="search_semester_start_date"></input>
+        <label id="semester_range" style="margin-top: 10px">學期範圍:</label>
+      </div>
+      <div class="form-group">
         <label for="search_classtime_id">上課時段</label>
         <select class="form-control" id="search_classtime_id" name="search_classtime_id">
         </select>
@@ -1364,8 +1374,12 @@ $("#st_scheduleButton").fireModal({
         <select class="form-control" id="search_tr_id" name="search_tr_id"></select>
       </div>
       <div class="form-group">
-        <label for="search_date_start">起始日期</label>
+        <label for="search_date_start">課堂起始日期</label>
         <input type="date" class="form-control" id="search_date_start" name="search_date_start"></input>
+      </div>
+      <div class="form-group">
+        <label for="search_date_start">上課堂數</label>
+        <input type="number" class="form-control" id="search_class_num" name="search_class_num"></input>
       </div>
       <div class="form-group" id="st_schedule_info">
         <span style="font-weight: 600; color: #34395e; font-size: 12px;">目前已選擇:</span><br>

@@ -44,14 +44,14 @@ MAX_CONTENT_LENGTH = 64 * 1024
 
 
 app = Flask(__name__, static_folder='templates/assets')
-scheduler = BackgroundScheduler()
+# scheduler = BackgroundScheduler()
 
-def print_ok():
-    print("Ok")
+# def print_ok():
+#     print("Ok")
 
-# 設定定時任務：從今晚21:30開始，每5分鐘執行一次
-scheduler.add_job(print_ok, 'cron', day_of_week='0-6', hour=22, minute=15)
-scheduler.start()
+# # 設定定時任務：從今晚21:30開始，每5分鐘執行一次
+# scheduler.add_job(print_ok, 'cron', day_of_week='0-6', hour=22, minute=15)
+# scheduler.start()
 
 app.secret_key = os.urandom(24)  # 随机生成一个24字节的密钥
 
@@ -545,7 +545,7 @@ def st_for_tr():
                             WHERE 
                                 `status` = '' 
                             GROUP BY 
-                                `st_id`, `classtime_id`;
+                                `st_id`, `classtime_id`, `semester`;
                            """)
             result = cursor.fetchall()
         for i in result:
@@ -563,6 +563,7 @@ def st_for_tr():
                 'st_course_id' : i['course_id'],
                 'st_course_name' : i['course_name']
             })
+        print("data:", st_data)
 
         course_data = [] # 儲存可以選的教室時段
         with connection.cursor() as cursor:
@@ -586,9 +587,6 @@ def st_for_tr():
                 'end_time' : str(i['end_time'])[:-3],
                 'trs' : []
             })
-        # print("+++++++++++++++")
-        # print(course_data)
-        # print("+++++++++++++++")
         
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -1548,7 +1546,11 @@ def add_header(response):
 
 
 if __name__ == "__main__":
-    try:
-        app.run()
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
+    app.debug = True
+    app.run()
+
+# if __name__ == "__main__":
+#     try:
+#         app.run()
+#     except (KeyboardInterrupt, SystemExit):
+#         scheduler.shutdown()

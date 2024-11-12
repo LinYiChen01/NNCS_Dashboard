@@ -108,6 +108,53 @@
       <div class="main-content">
         <section class="section">
           <br>
+          <script>
+            var st_data = {{ st_data| tojson | safe}};
+            console.log(st_data);
+            var course_data = {{ course_data| tojson | safe}}; 
+          </script>
+          <!-- <div class="row">
+            <div class="col-lg-12">
+              <div class="card" style="height: calc(100% - 30px);">
+                <div class="card-header">
+                  <h4>安排學生上課時段</h4>
+                </div>
+                
+                <div class="card-body table-responsive p-0" style="padding-top: inherit;">
+                    <table class="table table-striped">
+                      <thead>
+                        <tr>
+                            <th style="min-width: 100px;">學號</th>
+                            <th style="min-width: 135px;">剩餘上課期數</th>
+                            <th style="min-width: 320px;">上課時段</th>
+                            <th style="min-width: 195px;">開始日期</th>
+                            <th style="min-width: 115px;">上課堂數</th>
+                            <th style="width: 133px; min-width: 133px;">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><input type="text" class="form-control"></input></td>
+                          <td><input type="text" readonly class="form-control" style="pointer-events: none; background-color: #efeeee; border: none;"></td>
+                          <td>
+                            <select class="form-control" id="st_pay">
+                              <option value="" disabled selected>請選擇上課時段</option>
+                            </select>
+                          </td>
+                          <td><input type="date" class="form-control"></input></td>
+                          <td><input type="number" class="form-control"></input></td>
+                          <td>
+                            <button class="btn btn-primary fas fa-plus"></button>
+                            <button class="btn btn-primary fas fa-minus"></button>
+                          </td>
+                          
+                        </tr>
+                      </tbody>
+                    </table>
+                </div>
+              </div>
+            </div>
+          </div> -->
           <div class="row">
             <div class="col-lg-12">
               <div class="card" style="height: calc(100% - 30px);">
@@ -123,18 +170,13 @@
                   </div>
                   </div>
                 </div>
-                <script>
-                  var st_data = {{ st_data| tojson | safe}};
-                  console.log(st_data);
-                  var course_data = {{ course_data| tojson | safe}}; 
-                </script>
-                <div class="card-body table-responsive p-0" id="top-5-scroll_st_table" style="padding-top: inherit;">
+                
+                <div class="card-body table-responsive p-0" id="top-5-scroll_st__schedule_table" style="padding-top: inherit;">
                     <button type="button" id="edit_st_scheduleButton" style="display: none;"></button>
                     <button type="button" id="leave_st_scheduleButton" style="display: none;"></button>
                     <table class="table table-striped" id="studentTable">
                       <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
                         <tr>
-                            <th>編號</th>
                             <th>學期</th>
                             <th>學號</th>
                             <th>學生姓名</th>
@@ -150,7 +192,6 @@
                     </table>
                 </div>
                 <div class="card-footer text-right">
-                  <button class="btn btn-primary" id="st_continue" style="margin-right: 10px;">學生續報</button>
                   <button class="btn btn-primary" id="st_scheduleButton">安排學生</button>
                 </div>
               </div>

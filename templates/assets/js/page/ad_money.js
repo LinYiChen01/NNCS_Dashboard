@@ -1,28 +1,5 @@
 "use strict";
 
-$(document).ready(function() {
-  $("#st_id").on("input", function() {  // 檢查此處 ID 是否與 HTML 一致
-    const st_id = $(this).val();
-    if (st_id) {
-      $.ajax({
-        url: "/search_st_tuiton",
-        method: "POST",
-        contentType: "application/json",
-        data: JSON.stringify({ st_id: st_id }),
-        success: function(response) {
-          $("#st_tuition").val(response.tuition);
-        },
-        error: function() {
-          $("#st_tuition").val("查無資料");
-        }
-      });
-    }
-  });
-});
-
-
-
-
 // 點 X 清除搜尋框文字
 function clearInput() {
   document.getElementById("searchInput").value = ""; // 清空輸入框
