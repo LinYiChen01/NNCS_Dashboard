@@ -106,7 +106,6 @@ def handle_message(event):
             )
         
     except pymysql.MySQLError as err:
-        print(f"Error: {err}")
         with ApiClient(configuration) as api_client:
             line_bot_api = MessagingApi(api_client)
             line_bot_api.reply_message_with_http_info(
@@ -545,7 +544,9 @@ def st_for_tr():
                             WHERE 
                                 `status` = '' 
                             GROUP BY 
-                                `st_id`, `classtime_id`, `semester`;
+                                `st_id`, `classtime_id`, `semester`
+                            ORDER BY
+                                `semester`, `st_id` ASC;
                            """)
             result = cursor.fetchall()
         for i in result:
@@ -563,7 +564,6 @@ def st_for_tr():
                 'st_course_id' : i['course_id'],
                 'st_course_name' : i['course_name']
             })
-        print("data:", st_data)
 
         course_data = [] # 儲存可以選的教室時段
         with connection.cursor() as cursor:
@@ -609,14 +609,10 @@ def st_for_tr():
         remove_classtime_id = set()
         for i in result:
             if i['st_num'] == i['max_classroom'] or i['st_num'] == i['tr_max']:
-                print('st_num:', i['st_num'] , 'max_classroom:', i['max_classroom'], 'tr_max:', i['tr_max'])
                 remove_classtime_id.add(i['classtime_id'])
 
         # 留下有空位的時段
         course_data = [course for course in course_data if course['classtime_id'] not in remove_classtime_id]
-        print("-------------------")
-        print(course_data)
-        print("-------------------")
 
         # 查看有沒有老師可以教(這邊只有看人數)
         tr_data = []
@@ -697,11 +693,11 @@ def search_st_info():
                 result1 = cursor.fetchone()
                 st_name = result1['name'] if result1 else ''
                 st_course_id = result1['course_id'] if result1 else ''
-            
 
             with connection.cursor() as cursor:
-                cursor.execute("SELECT a.classtime_id, a.tr_id, ct.start_time, ct.end_time FROM `attend` a JOIN classtime ct ON a.classtime_id = ct.classtime_id WHERE user_id=%s AND status='';", (st_id,))
+                cursor.execute("SELECT a.semester, a.classtime_id, a.tr_id, ct.start_time, ct.end_time FROM `attend` a JOIN classtime ct ON a.classtime_id = ct.classtime_id WHERE user_id=%s AND status='';", (st_id,))
                 result2 = cursor.fetchall()
+                st_semester = [int(i['semester']) for i in result2] if result2 else []
                 st_classtime_id = [int(i['classtime_id']) for i in result2] if result2 else []
                 st_tr_id = [int(i['tr_id']) for i in result2] if result2 else []
                 st_start_time = [str(i['start_time']) for i in result2] if result2 else []
@@ -710,11 +706,21 @@ def search_st_info():
                 cursor.execute("SELECT pay_num FROM `students` WHERE st_id=%s;", (st_id,))
                 result3 = cursor.fetchone()
                 pay_num = result3['pay_num']
+            
+            # 找當期開始日期
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT semester ,MIN(class_date) as date FROM `attend` WHERE user_id=%s AND status = '' GROUP by semester ASC;", (st_id,))
+                result4 = cursor.fetchall()
+                semester_start_date = [str(i['date']) for i in result4] if result4 else []
+
                 
             if (st_name != '' and st_course_id != ''):
                 if st_classtime_id != []: 
                     return jsonify({
                         'first_time': False,
+                        'pay_num' : pay_num,
+                        'st_semester' : st_semester,
+                        'semester_start_date': semester_start_date,
                         'st_name': st_name,
                         'st_course_id': st_course_id,
                         'st_classtime_id': st_classtime_id,
@@ -724,10 +730,11 @@ def search_st_info():
                         })
                 else:
                     # return jsonify({'st_name': '<span style="color: red">該生本期剩餘上課堂數為0!</span>'})
-                    # 第一次排課
+                    # 剛好上完或第一次排課
                     if pay_num > 0:
                         return jsonify({
                                 'first_time': True,
+                                'st_semester' : '新增下期',
                                 'st_name': st_name,
                                 'st_course_id': st_course_id,
                                 })
@@ -739,7 +746,6 @@ def search_st_info():
 
         except Exception as e:
             # 记录错误信息（可选）
-            print(f"Database error: {e}")
             return jsonify({'st_name': '<span style="color: red">查無資料!</span>'})
 
         finally:
@@ -749,6 +755,7 @@ def search_st_info():
 def st_scheduleButton():
     if request.method == 'POST':
         st_id = request.form['search_st_id']
+        st_semester = request.form['search_semester']
         old_classtime_id = request.form['old_classtime_id'].split(',')
         currentSelection_val = request.form['currentSelection_val'].split(', ')
         st_schedule = dict()
@@ -758,60 +765,64 @@ def st_scheduleButton():
         for i in range(len(currentSelection_val)):
             c, t = currentSelection_val[i].split()
             st_schedule[len(st_schedule) + i] = {'classtime_id': c, 'tr_id': t, 'week': ''}
-        class_date_start = datetime.strptime(request.form['search_date_start'], '%Y-%m-%d')
-        
+
+        week = ['一', '二', '三', '四', '五', '六', '日']
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # 最後一次上課
-            cursor.execute(("SELECT semester FROM `attend` WHERE `user_id`=%s ORDER BY `semester` DESC, `class_date` DESC LIMIT 1;"), st_id)
-            result = cursor.fetchone()
-            st_semester = result['semester'] if result else 1
-            
-            # 查已經上了多少課
-            # cursor.execute(("SELECT COUNT(attend_id) as taken_class_num FROM `attend` WHERE `semester`=%s AND user_id=%s AND (status='1' OR status='3') ORDER BY `class_date` DESC;"),
-            #                 (st_semester, st_id))
-            # result = cursor.fetchone()
-            # taken_class_num = result['taken_class_num']
-            # print('taken_class_num', taken_class_num)
-
-            # 計算有多少堂要改
-            cursor.execute(("SELECT COUNT(attend_id) as class_num FROM `attend` WHERE `user_id`=%s AND `status` = '' AND `class_date` >=%s"), (st_id, class_date_start))
-            result = cursor.fetchone()
-            class_num = result['class_num']
-
-            cursor.execute(("DELETE FROM `attend` WHERE `user_id`=%s AND `status` = '' AND `class_date` >=%s"), (st_id, class_date_start))
-            connection.commit()
-
-            st_old_schedule = []
-            cursor.execute(("SELECT class_date FROM `attend` WHERE user_id=%s AND status != '';"),(st_id))
-            result = cursor.fetchall()
-            for i in result:
-                st_old_schedule.append(i['class_date'].strftime('%Y-%m-%d'))
-
-            week = ['一', '二', '三', '四', '五', '六', '日']
             for i in st_schedule.keys():
-                cursor.execute(("SELECT class_week FROM `classtime` WHERE `classtime_id`=%s;"), st_schedule[i]['classtime_id'])
-                result = cursor.fetchone()
-                st_schedule[i]['week']=week.index(result['class_week'])
-            
-            num = 0
-            current_date = class_date_start
-            while num < class_num:
-                for i in st_schedule.keys():
-                    # 计算下一个符合条件的日期
-                    # if num >= 20 - taken_class_num:
-                    #     break
-                    days_ahead = (st_schedule[i]['week'] - current_date.weekday() + 7) % 7  # 确保是正数
-                    next_class_date = current_date + timedelta(days=days_ahead)
-                    if next_class_date.strftime('%Y-%m-%d') not in st_old_schedule:
-                        cursor.execute("INSERT INTO attend (semester, user_id, tr_id, classtime_id, class_date, status) VALUES (%s, %s, %s, %s, %s, %s)", 
-                            (st_semester, st_id, st_schedule[i]['tr_id'], st_schedule[i]['classtime_id'], next_class_date, '')
+                    cursor.execute(("SELECT class_week FROM `classtime` WHERE `classtime_id`=%s;"), st_schedule[i]['classtime_id'])
+                    result = cursor.fetchone()
+                    st_schedule[i]['week']=week.index(result['class_week'])
+    
+        if st_semester != 'new':
+            with connection.cursor() as cursor:
+                # 找出剩餘課程數跟起始日期
+                cursor.execute(("SELECT attend_id, class_date FROM `attend` WHERE `user_id`=%s AND semester=%s AND status='' AND adjust = 0 ORDER BY class_date ASC;"), (st_id, st_semester))
+                result = cursor.fetchall()
+                attend_id = [int(i['attend_id']) for i in result]
+                class_num = len(attend_id)
+                class_start_date = min(i['class_date'] for i in result)
+                current_date = class_start_date
+                num = 1
+                while num <= class_num:
+                    for i in st_schedule.keys():
+                        if num > class_num:
+                            break
+                        cursor.execute(
+                            """UPDATE `attend` SET `tr_id`=%s,`classtime_id`=%s,`class_date`=%s
+                            WHERE `attend_id` = %s;""",
+                            (st_schedule[i]['tr_id'], st_schedule[i]['classtime_id'], current_date, attend_id[num-1])
                         )
                         connection.commit()
-                        print(next_class_date)
+
+                        # 更新 current_date 到下一个课时的日期
+                        days_ahead = (st_schedule[i]['week'] - current_date.weekday() + 7) % 7
+                        current_date += timedelta(days=days_ahead)
                         num += 1
-                # 更新 current_date 为下一周的开始
-                current_date += timedelta(weeks=1)
+        else:
+            class_start_date = request.form['search_semester_start_date']
+            with connection.cursor() as cursor:
+                # 找出這是第幾學期
+                cursor.execute(("SELECT MAX(semester) as semester FROM `attend` WHERE user_id=%s;"), (st_id))
+                result = cursor.fetchone()
+                st_semester = result['semester'] if result else 1
+                current_date = class_start_date
+                num = 1
+                while num <= 20:
+                    for i in st_schedule.keys():
+                        if num >= 20:
+                            break
+                        cursor.execute(
+                            """INSERT INTO `attend`(`semester`, `user_id`, `tr_id`, `classtime_id`, `class_date`, `status`, `adjust`) 
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                            (st_semester, st_id, st_schedule[i]['tr_id'], st_schedule[i]['classtime_id'], current_date, '', 0)
+                        )
+                        connection.commit()
+
+                        # 更新 current_date 到下一个课时的日期
+                        days_ahead = (st_schedule[i]['week'] - current_date.weekday() + 7) % 7
+                        current_date += timedelta(days=days_ahead)
+                        num += 1
         return redirect(url_for('st_for_tr'))
     else:
         return redirect(url_for('login'))
@@ -842,7 +853,6 @@ def leave_st_scheduleButton():
                         (st_id, semester))
             result = cursor.fetchone()
             class_end_date = result['class_date']
-        print('class_end_date', class_end_date)
 
         week = ['一', '二', '三', '四', '五', '六', '日']
         # 找出現在學生有哪些時段把他分配上去
@@ -860,8 +870,6 @@ def leave_st_scheduleButton():
                 tr_id = cursor.fetchone()
                 current_schedule[i['classtime_id']] = [week.index(class_week['class_week']), tr_id['tr_id']]
 
-
-            print('current_schedule', current_schedule)
 
             num = 1
             while num < leave_num:
@@ -1044,7 +1052,6 @@ def fc_scheduleButton():
                         tr_data = []
                         for i in result:
                             tr_data.append(i['tr_id'])
-                        print(tr_data)
                         
                         # 查當日該時段的各老師的學生數
                         # cursor.execute("SELECT tr_id, COUNT(*) AS st_num FROM st_classtime WHERE classtime_id=%s and class_date=%s GROUP BY tr_id ORDER BY count;", 
@@ -1274,7 +1281,6 @@ def profiles():
         with connection.cursor() as cursor:
             cursor.execute("SELECT class_date FROM `attend` WHERE user_id=%s AND semester=%s  ORDER BY class_date ASC LIMIT 1;", (user_id, semester))
             result = cursor.fetchone()
-        # print(result)
             start_class_date = result['class_date']
             end_class_date = start_class_date + timedelta(days=168)
         
@@ -1485,8 +1491,6 @@ def login():
         acc = request.form['acc']
         pwd = request.form['pwd']
 
-        print('acc:'+acc+'!!!')
-        print(len(acc), 'acclen')
         try:
             connection = get_db_connection()
             with connection.cursor() as cursor:
@@ -1522,7 +1526,6 @@ def login():
                 return render_template("login.html")  # 在此页面显示模态框
 
         except Exception as e:
-            print(f"資料庫錯誤: {e}")
             return render_template("login.html", error="發生錯誤，請再試一次。")
         finally:
             connection.close()

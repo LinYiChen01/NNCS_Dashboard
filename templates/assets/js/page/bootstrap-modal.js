@@ -1362,6 +1362,8 @@ $("#st_scheduleButton").fireModal({
       <div class="form-group">
         <label for="search_semester_start_date">學期起始日期</label>
         <input type="date" class="form-control" id="search_semester_start_date" name="search_semester_start_date"></input>
+      </div>
+      <div class="form-group">
         <label id="semester_range" style="margin-top: 10px">學期範圍:</label>
       </div>
       <div class="form-group">
@@ -1372,14 +1374,6 @@ $("#st_scheduleButton").fireModal({
       <div class="form-group">
         <label for="search_tr_id">授課老師</label>
         <select class="form-control" id="search_tr_id" name="search_tr_id"></select>
-      </div>
-      <div class="form-group">
-        <label for="search_date_start">課堂起始日期</label>
-        <input type="date" class="form-control" id="search_date_start" name="search_date_start"></input>
-      </div>
-      <div class="form-group">
-        <label for="search_date_start">上課堂數</label>
-        <input type="number" class="form-control" id="search_class_num" name="search_class_num"></input>
       </div>
       <div class="form-group" id="st_schedule_info">
         <span style="font-weight: 600; color: #34395e; font-size: 12px;">目前已選擇:</span><br>
@@ -1412,8 +1406,7 @@ $("#st_scheduleButton").fireModal({
       handler: function (modal) {
         const st_id = $("#search_st_id").val().trim();
         const currentSelection_val = $("#currentSelection_val").val();
-        const search_date_start = $("#search_date_start").val();
-        if (!st_id || !currentSelection_val || !search_date_start) {
+        if (!st_id || !currentSelection_val) {
           $("#search_st_info_msg").text("請選擇完整資料！");
         } else {
           $("#search_st_info").submit();
