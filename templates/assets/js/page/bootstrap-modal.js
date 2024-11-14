@@ -1563,6 +1563,10 @@ $("#leave_st_scheduleButton").fireModal({
   ],
 });
 
+$("#st_pay_add").fireModal({ 
+  title: "學生繳費",
+  body: `<span id=st_pay_add_message></span>` 
+});
 
 
 $("#modal-1").fireModal({ body: "Modal body text goes here." });

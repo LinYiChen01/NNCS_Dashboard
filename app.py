@@ -455,52 +455,79 @@ def ad_money():
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
 
-        #     st_data.append({
-        #         'st_id' : i['user_id'],
-        #         'st_acc' : i['acc'],
-        #         'st_pwd' : i['pwd'],
-        #         'st_name' : i['name'],
-        #         'st_age' : i['age'],
-        #         'st_address' : i['address'],
-        #         'st_phone1' : i['phone1'],
-        #         'st_phone2' : i['phone2'],
-        #         'st_email' : i['email'],
-        #         'st_picture' : picture,
-        #         'st_create_date' : i['create_date'],
-        #         'st_workplace' : i['workplace'],
-        #         'st_profession' : i['profession'],
-        #         'st_parent' : i['parent'],
-        #         'st_tuition' : i['tuition'],
-        #         'st_pay_num' : i['pay_num'],
-        #         'st_course_id' : i['course_id'],
-        #         'st_note' : i['note'],
-        #     })
+        money_record = [] 
+        
 
-        # course_name_data = []
-        # with connection.cursor() as cursor:
-        #     cursor.execute("SELECT course_id, name FROM `courses`;")
-        #     result = cursor.fetchall()
-        #     course_name_data = result
+        
         return render_template("ad_money.html", **locals())
     else:
         return redirect(url_for('login'))
 
+
+# @app.route('/search_st_tuiton', methods=['POST'])
+# def search_st_tuiton():
+#     st_id = request.json.get('st_id')
+#     try:
+#         connection = get_db_connection()
+#         with connection.cursor() as cursor:  # dictionary=True 可使結果以字典形式返回
+#             cursor.execute("SELECT tuition FROM students WHERE st_id=%s;", (st_id,))
+#             result = cursor.fetchone()
+#             if result:
+#                 return jsonify({"tuition": result['tuition']})
+#             else:
+#                 return jsonify({"tuition": "查無資料"}), 404
+#     except:
+#         return jsonify({"tuition": "查無資料"})
 
 @app.route('/search_st_tuiton', methods=['POST'])
 def search_st_tuiton():
     st_id = request.json.get('st_id')
     try:
         connection = get_db_connection()
-        with connection.cursor() as cursor:  # dictionary=True 可使結果以字典形式返回
-            cursor.execute("SELECT tuition FROM students WHERE st_id=%s;", (st_id,))
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT user_id FROM `users` WHERE user_id=%s AND role = 1 AND status = 1", (st_id,))
             result = cursor.fetchone()
             if result:
-                return jsonify({"tuition": result['tuition']})
+                return jsonify({"st_id": True})
             else:
-                return jsonify({"tuition": "查無資料"}), 404
+                return jsonify({"st_id": False})
     except:
-        return jsonify({"tuition": "查無資料"})
+        return jsonify({"st_id": False})
     
+@app.route('/insert_st_tuiton', methods=['POST'])
+def insert_st_tuiton():
+    st_id = request.json.get('st_id')
+    st_pay = request.json.get('st_pay')
+    st_pay_num = request.json.get('st_pay_num')
+    st_way = request.json.get('st_way')
+    st_pay_date = request.json.get('st_pay_date')
+    print(st_pay_date)
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 找出該生學費
+            cursor.execute("SELECT tuition FROM `students` WHERE st_id=%s;", (st_id,))
+            result = cursor.fetchone()
+            tuition = result['tuition']
+            # 找出該生是第幾學期
+            cursor.execute("SELECT MAX(money_semester) as money_semester FROM `money` WHERE st_id =%s;", (st_id,))
+            result = cursor.fetchone()
+            money_semester = result['money_semester'] + 1 if result and result['money_semester'] is not None else 1
+
+            for i in range(int(st_pay_num)):
+                cursor.execute("""INSERT INTO `money`(`st_id`, `money_semester`, `money`, `money_way`, `money_date`, `money_details`) 
+                            VALUES (%s, %s, %s, %s, %s, %s)""", 
+                            (st_id, money_semester, tuition, st_way, st_pay_date, st_pay))
+                connection.commit()
+                money_semester += 1
+            cursor.execute("UPDATE `students` SET `pay_num`=`pay_num`+1  WHERE `st_id`=%s", (st_id))
+            connection.commit()
+            return jsonify({"success": True})
+    except Exception as e:
+        print(e)
+        return jsonify({"success": False, "message": str(e)})
+    finally:
+        connection.close()
 
 @app.route('/st_for_tr', methods=['GET', 'POST'])
 def st_for_tr():
@@ -805,7 +832,7 @@ def st_scheduleButton():
                 # 找出這是第幾學期
                 cursor.execute(("SELECT MAX(semester) as semester FROM `attend` WHERE user_id=%s;"), (st_id))
                 result = cursor.fetchone()
-                st_semester = result['semester'] if result else 1
+                st_semester = result['semester']+1 if result else 1
                 current_date = class_start_date
                 num = 1
                 while num <= 20:
@@ -823,6 +850,10 @@ def st_scheduleButton():
                         days_ahead = (st_schedule[i]['week'] - current_date.weekday() + 7) % 7
                         current_date += timedelta(days=days_ahead)
                         num += 1
+                cursor.execute(("UPDATE `students` SET `semester`=`semester`+1, `pay_num`=`pay_num`-1 WHERE `st_id`=%s;"), (st_id))
+                connection.commit()
+
+
         return redirect(url_for('st_for_tr'))
     else:
         return redirect(url_for('login'))
