@@ -454,30 +454,39 @@ def ad_money():
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
-
+        
         money_record = [] 
-        
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM `money` ORDER BY money_semester DESC, st_id ASC;")
+            result = cursor.fetchall()
+            for i in result:
+                if i['money_way'] == 0:
+                        i['money_way'] = '現金'
+                else:
+                    i['money_way'] = '匯款'
 
-        
+                if i['money_details'] == 0:
+                    i['money_details'] = '學費'
+                else:
+                    i['money_details'] = '教材費'
+                if i['money_semester'] == 0:
+                    i['money_semester'] = '-'
+                cursor.execute("SELECT COUNT(attend_id) as class_num FROM `attend` WHERE semester=%s AND user_id=%s AND (status = 1 or status = 3);", 
+                               (i['money_semester'], i['st_id']))
+                result2 = cursor.fetchone()
+                money_record.append({
+                    'money_id': i['money_id'],
+                    'st_id': i['st_id'],
+                    'money_semester': i['money_semester'],
+                    'money_way': i['money_way'],
+                    'money_date': i['money_date'],
+                    'money_details': i['money_details'],
+                    'class_num': int(result2['class_num'])
+                })  
         return render_template("ad_money.html", **locals())
     else:
         return redirect(url_for('login'))
 
-
-# @app.route('/search_st_tuiton', methods=['POST'])
-# def search_st_tuiton():
-#     st_id = request.json.get('st_id')
-#     try:
-#         connection = get_db_connection()
-#         with connection.cursor() as cursor:  # dictionary=True 可使結果以字典形式返回
-#             cursor.execute("SELECT tuition FROM students WHERE st_id=%s;", (st_id,))
-#             result = cursor.fetchone()
-#             if result:
-#                 return jsonify({"tuition": result['tuition']})
-#             else:
-#                 return jsonify({"tuition": "查無資料"}), 404
-#     except:
-#         return jsonify({"tuition": "查無資料"})
 
 @app.route('/search_st_tuiton', methods=['POST'])
 def search_st_tuiton():
@@ -512,17 +521,56 @@ def insert_st_tuiton():
             # 找出該生是第幾學期
             cursor.execute("SELECT MAX(money_semester) as money_semester FROM `money` WHERE st_id =%s;", (st_id,))
             result = cursor.fetchone()
-            money_semester = result['money_semester'] + 1 if result and result['money_semester'] is not None else 1
+            if st_pay == '0':
+                money_semester = result['money_semester'] + 1 if result and result['money_semester'] is not None else 1
+            else:
+                money_semester = 0
 
             for i in range(int(st_pay_num)):
-                cursor.execute("""INSERT INTO `money`(`st_id`, `money_semester`, `money`, `money_way`, `money_date`, `money_details`) 
-                            VALUES (%s, %s, %s, %s, %s, %s)""", 
-                            (st_id, money_semester, tuition, st_way, st_pay_date, st_pay))
+                # semester_value = money_semester if st_pay != 1 else 0  # 判断学期值
+                if st_pay == '0':
+                    cursor.execute("""INSERT INTO `money`(`st_id`, `money_semester`, `money`, `money_way`, `money_date`, `money_details`) 
+                                VALUES (%s, %s, %s, %s, %s, %s)""", 
+                                (st_id, money_semester, tuition, st_way, st_pay_date, st_pay))
+                    money_semester += 1
+                else:
+                    cursor.execute("""INSERT INTO `money`(`st_id`, `money_semester`, `money`, `money_way`, `money_date`, `money_details`) 
+                                VALUES (%s, %s, %s, %s, %s, %s)""", 
+                                (st_id, 0, 1000, st_way, st_pay_date, st_pay))
+                    print('money_semester', money_semester)
                 connection.commit()
-                money_semester += 1
             cursor.execute("UPDATE `students` SET `pay_num`=`pay_num`+1  WHERE `st_id`=%s", (st_id))
             connection.commit()
-            return jsonify({"success": True})
+        with connection.cursor() as cursor:
+            money_record = [] 
+            cursor.execute("SELECT * FROM `money`;")
+            result = cursor.fetchall()
+            for i in result:
+                if i['money_way'] == 0:
+                    i['money_way'] = '現金'
+                else:
+                    i['money_way'] = '匯款'
+
+                if i['money_details'] == 0:
+                    i['money_details'] = '學費'
+                else:
+                    i['money_details'] = '教材費'
+                if i['money_semester'] == 0:
+                    i['money_semester'] = '-'
+                cursor.execute("SELECT COUNT(attend_id) as class_num FROM `attend` WHERE semester=%s AND user_id=%s AND (status = 1 or status = 3);", 
+                               (i['money_semester'], i['st_id']))
+                result2 = cursor.fetchone()
+                money_record.append({
+                    'money_id': i['money_id'],
+                    'st_id': i['st_id'],
+                    'money_semester': i['money_semester'],
+                    'money_way': i['money_way'],
+                    'money_date': i['money_date'],
+                    'money_details': i['money_details'],
+                    'class_num': int(result2['class_num'])
+                })  
+            currnet_st_id = st_id
+            return jsonify({"success": True, "money_record": money_record, "currnet_st_id": currnet_st_id})
     except Exception as e:
         print(e)
         return jsonify({"success": False, "message": str(e)})
@@ -646,11 +694,11 @@ def st_for_tr():
         with connection.cursor() as cursor:
             cursor.execute('''
             SELECT 
+                t.user_id,
                 t.tr_id,
                 t.user_id, 
                 u.name,
                 t.classtime_id,
-                t.course_id,
                 t.st_num as tr_max,
                 COALESCE(subquery.st_num, 0) AS st_num
             FROM 
@@ -675,22 +723,29 @@ def st_for_tr():
             ''')
             result = cursor.fetchall()
 
-        remove_tr_id = set()
-        check = set()
-        for i in result:
-            t = (i['tr_id'], i['classtime_id'], i['course_id'])
-            if i['st_num'] == i['tr_max']:
-                remove_tr_id.add(i['tr_id'])
-            if t not in check:
+            remove_tr_id = set()
+            # check = set()
+            for i in result:
+                cursor.execute("SELECT trc.course_id FROM `tr_course` trc JOIN courses c on c.course_id = trc.course_id WHERE user_id=%s ORDER BY course_id;", (i['user_id']))
+                result2 = cursor.fetchall()
+                tr_course_id = []
+                for j in result2:
+                    tr_course_id.append(j['course_id'])
+                t = (i['tr_id'], i['classtime_id'], tr_course_id)
+                if i['st_num'] == i['tr_max']:
+                    remove_tr_id.add(i['tr_id'])
+                # if t not in check: 
                 tr_data.append({
                     'tr_id' : i['tr_id'],
                     'tr_name' : i['name'],
                     'tr_classtime_id' : i['classtime_id'],
-                    'tr_course_id' : i['course_id'],
+                    'tr_course_id' : tr_course_id
                 })
-                check.add(t)
+                    # check.add(t)
 
         tr_data = [tr for tr in tr_data if tr['tr_id'] not in remove_tr_id]
+        for i in tr_data:
+            print(i)
 
         for course in course_data:
             for tr in tr_data:
@@ -1200,11 +1255,35 @@ def tr_manage():
                 'st_note' : i['note'],
             })
 
-        course_name_data = []
+        connection = get_db_connection()
+
+        tr_data = []
         with connection.cursor() as cursor:
-            cursor.execute("SELECT course_id, name FROM `courses`;")
+            cursor.execute("SELECT user_id, tr_id, name, classtime_id, classroom_name, class_week, start_time, end_time, st_num FROM `teacher_schedule`;")
             result = cursor.fetchall()
-            course_name_data = result
+            for i in result:
+                course_id = []
+                course_name = []
+                cursor.execute("SELECT trc.*, c.name FROM `tr_course` trc JOIN courses c on c.course_id = trc.course_id WHERE user_id=%s ORDER BY course_id;", (i['user_id']))
+                result2 = cursor.fetchall()
+                for j in result2:
+                    course_id.append(j['course_id'])
+                    course_name.append(j['name'])
+                course_name_str = ", ".join(course_name)
+                print('course_name_str', course_name_str)
+                tr_data.append({
+                    'user_id': i['user_id'],
+                    'tr_id': i['tr_id'],
+                    'tr_name': i['name'],
+                    'classtime_id': i['classtime_id'],
+                    'classroom_name': i['classroom_name'],
+                    'class_week': i['class_week'],
+                    'start_time': str(i['start_time'])[:-3],
+                    'end_time': str(i['end_time'])[:-3],
+                    'course_id': course_id,
+                    'course_name': course_name_str,
+                    'st_num': i['st_num']
+                })
         
 
         

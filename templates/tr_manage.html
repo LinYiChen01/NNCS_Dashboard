@@ -97,6 +97,8 @@
               class="fas fa-school"></i><span>教室資訊管理</span></a></li>
             <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
               class="fas fa-box"></i><span>封存人員管理</span></a></li>
+            <li><a href="{{ url_for('ad_money') }}" class="nav-link"><i
+              class="fas fa-dollar-sign"></i><span>財務管理</span></a></li>
           </ul>
       </div>
 
@@ -120,30 +122,29 @@
                   </div>
                 </div>
                 <script>
-                    var st_data = {{ st_data| tojson | safe}};
-                    var course_name_data = {{course_name_data| tojson | safe}};
+                  tr_data = {{tr_data | tojson | safe}};
                 </script>
                 <div class="card-body table-responsive p-0" id="top-5-scroll_st_table" style="padding-top: inherit;">
-                    <button type="button" id="editStudentButton" style="display: none;"></button>
-                    <button type="button" id="leaveStudentButton" style="display: none;"></button>
+                    <button type="button" id="editTeacherButton" style="display: none;"></button>
+                    <button type="button" id="leaveTeacherButton" style="display: none;"></button>
                     <table class="table table-striped" id="studentTable">
                       <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
                         <tr>
                             <th>編號</th>
                             <th>老師姓名</th>
-                            <th>家長姓名</th>
-                            <th>連絡電話1</th>
-                            <th>連絡電話2</th>
+                            <th>上課教室</th>
+                            <th>上課時段</th>
+                            <th>授課項目</th>
                             <th style="width: 142px;">操作</th>
                         </tr>
                       </thead>
-                      <tbody id="studentTableBody">
+                      <tbody id="trTableBody">
                           <!-- 新的學生資料將會在這裡插入 -->
                       </tbody>
                     </table>
                 </div>
                 <div class="card-footer text-right">
-                  <button class="btn btn-primary" id="st_insertDataButton">新增學生</button>
+                  <button class="btn btn-primary" id="tr_insertDataButton">新增老師</button>
                 </div>
               </div>
             </div>
@@ -178,7 +179,7 @@
   <!-- Page Specific JS File -->
   <script src="assets/js/page/bootstrap-modal.js"></script>
   <script src="assets/js/page/components-table.js"></script>
-  <script src="assets/js/page/ad_index.js"></script>
+  <script src="assets/js/page/tr_manage.js"></script>
   
   <!-- Template JS File -->
   <script src="assets/js/scripts.js"></script>

@@ -1569,6 +1569,335 @@ $("#st_pay_add").fireModal({
 });
 
 
+$("#editTeacherButton").fireModal({
+  size: "modal-lg",
+  title: `<span>老師資料【<span id="tr_id_edit"></span>】</span>`,
+  body: `
+  <form id="editTeacherForm" method="POST" action="/editTeacherButton">
+    <input type="input" style="display: none;" id="st_id_input_edit" name="st_id">
+    <div class="form-group">
+      <img src="" id="tr_picture_edit" alt="上傳的圖片" style="max-width: 100px;">
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="tr_name">老師姓名</label>
+          <input type="text" id="tr_name_edit" name="tr_name" class="form-control">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="trt_age">年齡</label>
+          <input type="number" id="tr_age_edit" name="tr_age" class="form-control">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="tr_acc">帳號</label>
+          <input type="text" id="tr_acc_edit" name="tr_acc" class="form-control">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="tr_pwd">密碼</label>
+          <input type="text" id="tr_pwd_edit" name="tr_pwd" class="form-control">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="tr_course_name">授課項目</label>
+          <select type="select" id="tr_course_name_edit" name="tr_course_name" class="form-control"></select>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="tr_phone1">連絡電話1</label>
+          <input type="text" id="tr_phone1_edit" name="tr_phone1" class="form-control">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">
+            <label for="tr_phone2">連絡電話2</label>
+            <input type="text" id="tr_phone2_edit" name="tr_phone2" class="form-control">
+        </div>
+      </div>
+    </div>  
+    <div class="row">
+      <div class="col-md-12">
+          <div class="form-group">
+            <label for="tr_address">地址</label>
+            <input type="text" id="tr_address_edit" name="tr_address" class="form-control">
+          </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="form-group">
+              <label for="tr_email">Email</label>
+              <input type="email" id="tr_email_edit" name="tr_email" class="form-control">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="form-group">
+          <label for="st_create_date">入職日期</label>
+          <input type="text" id="st_create_date_edit" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+        </div>
+      </div>
+    </div>
+    <span id="editTeacherMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
+  </form>
+  `,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "送出",
+      class: "btn btn-primary",
+      handler: function (modal) {
+        const Message = $('#editTeacherMessage');
+        $('#st_id_input_edit').val($('#st_id_edit').text());
+        const stName = $('#st_name_edit').val().trim();
+        const stAge = $('#st_age_edit').val();
+        const stAcc = $('#st_acc_edit').val().trim();
+        const stPwd = $('#st_pwd_edit').val().trim();
+        const stCourseId = $('#st_course_name_edit').val();
+        const stTuition = $('#st_tuition_edit').val();
+        const stParent = $('#st_parent_edit').val().trim();
+        const stPhone1 = $('#st_phone1_edit').val().trim();
+        const stEmail = $('#st_email_edit').val().trim();
+        const stAddress = $('#st_address_edit').val().trim();
+        const stWorkplace = $('#st_workplace_edit').val().trim();
+        const stProfession = $('#st_profession_edit').val().trim();
+        const stNote = $('#st_note_edit').val().trim();
+        
+        Message.text("");
+        // 檢查所有必填字段
+        if (!stName || !stAge || !stAcc || !stPwd || !stTuition || !stParent || !stPhone1 || !stEmail || !stAddress || !stWorkplace || !stProfession) {
+          Message.text("請輸入完整資料!");
+          return;
+        }
+
+        // 驗證 email 格式
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(stEmail)) {
+          Message.text("請輸入有效的 Email 地址。");
+          return;
+        }
+
+        // 檢查備註字數
+        if (stNote.length > 100) {
+          Message.text("備註不能超過100字。");
+          return;
+        }
+        // 提交後關閉模態
+        $("#editTeacherForm").submit();
+      },
+    },
+  ],
+});
+
+
+$("#leaveTeacherButton").fireModal({
+  title: `<span>老師離職</span>`,
+  body: `
+<form id="leaveStudentForm" method="POST" action="/leaveStudentButton" style="margin-bottom: -45px;">
+  <div style="margin-bottom: 15px;">
+    <label for="st_id_leave" style="font-weight: bold;">編號:</label>
+    <span id="st_id_leave" name="st_id"></span>
+  </div>
+  <div style="margin-bottom: 15px;">
+    <label for="st_name_leave" style="font-weight: bold;">姓名:</label>
+    <span id="st_name_leave"></span>
+  </div>
+  <input type="input" style="display: none" id="st_id_leave_input" name="st_id">
+</form>
+`,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "確認",
+      class: "btn btn-danger",
+      handler: function (modal) {
+        $("#st_id_leave_input").val($("#st_id_leave").text())
+        $("#leaveStudentForm").submit();
+      },
+    },
+  ],
+});
+
+$("#tr_insertDataButton").fireModal({
+  size: "modal-lg",
+  title: "老師資料新增",
+  body: `
+    <form id="studentDataForm" method="POST" action="/tr_insertDataButton">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="name">學生姓名 <span style="color: red">*</span></label>
+            <input type="text" name="name" class="form-control" id="name" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="age">年齡 <span style="color: red">*</span></label>
+            <input type="number" name="age" class="form-control" id="age" required>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="email">Email <span style="color: red">*</span></label>
+            <input type="email" name="email" class="form-control" id="email" required>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="address">聯絡住址 <span style="color: red">*</span></label>
+            <input type="text" name="address" class="form-control" id="address" required>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="tuition">學費 <span style="color: red">*</span></label>
+            <input type="number" name="tuition" class="form-control" id="tuition" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="course_id">學習進度 <span style="color: red">*</span></label>
+            <select name="course_id" class="form-control" id="course_id" required>
+              <option value="" disabled selected>請選擇學習進度</option>
+            </select>
+          </div>
+        </div> 
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="parent">家長姓名 <span style="color: red">*</span></label>
+            <input type="text" name="parent" class="form-control" id="parent" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="phone1">連絡電話1 <span style="color: red">*</span></label>
+            <input type="text" name="phone1" class="form-control" id="phone1" required>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="phone2">連絡電話2</label>
+            <input type="text" name="phone2" class="form-control" id="phone2">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="workplace">就讀學校/就業公司 <span style="color: red">*</span></label>
+            <input type="text" name="workplace" class="form-control" id="workplace" required>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-group">
+            <label for="profession">職業 <span style="color: red">*</span></label>
+            <input type="text" name="profession" class="form-control" id="profession" required>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <div class="form-group">
+            <label for="note">備註</label>
+            <textarea name="note" class="form-control" id="note" rows="1"></textarea>
+          </div>
+        </div>
+      </div>
+      <span id="st_insertDataMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
+    </form>
+`,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "送出",
+      class: "btn btn-primary",
+      handler: function (modal) {
+        const message = $("#st_insertDataMessage");
+        const userId = $("#name").val();
+        const age = $("#age").val();
+        const email = $("#email").val();
+        const phone1 = $("#phone1").val();
+        const tuition = $("#tuition").val();
+        const address = $("#address").val();
+        const parent = $("#parent").val();
+        const workplace = $("#workplace").val();
+        const profession = $("#profession").val();
+        const note = $("#note").val(); // 取得 note 欄位的值
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phonePattern = /^[0-9]{10}$/;
+        const tuitionPattern = /^[0-9]+$/;
+
+        // 清空之前的錯誤訊息
+        message.text("");
+
+        if (!emailPattern.test(email)) {
+          message.text("Email 格式錯誤!");
+          return;
+        }
+        if (!phonePattern.test(phone1)) {
+          message.text("電話號碼格式錯誤!");
+          return;
+        }
+        if (note.length > 100) {
+          message.text("備註不能超過 100 字!");
+          return;
+        }
+
+        if (!userId || !age || !email || !phone1 || !tuition || !address || !parent || !workplace || !profession) {
+          message.text("請輸入完整資料!");
+          return;
+        }
+        $("#studentDataForm").submit();
+      },
+    },
+  ],
+});
+
+
 $("#modal-1").fireModal({ body: "Modal body text goes here." });
 
 $("#modal-2").fireModal({ body: "Modal body text goes here.", center: true });

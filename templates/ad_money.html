@@ -102,7 +102,7 @@
           </ul>
       </div>
       <script>
-        var a = 'jkjlj';
+        var money_record = {{ money_record| tojson | safe}};
       </script>
       <!-- Main Content -->
       <div class="main-content">
@@ -170,43 +170,21 @@
                   </div>
                 
               </div>
-                <div class="card-body table-responsive p-0" style="padding-top: inherit;">
+                <div class="card-body table-responsive p-0" id="top-5-scroll_money_table" style="padding-top: inherit;">
                   <table class="table table-striped">
-                    <thead>
+                    <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
                       <tr>
-                          <th style="min-width: 160px; width: 20%;">學號</th>
-                          <th style="min-width: 130px; width: 20%;">學費</th>
-                          <th style="min-width: 120px; width: 20%;">學期</th>
-                          <th style="min-width: 195px; width: 20%;">繳費方式</th>
-                          <th style="min-width: 195px; width: 20%;">繳費日期</th>
+                          <th style="min-width: 120px;">學號</th>
+                          <th style="min-width: 100px;">學期</th>
+                          <th style="min-width: 110px;">繳費細項</th>
+                          <th style="min-width: 110px;">繳費方式</th>
+                          <th style="min-width: 130px;">繳費日期</th>
+                          <th style="min-width: 110px;">上課堂數</th>
                           <th style="width: 100px;">操作</th>
                       </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td><a class="btn btn-danger btn-action leave-btn" data-id="1 17"><i class="fas fas fa-trash"></i></a></td>
-                        </tr>
-                        <tr>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td><a class="btn btn-danger btn-action leave-btn" data-id="1 17"><i class="fas fas fa-trash"></i></a></td>
-                        </tr>
-                        <tr>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td>jkojl</td>
-                          <td><a class="btn btn-danger btn-action leave-btn" data-id="1 17"><i class="fas fas fa-trash"></i></a></td>
-                        </tr>
+                    <tbody id="money_table_body">
+                        <!-- 動態新增 -->
                     </tbody>
                   </table>
                 </div>

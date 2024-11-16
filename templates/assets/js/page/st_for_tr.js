@@ -57,7 +57,6 @@ function populateTable(data) {
       $("#st_name_forTr").text(studentData.st_name);
 
       currentClassroom = ""; // 用于追踪当前教室名称
-
       // 动态生成 select 选项
       course_data.forEach((classroom) => {
         if (classroom.trs.length > 0) {
@@ -76,8 +75,9 @@ function populateTable(data) {
             );
           } else {
             const filteredTeachers = classroom.trs.filter(
-              (tr) => tr.tr_course_id === studentCourseId
+              (tr) => tr.tr_course_id.includes(studentCourseId),
             );
+            
             if (filteredTeachers.length > 0) {
               const studentClasstimeId = st_data
                 .filter((st) => st.st_id === studentData.st_id) // 筛选出符合 student_id 的项
@@ -116,7 +116,7 @@ function populateTable(data) {
         ) {
           selectedCourse.trs.forEach((tr) => {
             const isDisabled =
-              studentCourseId > 10 && tr.tr_course_id != studentCourseId; // 判断老师是否符合条件
+              studentCourseId > 10 && !tr.tr_course_id.includes(studentCourseId); // 判断老师是否符合条件
             const isSelected = studentTrId == tr.tr_id;
             const option = `
                 <option value="${tr.tr_id}" ${isSelected ? "selected" : ""}  ${
@@ -374,7 +374,7 @@ function populateClasstimeSelect(studentCourseId, studentClasstimeId, studentSta
         addClassroomOptions(classroom, classtimeSelect, isSelected, isConflict);
       } else {
         const filteredTeachers = classroom.trs.filter(
-          (tr) => tr.tr_course_id === studentCourseId
+          (tr) => tr.tr_course_id.includes(studentCourseId)
         );
         if (filteredTeachers.length > 0) {
           const isSelected = studentClasstimeId.includes(classroom.classtime_id);
@@ -404,6 +404,11 @@ function addClassroomOptions_edit(
   currentClasstimeId
 ) {
   const classroomName = classroom.classroom_name;
+  console.log('classroom', classroom);
+  console.log('classtimeSelect', classtimeSelect);
+  console.log('isSelected', isSelected);
+  console.log('currentClasstimeId', currentClasstimeId);
+  
 
   // 只在教室名称变化时添加 optgroup
   if (classroomName !== currentClassroom) {
@@ -525,7 +530,7 @@ function searchUpdateTeacherOptions(classtimeId, studentCourseId) {
   if (selectedCourse && selectedCourse.trs && selectedCourse.trs.length > 0) {
     selectedCourse.trs.forEach((tr) => {
       const isDisabled =
-        studentCourseId > 10 && tr.tr_course_id != studentCourseId; // 判断老师是否符合条件
+        studentCourseId > 10 && !tr.tr_course_id.includes(studentCourseId); // 判断老师是否符合条件
 
       const option = `
                 <option value="${tr.tr_id}" ${
@@ -548,7 +553,6 @@ document.addEventListener("DOMContentLoaded", function () {
 function clearInput() {
   document.getElementById("searchInput").value = ""; // 清空輸入框
   populateTable(st_data); // 恢復顯示所有學生資料
-  toggleClearButton(); // 更新清除按鈕的顯示
 }
 
 // Enter 搜尋

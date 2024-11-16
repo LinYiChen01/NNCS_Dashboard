@@ -3,7 +3,6 @@
 function clearInput() {
   document.getElementById('searchInput').value = ''; // 清空輸入框
   populateTable(st_data); // 恢復顯示所有學生資料
-  toggleClearButton(); // 更新清除按鈕的顯示
 }
 
 // 監聽輸入框的 Enter 鍵
