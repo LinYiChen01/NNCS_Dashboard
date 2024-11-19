@@ -123,6 +123,9 @@
                 </div>
                 <script>
                   tr_data = {{tr_data | tojson | safe}};
+                  tr_info = {{tr_info | tojson | safe}};
+                  course_data = {{course_data | tojson | safe}};
+                  classtime_data = {{classtime_data | tojson | safe}};
                 </script>
                 <div class="card-body table-responsive p-0" id="top-5-scroll_st_table" style="padding-top: inherit;">
                     <button type="button" id="editTeacherButton" style="display: none;"></button>
@@ -144,6 +147,7 @@
                     </table>
                 </div>
                 <div class="card-footer text-right">
+                  <button class="btn btn btn-outline-primary" id="tr_insetTimeButton">新增老師時段</button>
                   <button class="btn btn-primary" id="tr_insertDataButton">新增老師</button>
                 </div>
               </div>
