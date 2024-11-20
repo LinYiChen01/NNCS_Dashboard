@@ -1855,6 +1855,24 @@ $("#tr_insertDataButton").fireModal({
       <div class="row">
         <div class="col-md-12">
           <div class="form-group">
+                <input type="text" id="have_st">
+                <input type="text" id="tr_classtime_edit" name="tr_classtime_edit">
+                <label for="tr_st_num" id="tr_classtime_st_num_edit">可接納學生數</label>
+                <select id="tr_st_num_insert" name="tr_st_num_insert" class="form-control">
+                  <option value="8">8</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                </select>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
             <label for="tr_course_name">授課項目</label>
             <div class="d-flex align-items-center">
               <select id="tr_course_name_insert" name="tr_course_name_insert" class="form-control" style="flex: 1; margin-right: 10px;">
@@ -1920,6 +1938,88 @@ $("#tr_insertDataButton").fireModal({
 
         $("#teacherDataForm").submit();
       },
+    },
+  ],
+});
+
+$("#tr_insetTimeButton").fireModal({
+  title: `<span>新增老師授課時段</span>`,
+  body: `
+    <form id="search_tr_info" method="POST" action="/tr_insetTimeButton">
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label for="search_tr_id">老師編號:</label>
+        <div class="input-group">
+          <input type="text" class="form-control" id="search_tr_id" name="search_tr_id">
+          <div class="input-group-append">
+            <button id="searchTeacherBtn" class="btn btn-primary" type="button">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+        <br>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="search_tr_name">姓名:</label>
+          <label id="search_tr_name"></label>
+          <input type="input" style="display: none;" id="search_tr_course_id">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="search_classtime_id">授課時段</label>
+            <div class="d-flex align-items-center">
+              <select id="search_classtime_id" name="search_classtime_id" class="form-control" style="flex: 1; margin-right: 10px;">
+                <option value="" selected disabled>請選擇授課時段</option>
+              </select>
+              <button id="tr_insetTimeButton_search" type="button" class="btn btn-primary">新增</button>
+            </div>
+          </div>
+          <div class="form-group mt-3">
+            <label id="tr_classtime_choose_search">已選授課時段：</label><br>
+            <input type="text" style="display: none;" id="tr_classtimeid_choose_search" name="tr_classtimeid_choose_search"></input>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+              <label for="tr_st_num_insert" id="tr_classtime_st_num_insert">可接納學生數</label>
+              <select id="tr_st_num_insert" name="tr_st_num_insert" class="form-control">
+                <option value="8">8</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
+          </div>
+        </div>
+      </div>
+      <span id="search_st_info_msg" style="display: block; margin-bottom: .5rem; color: red;"></span>
+    </form>
+  `,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary btn-left", // 将取消按钮置左
+      handler: function (modal) {
+        
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "確認",
+      class: "btn btn-primary",
+      handler: function (modal) {
+        const st_id = $("#search_st_id").val().trim();
+        const currentSelection_val = $("#currentSelection_val").val();
+        if (!st_id || !currentSelection_val) {
+          $("#search_st_info_msg").text("請選擇完整資料！");
+        } else {
+          $("#search_st_info").submit();
+        }
+      }
     },
   ],
 });

@@ -44,7 +44,7 @@ function populateTable(data, data2) {
         $('#tr_name_edit').val(trData.tr_name); 
         $('#tr_course_name_choose').text('已選授課項目：' + trData.course_name);
         $('#tr_course_val_choose').val(trData.course_id);
-        $('#tr_classtime_st_num_edit').text(trData.classroom_name + ' ' + "禮拜" + trData.class_week + " " + trData.start_time + "-" + trData.end_time);
+        $('#tr_classtime_st_num_edit').text(trData.classroom_name + ' ' + "禮拜" + trData.class_week + " " + trData.start_time + "-" + trData.end_time + " " + "可接納學生數");
         $('#tr_classtime_edit').val(trData.classtime_id);
 
         for (let option of document.getElementById('tr_st_num').options) {
@@ -138,8 +138,11 @@ document.getElementById('add_course_btn_insert').addEventListener('click', () =>
 });
 
 
-let currentClassroom = "";
 document.getElementById('tr_insertDataButton').addEventListener('click', () => {
+    $("#tr_classtime_choose_insert").text('已選授課時段：');
+    $("#tr_classtimeid_choose_insert").val('');
+    let currentClassroom = "";
+
     classtime_data.forEach((classroom) => {
     const classroomName = classroom.classroom_name;
 
@@ -159,21 +162,214 @@ document.getElementById('tr_insertDataButton').addEventListener('click', () => {
     });
 });
 
+document.getElementById('tr_insetTimeButton').addEventListener('click', () => {
+    $("#search_classtime_id").closest(".form-group").hide();
+    $("#tr_classtime_st_num_insert").closest(".form-group").hide();
+    $("#st_schedule_info").hide();
+    $("#tr_classtime_choose_search").hide();
+    $("#tr_classtime_choose_search").text('已選授課時段：');
+    $("#tr_classtimeid_choose_search").val('');
+    let currentClassroom = "";
+
+    classtime_data.forEach((classroom) => {
+    const classroomName = classroom.classroom_name;
+
+    // 如果教室名称发生变化，创建新的 <optgroup>
+    if (classroomName !== currentClassroom) {
+        $("#search_classtime_id").append(`<optgroup label="${classroomName}"></optgroup>`);
+        currentClassroom = classroomName; // 更新当前教室名称
+    }
+
+    // 创建选项
+    const option = `
+        <option value="${classroom.classtime_id}">${classroom.classroom_schedule}</option>
+    `;
+
+    // 将选项追加到最后一个 <optgroup> 中
+    $("#search_classtime_id").find(`optgroup[label="${classroomName}"]`).append(option);
+    });
+});
+
+
+document
+.getElementById("searchTeacherBtn")
+.addEventListener("click", function () {
+    const trId = document.getElementById("search_tr_id").value.trim(); // 获取输入的学号并去掉前后空格
+    // 如果输入为空，不发送请求
+    if (!trId) { 
+        document.getElementById("search_tr_name").innerHTML = '<span style="color: red">請輸入教師編號!</span>';  
+        return;
+    }
+    if (!Number.isInteger(Number(trId)) || Number(trId) < 0) { 
+        document.getElementById("search_tr_name").innerHTML = '<span style="color: red">教師編號格式錯誤!</span>'; 
+        console.log('vhijko');
+        return;
+    }
+    
+    // 发起 AJAX 请求
+    fetchTeacherInfo(trId);
+});
+ 
+
+  function fetchTeacherInfo(trId) {
+    // 发起 AJAX 请求
+    fetch("/searchTeacher", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ tr_id: trId }), // 将数据转为 JSON 格式
+    })
+      .then((response) => {
+        if (response.ok) {
+            return response.json(); // 将响应转换为 JSON
+        }
+      })
+      .then((data) => {
+          document.getElementById("search_tr_name").innerHTML = data.tr_name;
+          if (data.tr_name !==`<span style="color: red">查無資料!</span>`) { 
+            $("#search_classtime_id").closest(".form-group").show();
+            $("#tr_classtime_st_num_insert").closest(".form-group").show();
+            $("#st_schedule_info").show();
+            $("#tr_classtime_choose_search").show();
+          }
+
+      })
+      .catch((error) => {
+        document.getElementById("search_tr_name").innerHTML = '<span style="color: red>查無資料!</span>';  
+      });
+  }
+  
+// 添加监听器，当 search_tr_id 内容变化时隐藏相关元素
+document.getElementById("search_tr_id").addEventListener("input", function () {
+    // 隐藏指定内容
+    document.getElementById("search_tr_name").innerHTML = '';
+    $("#search_classtime_id").closest(".form-group").hide();
+    $("#tr_classtime_st_num_insert").closest(".form-group").hide();
+    $("#st_schedule_info").hide();
+    $("#tr_classtime_choose_search").hide();
+    
+  });
+  
+
 document.getElementById('add_tr_classtime_id').addEventListener('click', () => {
     const selectedClasstimeId = $('#tr_classtime_id').val();   
     const selectedClasstime = $('#tr_classtime_id option:selected').text();
-    if (!$('#tr_classtimeid_choose_insert').val().includes(selectedClasstimeId) && selectedClasstimeId) { 
-        if ($('#tr_classtime_choose_insert').text() == '已選授課時段：') {
-            $('#tr_classtimeid_choose_insert').val($('#tr_classtimeid_choose_insert').val() + selectedClasstimeId); 
-        }
-        else { 
-            $('#tr_classtimeid_choose_insert').val($('#tr_classtimeid_choose_insert').val() + ',' + selectedClasstimeId); 
-        }
-        $('#tr_classtime_choose_insert').css('display', 'block');
-            $('#tr_classtime_choose_insert').html(
-                $('#tr_classtime_choose_insert').html() + '<br>' + selectedClasstime
-            );   
-    }
-    $('#tr_classtime_id').val("");
-});
 
+    if (!selectedClasstimeId || $('#tr_classtimeid_choose_insert').val().includes(selectedClasstimeId)) {
+        return; // 如果未选择或已选过，直接返回
+    }
+
+    // 更新隐藏的输入框
+    if ($('#tr_classtime_choose_insert').text() === '已選授課時段：') {
+        $('#tr_classtimeid_choose_insert').val(selectedClasstimeId);
+    } else { 
+        $('#tr_classtimeid_choose_insert').val($('#tr_classtimeid_choose_insert').val() + ',' + selectedClasstimeId); 
+    }
+
+    // 更新显示已选课程时段
+    $('#tr_classtime_choose_insert').css('display', 'block');
+    $('#tr_classtime_choose_insert').html(
+        $('#tr_classtime_choose_insert').html() + '<br>' + selectedClasstime
+    );
+
+    // 解析选中课程的时间范围
+    const schedule = selectedClasstime.split(' ')[1]; // e.g., "禮拜三19:00-20:00"
+    const class_week = schedule.substr(0, 3);
+    const [start, end] = schedule.split('-');
+    const start_time = start.slice(3); // 截取时间部分
+    const end_time = end;
+
+    // 禁用冲突的选项
+    classtime_data.forEach((i) => {
+        const i_schedule = i.classroom_schedule.split(' ')[1];
+        const i_class_week = i_schedule.substr(0, 3);
+        const [i_start, i_end] = i_schedule.split('-');
+        const i_start_time = i_start.slice(3);
+        const i_end_time = i_end;
+
+        // 判断是否冲突
+        if (
+            (class_week === i_class_week) &&
+            (
+                (start_time < i_end_time && end_time > i_start_time) // 时间段有交集
+            )
+        ) {
+            $(`#tr_classtime_id option[value="${i.classtime_id}"]`)
+                .prop('disabled', true)
+                .text(i.classroom_schedule + ' (衝堂)')
+                .addClass('text-muted');
+        }
+    });
+
+    // 禁用已选择的选项，并标记为“已选择”
+    $('#tr_classtime_id option:selected')
+        .prop('disabled', true)
+        .text(selectedClasstime + ' (已選擇)');
+
+    // 清空下拉菜单选择
+    $('#tr_classtime_id').val("");
+    });
+
+
+
+document.getElementById('tr_insetTimeButton_search').addEventListener('click', () => {
+    const selectedClasstimeId = $('#search_classtime_id').val();   
+    const selectedClasstime = $('#search_classtime_id option:selected').text();
+
+    if (!selectedClasstimeId || $('#tr_classtimeid_choose_search').val().includes(selectedClasstimeId)) {
+        return; // 如果未选择或已选过，直接返回
+    }
+
+    // 更新隐藏的输入框
+    if ($('#tr_classtime_choose_search').text() === '已選授課時段：') {
+        $('#tr_classtimeid_choose_search').val(selectedClasstimeId);
+    } else { 
+        $('#tr_classtimeid_choose_search').val($('#tr_classtimeid_choose_search').val() + ',' + selectedClasstimeId); 
+    }
+
+    // 更新显示已选课程时段
+    $('#tr_classtime_choose_search').css('display', 'block');
+    $('#tr_classtime_choose_search').html(
+        $('#tr_classtime_choose_search').html() + '<br>' + selectedClasstime
+    );
+
+    // 解析选中课程的时间范围
+    const schedule = selectedClasstime.split(' ')[1]; // e.g., "禮拜三19:00-20:00"
+    const class_week = schedule.substr(0, 3);
+    const [start, end] = schedule.split('-');
+    const start_time = start.slice(3); // 截取时间部分
+    const end_time = end;
+
+    // 禁用冲突的选项
+    classtime_data.forEach((i) => {
+        const i_schedule = i.classroom_schedule.split(' ')[1];
+        const i_class_week = i_schedule.substr(0, 3);
+        const [i_start, i_end] = i_schedule.split('-');
+        const i_start_time = i_start.slice(3);
+        const i_end_time = i_end;
+
+        // 判断是否冲突
+        if (
+            (class_week === i_class_week) &&
+            (
+                (start_time < i_end_time && end_time > i_start_time) // 时间段有交集
+            )
+        ) {
+            $(`#search_classtime_id option[value="${i.classtime_id}"]`)
+                .prop('disabled', true)
+                .text(i.classroom_schedule + ' (衝堂)')
+                .addClass('text-muted');
+        }
+    });
+
+    // 禁用已选择的选项，并标记为“已选择”
+    $('#search_classtime_id option:selected')
+        .prop('disabled', true)
+        .text(selectedClasstime + ' (已選擇)');
+
+    // 清空下拉菜单选择
+    $('#search_classtime_id').val("");
+    });
+    
+    

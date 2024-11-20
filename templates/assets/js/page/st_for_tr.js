@@ -332,7 +332,7 @@ function updateStudentInfo(data) {
     $("#old_classtime_id").val(Array.from(old_classtime_id));
     document.getElementById("search_st_course_id").value = data.st_course_id;
 
-    populateClasstimeSelect(data.st_course_id, data.st_classtime_id, data.st_start_time, data.st_end_time);
+    populateClasstimeSelect(data.st_course_id, data.st_classtime_id, data.st_class_week, data.st_start_time, data.st_end_time);
     currentClassroom = "";
   }
 }
@@ -351,7 +351,8 @@ function timeToSeconds(timeStr) {
 }
 
 // 动态填充上课时段的下拉框
-function populateClasstimeSelect(studentCourseId, studentClasstimeId, studentStartTime, studentEndtTime) {
+function populateClasstimeSelect(studentCourseId, studentClasstimeId, studentClassWeek, studentStartTime, studentEndtTime) {
+  console.log('studentClasstimeIdlllllllll', studentClassWeek, studentStartTime);
   const classtimeSelect = $("#search_classtime_id");
   const studentStartSeconds = timeToSeconds(studentStartTime);
   const studentEndSeconds = timeToSeconds(studentEndtTime);
@@ -369,8 +370,10 @@ function populateClasstimeSelect(studentCourseId, studentClasstimeId, studentSta
         const classroomEndSeconds = timeToSeconds(classroom.end_time);
         const isConflict = (
           (studentStartSeconds < classroomEndSeconds) && 
-          (studentEndSeconds > classroomStartSeconds)
+          (studentEndSeconds > classroomStartSeconds) &&
+          (studentClassWeek.includes(classroom.class_week))
         );
+        console.log('week', studentClassWeek, classroom.class_week);
         addClassroomOptions(classroom, classtimeSelect, isSelected, isConflict);
       } else {
         const filteredTeachers = classroom.trs.filter(
@@ -382,8 +385,10 @@ function populateClasstimeSelect(studentCourseId, studentClasstimeId, studentSta
           const classroomEndSeconds = timeToSeconds(classroom.end_time);
           const isConflict = (
             (studentStartSeconds < classroomEndSeconds) && 
-            (studentEndSeconds > classroomStartSeconds)
+            (studentEndSeconds > classroomStartSeconds) &&
+            (studentClassWeek.includes(classroom.class_week))
           );
+          console.log('week', studentClassWeek, classroom.class_week);
           addClassroomOptions(classroom, classtimeSelect, isSelected, isConflict);
         }
       }

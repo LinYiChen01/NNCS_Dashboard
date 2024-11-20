@@ -589,6 +589,7 @@ def st_for_tr():
             cursor.execute("""
                            SELECT 
                             ct.classtime_id, 
+                            ct.class_week,
                             c.name, 
                             ct.class_week, 
                             ct.start_time, 
@@ -721,10 +722,11 @@ def search_st_info():
                 st_course_id = result1['course_id'] if result1 else ''
 
             with connection.cursor() as cursor:
-                cursor.execute("SELECT a.semester, a.classtime_id, a.tr_id, ct.start_time, ct.end_time FROM `attend` a JOIN classtime ct ON a.classtime_id = ct.classtime_id WHERE user_id=%s AND status='';", (st_id,))
+                cursor.execute("SELECT a.semester, a.classtime_id, ct.class_week, a.tr_id, ct.start_time, ct.end_time FROM `attend` a JOIN classtime ct ON a.classtime_id = ct.classtime_id WHERE user_id=%s AND status='';", (st_id,))
                 result2 = cursor.fetchall()
                 st_semester = [int(i['semester']) for i in result2] if result2 else []
                 st_classtime_id = [int(i['classtime_id']) for i in result2] if result2 else []
+                st_class_week = [str(i['class_week']) for i in result2] if result2 else []
                 st_tr_id = [int(i['tr_id']) for i in result2] if result2 else []
                 st_start_time = [str(i['start_time']) for i in result2] if result2 else []
                 st_end_time = [str(i['end_time']) for i in result2] if result2 else []
@@ -750,6 +752,7 @@ def search_st_info():
                         'st_name': st_name,
                         'st_course_id': st_course_id,
                         'st_classtime_id': st_classtime_id,
+                        'st_class_week': st_class_week,
                         'st_tr_id': st_tr_id,
                         'st_start_time': st_start_time,
                         'st_end_time': st_end_time
@@ -1228,7 +1231,6 @@ def tr_manage():
                     course_id.append(j['course_id'])
                     course_name.append(j['name'])
                 course_name_str = ", ".join(course_name)
-                print('course_name_str', course_name_str)
                 tr_data.append({
                     'user_id': i['user_id'],
                     'tr_id': i['tr_id'],
@@ -1328,9 +1330,12 @@ def tr_insertDataButton():
         tr_address = request.form['address']
         tr_phone1 = request.form['phone1']
         tr_phone2 = request.form['phone2']
-        tr_classtime_id = request.form['tr_classtimeid_choose_insert'].split()
-        tr_course_id = request.form['tr_course_val_choose_insert'].split()
-        tr_st_num = request.form['tr_st_num']
+        tr_classtime_id = [int(i) for i in request.form['tr_classtimeid_choose_insert'].split(',')]
+        tr_course_id = [int(i) for i in request.form['tr_course_val_choose_insert'].split(',')]
+        tr_st_num = request.form['tr_st_num_insert']
+        print('tr_classtime_id', tr_classtime_id)
+        print('tr_course_id', tr_course_id)
+        
 
          # 預設圖片
         with open('templates/assets/img/avatar/avatar-4.png', 'rb') as file:
@@ -1349,17 +1354,43 @@ def tr_insertDataButton():
             result = cursor.fetchone()
             tr_id = result['user_id']
 
-            # for i in range(len(tr_classtime_id)):
-            #     cursor.execute("""INSERT INTO `users`(`acc`, `pwd`, `name`, `age`, `address`, `phone1`, `phone2`, `email`, `picture`, `create_date`, `role`, `status`) 
-            #                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
-            #                (tr_acc, tr_pwd, tr_name, tr_age, tr_address, tr_phone1, tr_phone2, tr_email, picture, datetime.today(), "3", "1"))
-            
-
-
+            for i in tr_classtime_id:
+                cursor.execute("INSERT INTO `teachers`(`user_id`, `classtime_id`, `st_num`, `status`) VALUES (%s, %s, %s, %s)", 
+                           (tr_id, i, tr_st_num, "1"))
+                connection.commit()
+                
+            for i in tr_course_id:
+                cursor.execute("INSERT INTO `tr_course`(`user_id`, `course_id`) VALUES (%s, %s)", (tr_id, i))
+                connection.commit()
         return redirect(url_for('tr_manage'))
     else:
         return redirect(url_for('login'))
 
+
+@app.route('/searchTeacher', methods=['POST'])
+def searchTeacher():
+    tr_id = request.json.get('tr_id')
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT `classtime_id` FROM `teachers` WHERE `user_id`=%s;", (tr_id,))
+            result = cursor.fetchall()
+            tr_classtime_id  = []
+            if result:
+                for i in result:
+                    tr_classtime_id.append(i['classtime_id'])
+                cursor.execute("SELECT `user_id`, `name` FROM `users` WHERE `user_id`=%s AND status = 1 AND `role` =3;", (tr_id,))
+                result = cursor.fetchone()
+                if result:
+                    return jsonify({
+                        "tr_id": result['user_id'],
+                        'tr_name': result['name'],
+                        'tr_classtime_id' : tr_classtime_id
+                        })
+            else:
+                return jsonify({"tr_name": '<span style="color: red">查無資料!</span>'})
+    except:
+        return jsonify({"tr_name": '<span style="color: red">查無資料!kk</span>'})
 
 
 # 單堂請假/全部退選
