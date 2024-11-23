@@ -284,10 +284,110 @@ def index():
                     'classtime_id': i['classtime_id'],
                 })
 
-
-
         connection.close()
         return render_template("index.html", **locals())
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route('/tr_index', methods=['GET', 'POST'])
+def tr_index():
+    login_status = session.get('login_status')
+    role = session.get('role')
+    user_id = session.get('user_id')
+
+    if login_status == "True" and  role == '3':
+        connection = get_db_connection()
+        st_data = []
+        today = datetime.today()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id))
+            result = cursor.fetchone()
+            name= result['name']
+            picture_data = result['picture']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+
+            cursor.execute("SELECT tr_id FROM `teachers` WHERE user_id=%s", (user_id))
+            result = cursor.fetchall()
+            tr_id = []
+            for i in result:
+                tr_id.append(i['tr_id'])
+
+            for i in tr_id:
+                print('tr_id', i)
+                cursor.execute("""SELECT 
+                                        a.*, u.name AS user_name, cr.name AS classroom_name, 
+                                        a.classtime_id,c.class_week, c.start_time, c.end_time, a.status
+                                    FROM `attend` a 
+                                        JOIN users u ON a.user_id = u.user_id 
+                                        JOIN classtime c ON c.classtime_id = a.classtime_id 
+                                        JOIN classroom cr ON cr.classroom_id = c.classroom_id 
+                                    WHERE a.tr_id=%s AND a.adjust=0 AND a.class_date=%s;""", 
+                            (i, datetime.strptime('2024-10-14', '%Y-%m-%d')))
+                result = cursor.fetchall()
+                for j in result:
+                    if j['status'] == '1':
+                        class_status = '上課'
+                    elif j['status'] == '2':
+                        class_status = '請假'
+                    elif j['status'] == '3':
+                        class_status = '曠課'
+                    else:
+                        class_status = ''
+                    
+                    st_data.append({
+                        'st_id': j['user_id'],
+                        'st_name': j['user_name'],
+                        'classroom': j['classroom_name'],
+                        'classtime_id':j['classtime_id'],
+                        'class_week': j['class_week'],
+                        'start_time': str(j['start_time'])[:-3],
+                        'end_time': str(j['start_time'])[:-3], 
+                        'status': '一般',
+                        'class_status': class_status
+                    })
+                cursor.execute("""SELECT 
+                                        a.*, u.name AS user_name, cr.name AS classroom_name, 
+                                        a.classtime_id, c.class_week, c.start_time, c.end_time 
+                                    FROM `attend` a 
+                                        JOIN users u ON a.user_id = u.user_id 
+                                        JOIN classtime c ON c.classtime_id = a.classtime_id 
+                                        JOIN classroom cr ON cr.classroom_id = c.classroom_id 
+                                    WHERE a.tr_id2=%s AND a.class_date=%s;""", 
+                            (i, datetime.strptime('2024-10-14', '%Y-%m-%d')))
+                result = cursor.fetchall()
+                for j in result:
+                    if j['status'] == '1':
+                        class_status = '上課'
+                    elif j['status'] == '2':
+                        class_status = '請假'
+                    elif j['status'] == '3':
+                        class_status = '曠課'
+                    else:
+                        class_status = ''
+                    st_data.append({
+                        'st_id': j['user_id'],
+                        'st_name': j['user_name'],
+                        'classroom': j['classroom_name'],
+                        'classtime_id':j['classtime_id'],
+                        'class_week': j['class_week'],
+                        'start_time': str(j['start_time'])[:-3],
+                        'end_time': str(j['start_time'])[:-3], 
+                        'status': '調課',
+                        'class_status': class_status
+                    })
+                classtimes = dict()
+                for i in st_data:
+                    classtimes[i['classtime_id']] = str(i['classroom'] + ' 禮拜' + i['class_week'] + i['start_time'] + "-" + i['end_time'])
+        connection.close()
+        return render_template("tr_index.html", **locals())
     else:
         return redirect(url_for('login'))
 
@@ -360,6 +460,77 @@ def ad_index():
         return render_template("ad_index.html", **locals())
     else:
         return redirect(url_for('login'))
+
+@app.route('/st_leave', methods=['GET', 'POST'])
+def st_leave():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+    role = session.get('role')
+
+    if login_status == "True" and  role == '4':
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id))
+            result = cursor.fetchone()
+            name= result['name']
+            picture_data = result['picture']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+
+        leave_st_data = []
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT user_id, name, age, phone1, phone2, email FROM `users` WHERE role=1 and status=2;")
+            result = cursor.fetchall()
+        for i in result:
+            leave_st_data.append({
+                'st_id' : i['user_id'],
+                'st_name' : i['name'],
+                'st_age' : i['age'],
+                'st_phone1' : i['phone1'],
+                'st_phone2' : i['phone2'],
+                'st_email' : i['email'] 
+            }) 
+        return render_template("st_leave.html", **locals())
+    else:
+        return redirect(url_for('login'))
+
+@app.route('/returnStudentButton', methods=['POST'])
+def returnStudentButton():
+    if request.method == 'POST':
+        st_id = request.form['st_id']
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE `users` SET `status`='1' WHERE `user_id`=%s", (st_id))
+            connection.commit()
+        return redirect(url_for('st_leave'))
+    else:
+        return redirect(url_for('login'))
+
+@app.route('/tr_rollcall', methods=['POST'])
+def tr_rollcall():
+    if request.method == 'POST':
+        rollcall = json.loads(request.form['rollcall'])
+        print(type(rollcall))
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            for st_id, v in rollcall.items():
+                print("v['status']", v['status'])
+                print("st_id", st_id)
+                print("v['classtime_id']", v['classtime_id'])
+                
+                # cursor.execute("UPDATE `attend` SET `status`=%s WHERE `user_id`=%s, `class_date`=%s, `classtime_id`=%s;",
+                #                 (v['status'], st_id, datetime.strptime('2024-10-14', '%Y-%m-%d'), v['classtime_id']))
+                # connection.commit()
+        return redirect(url_for('tr_index'))
+    else:
+        return redirect(url_for('login'))
+
 
 
 @app.route('/ad_money', methods=['GET', 'POST'])
@@ -1393,6 +1564,20 @@ def searchTeacher():
         return jsonify({"tr_name": '<span style="color: red">查無資料!kk</span>'})
 
 
+@app.route('/tr_insetTimeButton', methods=['POST'])
+def tr_insetTimeButton():
+    if request.method == 'POST':
+        tr_id = request.form['search_tr_id']
+        tr_classtimeid_choose_search = [int(i) for i in request.form['tr_classtimeid_choose_search'].split(',')]
+        tr_st_num_insert = int(request.form['tr_st_num_insert'])
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            for i in tr_classtimeid_choose_search:
+                cursor.execute("INSERT INTO `teachers`(`user_id`, `classtime_id`, `st_num`, `status`) VALUES (%s, %s, %s, %s)", (tr_id, i, tr_st_num_insert, '1'))
+                connection.commit()
+        return redirect(url_for('tr_manage'))
+    return redirect(url_for('login'))
+
 # 單堂請假/全部退選
 @app.route("/fc_leaveButton", methods=['POST'])
 def fc_leaveButton():
@@ -1531,6 +1716,118 @@ def profiles():
     else:
         # 未登入狀態下的處理
         return redirect(url_for('login'))
+
+@app.route("/tr_profiles")
+def tr_profiles():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+    role = session.get('role')
+
+    if login_status == "True" and  role == '1':
+        connection = get_db_connection()
+        
+        # 查user資料
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id,))
+            result = cursor.fetchone()
+            
+        name = result['name']
+        address = result['address']
+        phone1 = result['phone1']
+        phone2 = result['phone2']
+        email = result['email']
+        role = result['role']
+        if role == '1':
+            role = '學生'
+        elif role == '3':
+            role = '老師'
+        elif role == '4':
+            role = '管理員' 
+        picture_data = result['picture']
+
+        # 查students資料
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM students WHERE st_id = %s;", (user_id))
+            result = cursor.fetchone()
+        workplace = result['workplace']
+        profession = result['profession']
+        course_id = result['course_id']
+
+        # 查course_id 對應的course_name
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT name FROM courses WHERE course_id = %s;", (course_id))
+            result = cursor.fetchone()
+        course_name = result['name']
+
+        # 確定圖片的 MIME 類型
+        kind = filetype.guess(picture_data)
+        mime_type = kind.mime
+        # 將二進制數據編碼為 Base64 字符串
+        encoded_img = base64.b64encode(picture_data).decode('utf-8')
+        # 構建適用於前端的 Base64 數據 URL
+        picture = f"data:{mime_type};base64,{encoded_img}"
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT semester FROM `attend` WHERE user_id=%s ORDER BY `semester` DESC LIMIT 1;", (user_id))
+            # connection.commit()  # 確保插入操作被提交
+            result = cursor.fetchone()
+            semester = result['semester']
+
+        # 總共請假幾次
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT count(attend_id) as leave_num FROM `attend` WHERE user_id=%s AND semester=%s AND status='2'", (user_id, semester))
+            result = cursor.fetchone()
+            leave_num = result['leave_num']
+
+        # 總共上了多少課(含曠課)
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT count(attend_id) as class_num FROM `attend` WHERE user_id=%s AND semester=%s AND (status='1' OR status='3')", (user_id, semester))
+            result = cursor.fetchone()
+            class_num = result['class_num']
+
+        # 找出這學期第一次上課的日期 去計算結束日期
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT class_date FROM `attend` WHERE user_id=%s AND semester=%s  ORDER BY class_date ASC LIMIT 1;", (user_id, semester))
+            result = cursor.fetchone()
+            start_class_date = result['class_date']
+            end_class_date = start_class_date + timedelta(days=168)
+        
+        attend_data = []
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM `attend_view` WHERE st_id=%s AND semester=%s AND status != '' ORDER BY class_date ASC;", (user_id, semester))
+            result = cursor.fetchall()
+        # start_class_date = result['class_date']
+        # end_class_date = start_class_date + timedelta(days=168)
+        
+        for i in result:
+            if i['status'] == '1':
+                i['status'] = '上課'
+            elif i['status'] == '2':
+                i['status'] = '請假'
+            elif i['status'] == '3':
+                i['status'] = '曠課'
+            elif i['status'] == '4':
+                i['status'] = '停課'
+            
+            attend_data.append(
+                {
+                'class_date': i['class_date'],
+                'classroom_name': i['classroom_name'],
+                'start_time': str(i['start_time'])[:-3],
+                'end_time': str(i['end_time'])[:-3],
+                'status': i['status'] 
+                }
+            )
+
+        connection.close()  # 確保連接被關閉
+
+
+        return render_template("profiles.html", **locals())
+    
+    else:
+        # 未登入狀態下的處理
+        return redirect(url_for('login'))
+
 
 @app.route('/update_profile', methods=['POST'])
 def update_profile():
@@ -1724,8 +2021,7 @@ def login():
                         return redirect(url_for('index'))
                     
                     elif session['role'] == '3':  # 老師
-                        # return redirect(url_for('index'))
-                        return('tr')
+                        return redirect(url_for('tr_index'))
                     
                     elif session['role'] == '4':  # 管理員
                         return redirect(url_for('ad_index')) 

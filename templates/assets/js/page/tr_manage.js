@@ -88,13 +88,15 @@ function populateTable(data, data2) {
 function searchTable() {
     const input = document.getElementById('searchInput').value.toLowerCase();
     const filteredData = tr_data.filter(tr => {
-        return tr.st_id.toString().includes(input) || 
-               tr.st_name.toLowerCase().includes(input) || 
-               tr.st_parent.toLowerCase().includes(input) || 
-               tr.st_phone1.includes(input) || 
-               tr.st_phone2.includes(input);
+        return tr.user_id.toString() == input || 
+               tr.tr_name.toLowerCase().includes(input) ||
+               tr.classtime_id.toString() == input          
     });
-    populateTable(filteredData); // 更新表格
+    // 提取 filteredData 中的 user_id 列表
+    const filteredUserIds = filteredData.map(tr => tr.user_id);
+    // 筛选 filteredData2，根据 filteredUserIds 中的 user_id
+    const filteredData2 = tr_info.filter(tr => filteredUserIds.includes(tr.user_id));
+    populateTable(filteredData, filteredData2); // 更新表格
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -169,25 +171,6 @@ document.getElementById('tr_insetTimeButton').addEventListener('click', () => {
     $("#tr_classtime_choose_search").hide();
     $("#tr_classtime_choose_search").text('已選授課時段：');
     $("#tr_classtimeid_choose_search").val('');
-    let currentClassroom = "";
-
-    classtime_data.forEach((classroom) => {
-    const classroomName = classroom.classroom_name;
-
-    // 如果教室名称发生变化，创建新的 <optgroup>
-    if (classroomName !== currentClassroom) {
-        $("#search_classtime_id").append(`<optgroup label="${classroomName}"></optgroup>`);
-        currentClassroom = classroomName; // 更新当前教室名称
-    }
-
-    // 创建选项
-    const option = `
-        <option value="${classroom.classtime_id}">${classroom.classroom_schedule}</option>
-    `;
-
-    // 将选项追加到最后一个 <optgroup> 中
-    $("#search_classtime_id").find(`optgroup[label="${classroomName}"]`).append(option);
-    });
 });
 
 
@@ -202,7 +185,6 @@ document
     }
     if (!Number.isInteger(Number(trId)) || Number(trId) < 0) { 
         document.getElementById("search_tr_name").innerHTML = '<span style="color: red">教師編號格式錯誤!</span>'; 
-        console.log('vhijko');
         return;
     }
     
@@ -227,11 +209,66 @@ document
       })
       .then((data) => {
           document.getElementById("search_tr_name").innerHTML = data.tr_name;
-          if (data.tr_name !==`<span style="color: red">查無資料!</span>`) { 
+          if (data.tr_name !== `<span style="color: red">查無資料!</span>`) { 
+            $("#search_classtime_id").empty().append('<option value="" selected disabled>請選擇授課時段</option>');
             $("#search_classtime_id").closest(".form-group").show();
             $("#tr_classtime_st_num_insert").closest(".form-group").show();
             $("#st_schedule_info").show();
             $("#tr_classtime_choose_search").show();
+            $("#tr_classtime_choose_search").text('已選授課時段：');
+            $("#tr_classtimeid_choose_search").val('');  
+              
+            let currentClassroom = "";
+            const trData = tr_data.filter(tr => tr.user_id == trId);
+            const trClasstimeIds = trData.map(tr => tr.classtime_id);
+            const trSchedules = trData.map(tr => ({
+                week: tr.class_week,
+                start_time: tr.start_time,
+                end_time: tr.end_time,
+            }));  
+
+            classtime_data.forEach((classroom) => {
+                const classroomName = classroom.classroom_name;
+                const schedule = classroom.classroom_schedule.split(' ')[1];
+                const class_week = schedule.substr(2, 1);
+                const [start, end] = schedule.split('-');
+                const start_time = start.slice(3); // 提取开始时间
+                const end_time = end; // 提取结束时间
+            
+                const isSelected = trClasstimeIds.includes(classroom.classtime_id);
+                let isConflicted = false;
+            
+                // 冲堂判定
+                for (const i of trSchedules) {
+                    if (
+                        class_week === i.week && // 同一星期
+                        (start_time < i.end_time && end_time > i.start_time) // 时间冲突条件
+                    ) {
+                        isConflicted = true;
+                        break; // 一旦发现冲突，立即退出循环
+                    }
+                }
+            
+                // 如果教室名称发生变化，创建新的 <optgroup>
+                if (classroomName !== currentClassroom) {
+                    $("#search_classtime_id").append(`<optgroup label="${classroomName}"></optgroup>`);
+                    currentClassroom = classroomName; // 更新当前教室名称
+                }
+            
+                // 创建选项
+                const option = `
+                    <option value="${classroom.classtime_id}" 
+                        ${isSelected || isConflicted ? 'class="text-muted" disabled': ''}>
+                        ${classroom.classroom_schedule} 
+                        ${isSelected ? '(已選擇)' : isConflicted ? '(衝堂)' : ''}
+                    </option>
+
+                `;
+            
+                // 将选项追加到最后一个 <optgroup> 中
+                $("#search_classtime_id").find(`optgroup[label="${classroomName}"]`).append(option);
+            });
+            
           }
 
       })

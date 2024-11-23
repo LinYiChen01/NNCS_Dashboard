@@ -115,6 +115,12 @@ $(function() {
     }).niceScroll();
   }
 
+  if($("#top-5-scroll_leave_st_table").length) {
+    $("#top-5-scroll_leave_st_table").css({
+      height: 520
+    }).niceScroll();
+  }
+
   if($("#top-5-scroll_st__schedule_table").length) {
     $("#top-5-scroll_st__schedule_table").css({
       height: 450

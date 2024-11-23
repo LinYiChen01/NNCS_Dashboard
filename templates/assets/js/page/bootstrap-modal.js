@@ -1568,165 +1568,167 @@ $("#st_pay_add").fireModal({
   body: `<span id=st_pay_add_message></span>` 
 });
 
-
-$("#editTeacherButton").fireModal({
-  size: "modal-lg",
-  title: `<span>老師資料【<span id="tr_id_edit"></span>】</span>`,
-  body: `
-  <form id="editTeacherForm" method="POST" action="/editTeacherButton">
-    <input type="input" style="display: none;" id="tr_id_input_edit" name="tr_id">
-    <div class="form-group">
-      <img src="" id="tr_picture_edit" alt="上傳的圖片" style="max-width: 100px;">
-    </div>
-    <div class="row">
-      <div class="col-md-6">
-        <div class="form-group">
-          <label for="tr_name">老師姓名</label>
-          <input type="text" id="tr_name_edit" name="tr_name" class="form-control">
-        </div>
+if (window.location.pathname === "/tr_manage") { 
+  $("#editTeacherButton").fireModal({
+    size: "modal-lg",
+    title: `<span>老師資料【<span id="tr_id_edit"></span>】</span>`,
+    body: `
+    <form id="editTeacherForm" method="POST" action="/editTeacherButton">
+      <input type="input" style="display: none;" id="tr_id_input_edit" name="tr_id">
+      <div class="form-group">
+        <img src="" id="tr_picture_edit" alt="上傳的圖片" style="max-width: 100px;">
       </div>
-      <div class="col-md-6">
-        <div class="form-group">
-          <label for="trt_age">年齡</label>
-          <input type="number" id="tr_age_edit" name="tr_age" class="form-control">
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-6">
-        <div class="form-group">
-          <label for="tr_acc">帳號</label>
-          <input type="text" id="tr_acc_edit" name="tr_acc" class="form-control">
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="form-group">
-          <label for="tr_pwd">密碼</label>
-          <input type="text" id="tr_pwd_edit" name="tr_pwd" class="form-control">
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <div class="form-group">
-          <label for="tr_course_name">授課項目</label>
-          <div class="d-flex align-items-center">
-            <select id="tr_course_name_edit" name="tr_course_name" class="form-control" style="flex: 1; margin-right: 10px;">
-              <option value="" selected disabled>請選擇授課項目</option>
-              ${course_data
-                .map((c) => `<option value="${c['course_id']}">${c['course_name']}</option>`)
-                .join("")}
-            </select>
-            <button id="add-course-btn" type="button" class="btn btn-primary">新增</button>
-          </div>
-        </div>
-        <div class="form-group mt-3">
-          <label id="tr_course_name_choose">已選授課項目：</label><br>
-          <input type="text" id="tr_course_val_choose" name="tr_course_val_choose"></input>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-6">
-        <div class="form-group">
-          <label for="tr_phone1">連絡電話1</label>
-          <input type="text" id="tr_phone1_edit" name="tr_phone1" class="form-control">
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="form-group">
-            <label for="tr_phone2">連絡電話2</label>
-            <input type="text" id="tr_phone2_edit" name="tr_phone2" class="form-control">
-        </div>
-      </div>
-    </div>  
-    <div class="row">
-      <div class="col-md-12">
+      <div class="row">
+        <div class="col-md-6">
           <div class="form-group">
-            <label for="tr_address">地址</label>
-            <input type="text" id="tr_address_edit" name="tr_address" class="form-control">
+            <label for="tr_name">老師姓名</label>
+            <input type="text" id="tr_name_edit" name="tr_name" class="form-control">
           </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <div class="form-group">
-              <label for="tr_email">Email</label>
-              <input type="email" id="tr_email_edit" name="tr_email" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="trt_age">年齡</label>
+            <input type="number" id="tr_age_edit" name="tr_age" class="form-control">
+          </div>
         </div>
       </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <div class="form-group">
-              <input type="text" id="have_st">
-              <input type="text" id="tr_classtime_edit" name="tr_classtime_edit">
-              <label for="tr_st_num" id="tr_classtime_st_num_edit">可接納學生數</label>
-              <select id="tr_st_num" name="tr_st_num" class="form-control">
-                <option value="8">8</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="tr_acc">帳號</label>
+            <input type="text" id="tr_acc_edit" name="tr_acc" class="form-control">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="tr_pwd">密碼</label>
+            <input type="text" id="tr_pwd_edit" name="tr_pwd" class="form-control">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="tr_course_name">授課項目</label>
+            <div class="d-flex align-items-center">
+              <select id="tr_course_name_edit" name="tr_course_name" class="form-control" style="flex: 1; margin-right: 10px;">
+                <option value="" selected disabled>請選擇授課項目</option>
+                ${course_data
+                  .map((c) => `<option value="${c['course_id']}">${c['course_name']}</option>`)
+                  .join("")}
               </select>
+              <button id="add-course-btn" type="button" class="btn btn-primary">新增</button>
+            </div>
+          </div>
+          <div class="form-group mt-3">
+            <label id="tr_course_name_choose">已選授課項目：</label><br>
+            <input type="text" id="tr_course_val_choose" name="tr_course_val_choose"></input>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <div class="form-group">
-          <label for="tr_create_date">入職日期</label>
-          <input type="text" id="tr_create_date_edit" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="tr_phone1">連絡電話1</label>
+            <input type="text" id="tr_phone1_edit" name="tr_phone1" class="form-control">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+              <label for="tr_phone2">連絡電話2</label>
+              <input type="text" id="tr_phone2_edit" name="tr_phone2" class="form-control">
+          </div>
+        </div>
+      </div>  
+      <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+              <label for="tr_address">地址</label>
+              <input type="text" id="tr_address_edit" name="tr_address" class="form-control">
+            </div>
         </div>
       </div>
-    </div>
-    <span id="editTeacherMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
-  </form>
-  `,
-  buttons: [
-    {
-      text: "取消",
-      class: "btn btn-secondary",
-      handler: function (modal) {
-        modal.modal("hide");
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+                <label for="tr_email">Email</label>
+                <input type="email" id="tr_email_edit" name="tr_email" class="form-control">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+                <input style="display: none;" type="text" id="tr_classtime_edit" name="tr_classtime_edit">
+                <label for="tr_st_num" id="tr_classtime_st_num_edit">可接納學生數</label>
+                <select id="tr_st_num" name="tr_st_num" class="form-control">
+                  <option value="8">8</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                </select>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="tr_create_date">入職日期</label>
+            <input type="text" id="tr_create_date_edit" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+          </div>
+        </div>
+      </div>
+      <span id="editTeacherMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
+    </form>
+    `,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
       },
-    },
-    {
-      text: "送出",
-      class: "btn btn-primary",
-      handler: function () {
-        const Message = $('#editTeacherMessage');
-        $('#tr_id_input_edit').val($('#tr_id_edit').text());
-        const trName = $('#tr_name_edit').val().trim();
-        const trAge = $('#tr_age_edit').val();
-        const trAcc = $('#tr_acc_edit').val().trim();
-        const trPwd = $('#tr_pwd_edit').val().trim();
-        const trCourseId = $('#tr_course_val_choose').val();
-        const trPhone1 = $('#tr_phone1_edit').val().trim();
-        const trEmail = $('#tr_email_edit').val().trim();
-        const trAddress = $('#tr_address_edit').val().trim();
-        
-        Message.text("");
-        // 檢查所有必填字段
-        if (!trName || !trAge || !trAcc || !trPwd || !trCourseId || !trPhone1 || !trEmail || !trAddress) {
-          Message.text("請輸入完整資料!");
-          return;
-        }
+      {
+        text: "送出",
+        class: "btn btn-primary",
+        handler: function () {
+          const Message = $('#editTeacherMessage');
+          $('#tr_id_input_edit').val($('#tr_id_edit').text());
+          const trName = $('#tr_name_edit').val().trim();
+          const trAge = $('#tr_age_edit').val();
+          const trAcc = $('#tr_acc_edit').val().trim();
+          const trPwd = $('#tr_pwd_edit').val().trim();
+          const trCourseId = $('#tr_course_val_choose').val();
+          const trPhone1 = $('#tr_phone1_edit').val().trim();
+          const trEmail = $('#tr_email_edit').val().trim();
+          const trAddress = $('#tr_address_edit').val().trim();
+          
+          Message.text("");
+          // 檢查所有必填字段
+          if (!trName || !trAge || !trAcc || !trPwd || !trCourseId || !trPhone1 || !trEmail || !trAddress) {
+            Message.text("請輸入完整資料!");
+            return;
+          }
+  
+          // 驗證 email 格式
+          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailPattern.test(trEmail)) {
+            Message.text("請輸入有效的 Email 地址。");
+            return;
+          }
+          // 提交後關閉模態
+          $("#editTeacherForm").submit();
+        },
+      },
+    ],
+  });
+}
 
-        // 驗證 email 格式
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailPattern.test(trEmail)) {
-          Message.text("請輸入有效的 Email 地址。");
-          return;
-        }
-        // 提交後關閉模態
-        $("#editTeacherForm").submit();
-      },
-    },
-  ],
-});
+
 
 
 $("#leaveTeacherButton").fireModal({
@@ -1772,175 +1774,179 @@ $("#leaveTeacherButton").fireModal({
   ],
 });
 
-$("#tr_insertDataButton").fireModal({
-  size: "modal-lg",
-  title: "老師資料新增",
-  body: `
-    <form id="teacherDataForm" method="POST" action="/tr_insertDataButton">
-      <div class="row">
-        <div class="col-md-6">
-          <div class="form-group">
-            <label for="tr_name">老師姓名 <span style="color: red">*</span></label>
-            <input type="text" name="tr_name" class="form-control" id="tr_name" required>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="form-group">
-            <label for="age">年齡 <span style="color: red">*</span></label>
-            <input type="number" name="age" class="form-control" id="age" required>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6">
-          <div class="form-group">
-            <label for="tr_acc">帳號 <span style="color: red">*</span></label>
-            <input type="text" name="tr_acc" class="form-control" id="tr_acc" required>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="form-group">
-            <label for="tr_pwd">密碼 <span style="color: red">*</span></label>
-            <input type="text" name="tr_pwd" class="form-control" id="tr_pwd" required>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="form-group">
-            <label for="email">Email <span style="color: red">*</span></label>
-            <input type="email" name="email" class="form-control" id="email" required>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="form-group">
-            <label for="address">聯絡住址 <span style="color: red">*</span></label>
-            <input type="text" name="address" class="form-control" id="address" required>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6">
-          <div class="form-group">
-            <label for="phone1">連絡電話1 <span style="color: red">*</span></label>
-            <input type="text" name="phone1" class="form-control" id="phone1" required>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="form-group">
-            <label for="phone2">連絡電話2</label>
-            <input type="text" name="phone2" class="form-control" id="phone2">
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="form-group">
-            <label for="tr_classtime_id">授課時段</label>
-            <div class="d-flex align-items-center">
-              <select id="tr_classtime_id" name="tr_classtime_id" class="form-control" style="flex: 1; margin-right: 10px;">
-                <option value="" selected disabled>請選擇授課時段</option>
-              </select>
-              <button id="add_tr_classtime_id" type="button" class="btn btn-primary">新增</button>
+
+if (window.location.pathname === "/tr_manage") {
+  $("#tr_insertDataButton").fireModal({
+    size: "modal-lg",
+    title: "老師資料新增",
+    body: `
+      <form id="teacherDataForm" method="POST" action="/tr_insertDataButton">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="tr_name">老師姓名 <span style="color: red">*</span></label>
+              <input type="text" name="tr_name" class="form-control" id="tr_name" required>
             </div>
           </div>
-          <div class="form-group mt-3">
-            <label id="tr_classtime_choose_insert">已選授課時段：</label><br>
-            <input type="text" id="tr_classtimeid_choose_insert" name="tr_classtimeid_choose_insert"></input>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="age">年齡 <span style="color: red">*</span></label>
+              <input type="number" name="age" class="form-control" id="age" required>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="form-group">
-                <input type="text" id="have_st">
-                <input type="text" id="tr_classtime_edit" name="tr_classtime_edit">
-                <label for="tr_st_num" id="tr_classtime_st_num_edit">可接納學生數</label>
-                <select id="tr_st_num_insert" name="tr_st_num_insert" class="form-control">
-                  <option value="8">8</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                  <option value="7">7</option>
-                  <option value="9">9</option>
-                  <option value="10">10</option>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="tr_acc">帳號 <span style="color: red">*</span></label>
+              <input type="text" name="tr_acc" class="form-control" id="tr_acc" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="tr_pwd">密碼 <span style="color: red">*</span></label>
+              <input type="text" name="tr_pwd" class="form-control" id="tr_pwd" required>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="email">Email <span style="color: red">*</span></label>
+              <input type="email" name="email" class="form-control" id="email" required>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="address">聯絡住址 <span style="color: red">*</span></label>
+              <input type="text" name="address" class="form-control" id="address" required>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="phone1">連絡電話1 <span style="color: red">*</span></label>
+              <input type="text" name="phone1" class="form-control" id="phone1" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="phone2">連絡電話2</label>
+              <input type="text" name="phone2" class="form-control" id="phone2">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="tr_classtime_id">授課時段</label>
+              <div class="d-flex align-items-center">
+                <select id="tr_classtime_id" name="tr_classtime_id" class="form-control" style="flex: 1; margin-right: 10px;">
+                  <option value="" selected disabled>請選擇授課時段</option>
                 </select>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="form-group">
-            <label for="tr_course_name">授課項目</label>
-            <div class="d-flex align-items-center">
-              <select id="tr_course_name_insert" name="tr_course_name_insert" class="form-control" style="flex: 1; margin-right: 10px;">
-                <option value="" selected disabled>請選擇授課項目</option>
-                ${course_data
-                  .map((c) => `<option value="${c['course_id']}">${c['course_name']}</option>`)
-                  .join("")}
-              </select>
-              <button id="add_course_btn_insert" type="button" class="btn btn-primary">新增</button>
+                <button id="add_tr_classtime_id" type="button" class="btn btn-primary">新增</button>
+              </div>
+            </div>
+            <div class="form-group mt-3">
+              <label id="tr_classtime_choose_insert">已選授課時段：</label><br>
+              <input type="text" id="tr_classtimeid_choose_insert" name="tr_classtimeid_choose_insert"></input>
             </div>
           </div>
-          <div class="form-group mt-3">
-            <label id="tr_course_name_choose_insert">已選授課項目：</label><br>
-            <input type="text" id="tr_course_val_choose_insert" name="tr_course_val_choose_insert"></input>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+                  <input type="text" id="have_st">
+                  <input type="text" id="tr_classtime_edit" name="tr_classtime_edit">
+                  <label for="tr_st_num" id="tr_classtime_st_num_edit">可接納學生數</label>
+                  <select id="tr_st_num_insert" name="tr_st_num_insert" class="form-control">
+                    <option value="8">8</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+            </div>
           </div>
         </div>
-      </div>
-      <span id="tr_insertDataMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
-    </form>
-`,
-  buttons: [
-    {
-      text: "取消",
-      class: "btn btn-secondary",
-      handler: function (modal) {
-        modal.modal("hide");
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="tr_course_name">授課項目</label>
+              <div class="d-flex align-items-center">
+                <select id="tr_course_name_insert" name="tr_course_name_insert" class="form-control" style="flex: 1; margin-right: 10px;">
+                  <option value="" selected disabled>請選擇授課項目</option>
+                  ${course_data
+                    .map((c) => `<option value="${c['course_id']}">${c['course_name']}</option>`)
+                    .join("")}
+                </select>
+                <button id="add_course_btn_insert" type="button" class="btn btn-primary">新增</button>
+              </div>
+            </div>
+            <div class="form-group mt-3">
+              <label id="tr_course_name_choose_insert">已選授課項目：</label><br>
+              <input type="text" id="tr_course_val_choose_insert" name="tr_course_val_choose_insert"></input>
+            </div>
+          </div>
+        </div>
+        <span id="tr_insertDataMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
+      </form>
+  `,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
       },
-    },
-    {
-      text: "送出",
-      class: "btn btn-primary",
-      handler: function () {
-        const message = $("#tr_insertDataMessage");
-        const tr_acc = $("#tr_acc").val();
-        const tr_pwd = $("#tr_pwd").val();
-        const tr_name = $("#tr_name").val();
-        const age = $("#age").val();
-        const email = $("#email").val();
-        const phone1 = $("#phone1").val();
-        const phone2 = $("#phone2").val();
-        const address = $("#address").val();
-        const tr_classtime = $("#tr_classtimeid_choose_insert").val();
-        const tr_course_id = $("#tr_course_val_choose_insert").val();
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phonePattern = /^[0-9]{10}$/;
-
-        // 清空之前的錯誤訊息
-        message.text("");
-
-        if (!emailPattern.test(email)) {
-          message.text("Email 格式錯誤!");
-          return;
-        }
-        if (!phonePattern.test(phone1) || !phonePattern.test(phone2)) {
-          message.text("電話號碼格式錯誤!");
-          return;
-        }
-
-        if (!tr_acc || !tr_pwd || !tr_name || !age || !email || !phone1 || !address || !tr_classtime || !tr_course_id) {
-          message.text("請輸入完整資料!");
-          return;
-        }
-
-        $("#teacherDataForm").submit();
+      {
+        text: "送出",
+        class: "btn btn-primary",
+        handler: function () {
+          const message = $("#tr_insertDataMessage");
+          const tr_acc = $("#tr_acc").val();
+          const tr_pwd = $("#tr_pwd").val();
+          const tr_name = $("#tr_name").val();
+          const age = $("#age").val();
+          const email = $("#email").val();
+          const phone1 = $("#phone1").val();
+          const phone2 = $("#phone2").val();
+          const address = $("#address").val();
+          const tr_classtime = $("#tr_classtimeid_choose_insert").val();
+          const tr_course_id = $("#tr_course_val_choose_insert").val();
+          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const phonePattern = /^[0-9]{10}$/;
+  
+          // 清空之前的錯誤訊息
+          message.text("");
+  
+          if (!emailPattern.test(email)) {
+            message.text("Email 格式錯誤!");
+            return;
+          }
+          if (!phonePattern.test(phone1) || !phonePattern.test(phone2)) {
+            message.text("電話號碼格式錯誤!");
+            return;
+          }
+  
+          if (!tr_acc || !tr_pwd || !tr_name || !age || !email || !phone1 || !address || !tr_classtime || !tr_course_id) {
+            message.text("請輸入完整資料!");
+            return;
+          }
+  
+          $("#teacherDataForm").submit();
+        },
       },
-    },
-  ],
-});
+    ],
+  });
+}
+
 
 $("#tr_insetTimeButton").fireModal({
   title: `<span>新增老師授課時段</span>`,
@@ -1996,7 +2002,7 @@ $("#tr_insetTimeButton").fireModal({
           </div>
         </div>
       </div>
-      <span id="search_st_info_msg" style="display: block; margin-bottom: .5rem; color: red;"></span>
+      <span id="search_tr_info_msg" style="display: block; margin-bottom: .5rem; color: red;"></span>
     </form>
   `,
   buttons: [
@@ -2011,18 +2017,115 @@ $("#tr_insetTimeButton").fireModal({
     {
       text: "確認",
       class: "btn btn-primary",
-      handler: function (modal) {
-        const st_id = $("#search_st_id").val().trim();
-        const currentSelection_val = $("#currentSelection_val").val();
-        if (!st_id || !currentSelection_val) {
-          $("#search_st_info_msg").text("請選擇完整資料！");
+      handler: function () {
+        const tr_id = $("#search_tr_id").val().trim();
+        const tr_classtimeid_choose_search = $("#tr_classtimeid_choose_search").val();
+        if (!tr_id || !tr_classtimeid_choose_search) {
+          $("#search_tr_info_msg").text("請選擇完整資料！");
         } else {
-          $("#search_st_info").submit();
+          $("#search_tr_info").submit();
         }
       }
     },
   ],
 });
+
+
+$("#returnStudentButton").fireModal({
+  title: `<span>學生復學</span>`,
+  body: `
+<form id="returnStudentForm" method="POST" action="/returnStudentButton" style="margin-bottom: -45px;">
+  <div style="margin-bottom: 15px;">
+    <label for="st_id_return" style="font-weight: bold;">學號:</label>
+    <span id="st_id_return" name="st_id_return"></span>
+  </div>
+  <div style="margin-bottom: 15px;">
+    <label for="st_name_return" style="font-weight: bold;">姓名:</label>
+    <span id="st_name_return"></span>
+  </div>
+  <input type="input" style="display: none" id="st_id_return_input" name="st_id">
+</form>
+`,
+  buttons: [
+    {
+      text: "快逃!!",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "確認",
+      class: "btn btn-danger",
+      handler: function () {
+        $("#st_id_return_input").val($("#st_id_return").text())
+        $("#returnStudentForm").submit();
+      },
+    },
+  ],
+});
+
+$("#tr_rollcall").fireModal({
+  title: "學生點名紀錄",
+  body: `
+  <form id="trRollcallForm" method="POST" action="/tr_rollcall">
+    <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="address">點名時段</label>
+              <select id="rollcall_time" name="rollcall_time" class="form-control">
+              ${Object.entries(classtimes).map(([key, c]) => {
+                return `<option value="${key}">${c}</option>`;
+              }).join('')}
+              </select>
+            </div>
+          </div>
+    </div>
+    <span id=rollcall_msg></span>
+    <input type="text" style="display:none" id="rollcall" name="rollcall">
+    <input type="text" style="display:none" id="issubmit">
+  </form>
+  `
+  ,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "送出",
+      class: "btn btn-primary",
+      handler: function () {
+        const selectedClasstime = $("#rollcall_time").val();  // 获取选中的时段
+        let allStudentsMarked = true;  // 假设所有学生都已点名
+
+        // 遍历 attendanceRecords 对象，检查与选中时段相关的学生
+        for (let studentId in attendanceRecords) {
+          const student = attendanceRecords[studentId];
+          console.log('student.classtime_id', student.classtime_id, 'selectedClasstime', selectedClasstime, 'student.status', student.status);
+          if (student.classtime_id == selectedClasstime && student.status == '') {
+            allStudentsMarked = false;  // 如果有学生未点名
+            break;  // 找到未点名的学生后停止检查
+          }
+        }
+        // 根据所有学生是否已点名，更新消息
+        if (allStudentsMarked) {
+          $("#rollcall_msg").text('確定送出點名紀錄');
+          $("#rollcall").val(JSON.stringify(attendanceRecords));
+          $("#trRollcallForm").submit();
+        } else {
+          $("#rollcall_msg").html('<span style="color:red;">尚有學生未點名!</span>');
+          return
+        }
+      },
+    },
+  ],
+});
+
+$("#st_info").fireModal({ body: "Modal body text goes here." });
 
 
 $("#modal-1").fireModal({ body: "Modal body text goes here." });
