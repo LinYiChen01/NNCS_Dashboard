@@ -96,6 +96,7 @@
       <script>
         var st_data = {{ st_data| tojson | safe}};
         var classtimes = {{ classtimes| tojson | safe}};
+        var tr_id = {{tr_id| tojson | safe}};
       </script>
       <!-- Main Content -->
       <div class="main-content">
@@ -117,7 +118,7 @@
                           <th>姓名</th>
                           <th>上課教室</th>
                           <th>上課時段</th>
-                          <th>上課進度</th>
+                          <th>學期進度</th>
                           <th>狀態</th>
                           <th style="width: 160px; min-width: 160px;">點名</th>
                       </tr>

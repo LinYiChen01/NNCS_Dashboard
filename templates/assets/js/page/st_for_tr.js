@@ -284,7 +284,15 @@ function updateStudentInfo(data) {
     option.selected = true;
     // 添加到 select 元素中
     selectElement.add(option);
-    $("#search_semester_start_date").closest(".form-group").hide();
+    
+    $("#search_semester_start_date").closest(".form-group").show();
+    $("#search_semester").closest(".form-group").show();
+    $("#search_classtime_id").closest(".form-group").show();
+    $("#search_tr_id").closest(".form-group").show();
+    $("#search_date_start").closest(".form-group").show();
+    $("#st_schedule_info").show();
+    populateClasstimeSelect_new(data.st_course_id);
+    currentClassroom = "";
   }
   else {  // 正常新增當期時段
     // 显示上课时段和授课老师的 div
@@ -401,6 +409,36 @@ function populateClasstimeSelect(studentCourseId, studentClasstimeId, studentCla
   }
 }
 
+
+function populateClasstimeSelect_new(studentCourseId) {
+  const classtimeSelect = $("#search_classtime_id");
+
+  classtimeSelect
+  .empty()
+  .append('<option value="" disabled selected>請選擇上課時段</option>'); // 添加默认选项
+
+  
+  course_data.forEach((classroom) => {
+    if (classroom.trs.length > 0) {
+      if (studentCourseId <= 10) {
+        addClassroomOptions_new(classroom, classtimeSelect);
+      } else {
+        const filteredTeachers = classroom.trs.filter(
+          (tr) => tr.tr_course_id.includes(studentCourseId)
+        );
+        if (filteredTeachers.length > 0) {
+          addClassroomOptions_new(classroom, classtimeSelect);
+        }
+      }
+    }
+  });
+
+  // 如果没有找到可选的课程时段，添加默认选项
+  if (classtimeSelect.find("option").length === 0) {
+    classtimeSelect.append('<option value="" disabled>無可選時段</option>');
+  }
+}
+
 // 添加课程时段选项的函数
 function addClassroomOptions_edit(
   classroom,
@@ -491,6 +529,29 @@ function addClassroomOptions(classroom, classtimeSelect, isSelected, isConflict)
   });
 }
 
+function addClassroomOptions_new(classroom, classtimeSelect) {
+  let option;
+  const classroomName = classroom.classroom_name;
+  
+
+    // 只在教室名称变化时添加 optgroup
+    if (classroomName !== currentClassroom) {
+      classtimeSelect.append(`<optgroup label="${classroomName}"></optgroup>`);
+      currentClassroom = classroomName; // 更新当前教室名称
+    }
+
+      // 如果是新学期，所有选项都可以选择
+      option = `
+        <option value="${classroom.classtime_id}">
+          ${classroomName} 星期${classroom.class_week} ${classroom.start_time} - ${classroom.end_time}
+        </option>
+      `;
+    classtimeSelect.find(`optgroup[label="${classroomName}"]`).append(option);
+    // Populate teacher select only if needed
+    populateTeacherSelect(classroom.trs);
+}
+
+
 
 // 动态填充老师下拉框
 function populateTeacherSelect(teachers) {
@@ -509,16 +570,6 @@ $("#search_classtime_id").on("change", function () {
   console.log('selectedClasstimeId', selectedClasstimeId, 'st_course_id', st_course_id);
 });
 
-// 页面加载时，确保下拉框的状态
-// $(document).ready(function () {
-//   const currentClasstimeId = $("#search_classtime_id").val(); // 获取当前选中的课程时段 ID
-//   if (currentClasstimeId) {
-//     searchUpdateTeacherOptions(
-//       currentClasstimeId,
-//       document.getElementById("search_st_course_id").value
-//     ); // 初始化老师选项
-//   }
-// });
 
 function searchUpdateTeacherOptions(classtimeId, studentCourseId) {
   const trSelect = $("#search_tr_id"); // 选取老师的下拉框

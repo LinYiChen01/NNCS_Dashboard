@@ -2083,7 +2083,7 @@ $("#tr_rollcall").fireModal({
     </div>
     <span id=rollcall_msg></span>
     <input type="text" style="display:none" id="rollcall" name="rollcall">
-    <input type="text" style="display:none" id="issubmit">
+    <input type="date" style="display:none" id="rollcall_date" name="rollcall_date">
   </form>
   `
   ,
@@ -2105,7 +2105,6 @@ $("#tr_rollcall").fireModal({
         // 遍历 attendanceRecords 对象，检查与选中时段相关的学生
         for (let studentId in attendanceRecords) {
           const student = attendanceRecords[studentId];
-          console.log('student.classtime_id', student.classtime_id, 'selectedClasstime', selectedClasstime, 'student.status', student.status);
           if (student.classtime_id == selectedClasstime && student.status == '') {
             allStudentsMarked = false;  // 如果有学生未点名
             break;  // 找到未点名的学生后停止检查
@@ -2125,7 +2124,93 @@ $("#tr_rollcall").fireModal({
   ],
 });
 
-$("#st_info").fireModal({ body: "Modal body text goes here." });
+$("#st_info").fireModal({
+  size: "modal-lg",
+  title: `<span>學生資訊</span>`,
+  body: `
+<form id="StudentInfoForm" method="POST" action="/st_info">
+      <input type="input" style="display: none;" id="st_info_input_edit" name="st_info_input_edit">
+      <div class="form-group">
+        <img src="" id="st_info_picture" alt="上傳的圖片" style="max-width: 100px;">
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_info_name">學生姓名</label>
+            <input type="text" id="st_info_name" name="st_info_name" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_info_age">年齡</label>
+            <input type="number" id="st_info_age" name="st_info_age" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_info_course_name">學習進度</label>
+            <input type="select" id="st_info_course_name" name="st_info_course_name" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;"></input>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="st_info_phone1">連絡電話1</label>
+            <input type="text" id="st_info_phone1" name="st_info_phone1" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+              <label for="st_info_phone2">連絡電話2</label>
+              <input type="text" id="st_info_phone2" name="st_info_phone2" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+          </div>
+        </div>
+      </div>  
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="st_info_note">備註</label>
+            <textarea id="st_info_note" name="st_info_note" class="form-control"></textarea>
+          </div>
+        </div>   
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="st_info_create_date">入學日期</label>
+            <input type="text" id="st_info_create_date" class="form-control" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+          </div>
+        </div>
+      </div>
+      <span id="StudenInfoMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
+    </form>
+`,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "確認",
+      class: "btn btn-primary",
+      handler: function () {
+
+        if ($("#st_info_note").val().length > 100) {
+          $("#StudenInfoMessage").text("備註不能超過 100 字!");
+          return;
+        }
+        $("#StudentInfoForm").submit();
+      },
+    },
+  ],
+});
+
 
 
 $("#modal-1").fireModal({ body: "Modal body text goes here." });
