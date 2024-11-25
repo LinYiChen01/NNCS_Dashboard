@@ -89,7 +89,16 @@ document.getElementById("file").addEventListener("change", async function () {
 // 計算時間相關的數據
 var totalDays = 168;  // 總天數
 var today = moment(); // 獲取當前日期
-var daysElapsed = today.diff(start_class_date, 'days') + 2; // 計算經過的天數
+var daysElapsed
+if (today.isBefore(start_class_date)) {
+  // 如果今天早于开始日期
+  daysElapsed = 0;
+  console.log('daysElapsed bbbb', daysElapsed);
+} else {
+  // 计算日期差并加 2 天
+  daysElapsed = today.diff(start_class_date, 'days') + 2;
+  console.log('daysElapsed', daysElapsed);
+}
 var remainingDays = totalDays; // 剩餘天數
 
 var statistics_chart = document.getElementById('myChart_1').getContext('2d');  // JavaScript 對應的 id

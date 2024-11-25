@@ -29,6 +29,23 @@ function renderPaymentRecords(records) {
 
       tbody.appendChild(row);
   });
+  tbody.addEventListener('click', function (event) {
+    // 判斷點擊的是否為 .leave-btn
+    const button = event.target.closest('.leave-btn');
+    if (button && !button.classList.contains('disabled')) {
+      const row = button.closest('tr');
+      const moneyId = button.getAttribute("data-id");
+      const studentId = row.querySelector('td:first-child').textContent.trim(); // 第一列为 st_id
+      const semester = row.querySelector('td:nth-child(2)').textContent.trim(); // 第二列为 semester
+      // event.preventDefault();
+      $("#money_id").val(moneyId);
+      $("#delete_money_st_id_input").val(studentId);
+      $("#semester_id").val(semester);
+      $("#delete_money_st_id").text(studentId);
+      $("#delete_money_st_semester").text(semester);
+      $("#delete_money_btn").click();
+    }
+  });
 }
 
 // 初始化顯示繳費紀錄
@@ -106,10 +123,11 @@ document.getElementById("st_pay_add").addEventListener("click", async () => {
             // 根據返回的結果顯示成功或失敗訊息
             if (data.success) {
               document.getElementById("st_pay_add_message").innerHTML = "<span>新增成功</span>";
-              console.log(data.money_record);
-              console.log(data.currnet_st_id);
               let tbodyContent = "";
               data.money_record.forEach(record => {
+                if (record.is_new) { 
+                  money_record.push(record);
+                }
                 console.log('record.st_id', record.st_id, 'data.currnet_st_id', data.currnet_st_id);
                 if (record.st_id == data.currnet_st_id) { // 只显示当前学生的记录
                   tbodyContent += `

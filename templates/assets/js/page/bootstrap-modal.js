@@ -655,6 +655,64 @@ $("#fc_leaveButton").fireModal({
   ],
 });
 
+$("#fc_notLeaveButton").fireModal({
+  title: "取消請假",
+  body: `
+    <form id="fc_notLeaveForm" method="POST" action="/fc_notLeaveButton">
+      <div class="form-group">
+        <label for="fc_notLeaveDayDate">日期</label>
+        <input type="date" name="fc_notLeaveDayDate" class="form-control" id="fc_notLeaveDayDate" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+      </div>
+      <div class="form-group">
+        <label for="fc_notLeaveDayClassroom">上課地點</label>
+        <input type="text" name="fc_notLeaveDayClassroom" class="form-control" id="fc_notLeaveDayClassroom" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+      </div>
+      <div class="form-group">
+        <label for="fc_notLeaveDayClasstime">上課時段</label>
+        <input type="text" name="fc_notLeaveDayClasstime" class="form-control" id="fc_notLeaveDayClasstime" readonly style="pointer-events: none; background-color: #efeeee; border: none;">
+      </div>
+      <span id="st_notLeaveMsg" name="st_notLeaveMsg" style="color:red;"></span>
+      <input type="hidden" id="fc_notAttend_id" name="fc_notAttend_id">
+    </form>
+  `,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        // 当用户点击取消按钮时，关闭模态框
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "確認",
+      class: "btn btn-primary",
+      handler: function (modal) {
+        var formData = $("#fc_notLeaveForm").serialize(); // 获取表单数据
+        $.ajax({
+          type: "POST",
+          url: "/fc_notLeaveButton",
+          data: formData,
+          success: function (response) {
+            if (response.status === "full") {
+              // 如果人数已满，则显示提示信息
+              $("#st_notLeaveMsg").text('人數已滿，無法上課!');
+            } else if (response.status === "success") {
+              // 如果更新成功，关闭模态框
+              window.location.reload()
+              modal.modal("hide");
+            }
+          },
+          error: function () {
+            alert("发生错误，请稍后再试。");
+          },
+        });
+      },
+    },
+  ],
+});
+
+
 $("#updateDataButton").on("click", function () {
   clearupdateForm();
 });
@@ -2065,64 +2123,68 @@ $("#returnStudentButton").fireModal({
   ],
 });
 
-$("#tr_rollcall").fireModal({
-  title: "學生點名紀錄",
-  body: `
-  <form id="trRollcallForm" method="POST" action="/tr_rollcall">
-    <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
-              <label for="address">點名時段</label>
-              <select id="rollcall_time" name="rollcall_time" class="form-control">
-              ${Object.entries(classtimes).map(([key, c]) => {
-                return `<option value="${key}">${c}</option>`;
-              }).join('')}
-              </select>
-            </div>
-          </div>
-    </div>
-    <span id=rollcall_msg></span>
-    <input type="text" style="display:none" id="rollcall" name="rollcall">
-    <input type="date" style="display:none" id="rollcall_date" name="rollcall_date">
-  </form>
-  `
-  ,
-  buttons: [
-    {
-      text: "取消",
-      class: "btn btn-secondary",
-      handler: function (modal) {
-        modal.modal("hide");
-      },
-    },
-    {
-      text: "送出",
-      class: "btn btn-primary",
-      handler: function () {
-        const selectedClasstime = $("#rollcall_time").val();  // 获取选中的时段
-        let allStudentsMarked = true;  // 假设所有学生都已点名
 
-        // 遍历 attendanceRecords 对象，检查与选中时段相关的学生
-        for (let studentId in attendanceRecords) {
-          const student = attendanceRecords[studentId];
-          if (student.classtime_id == selectedClasstime && student.status == '') {
-            allStudentsMarked = false;  // 如果有学生未点名
-            break;  // 找到未点名的学生后停止检查
-          }
-        }
-        // 根据所有学生是否已点名，更新消息
-        if (allStudentsMarked) {
-          $("#rollcall_msg").text('確定送出點名紀錄');
-          $("#rollcall").val(JSON.stringify(attendanceRecords));
-          $("#trRollcallForm").submit();
-        } else {
-          $("#rollcall_msg").html('<span style="color:red;">尚有學生未點名!</span>');
-          return
-        }
+if (window.location.pathname === "/tr_index") { 
+  $("#tr_rollcall").fireModal({
+    title: "學生點名紀錄",
+    body: `
+    <form id="trRollcallForm" method="POST" action="/tr_rollcall">
+      <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="address">點名時段</label>
+                <select id="rollcall_time" name="rollcall_time" class="form-control">
+                ${Object.entries(classtimes).map(([key, c]) => {
+                  return `<option value="${key}">${c}</option>`;
+                }).join('')}
+                </select>
+              </div>
+            </div>
+      </div>
+      <span id=rollcall_msg></span>
+      <input type="text" style="display:none" id="rollcall" name="rollcall">
+      <input type="date" style="display:none" id="rollcall_date" name="rollcall_date">
+    </form>
+    `
+    ,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
       },
-    },
-  ],
-});
+      {
+        text: "送出",
+        class: "btn btn-primary",
+        handler: function () {
+          const selectedClasstime = $("#rollcall_time").val();  // 获取选中的时段
+          let allStudentsMarked = true;  // 假设所有学生都已点名
+  
+          // 遍历 attendanceRecords 对象，检查与选中时段相关的学生
+          for (let studentId in attendanceRecords) {
+            const student = attendanceRecords[studentId];
+            if (student.classtime_id == selectedClasstime && student.status == '') {
+              allStudentsMarked = false;  // 如果有学生未点名
+              break;  // 找到未点名的学生后停止检查
+            }
+          }
+          // 根据所有学生是否已点名，更新消息
+          if (allStudentsMarked) {
+            $("#rollcall_msg").text('確定送出點名紀錄');
+            $("#rollcall").val(JSON.stringify(attendanceRecords));
+            $("#trRollcallForm").submit();
+          } else {
+            $("#rollcall_msg").html('<span style="color:red;">尚有學生未點名!</span>');
+            return
+          }
+        },
+      },
+    ],
+  });
+}
+
 
 $("#st_info").fireModal({
   size: "modal-lg",
@@ -2211,7 +2273,113 @@ $("#st_info").fireModal({
   ],
 });
 
+if (window.location.pathname === "/st_note") { 
+  $("#editNoteButton").fireModal({
+    title: `<span>新增學習紀錄</span>`,
+    body: `
+  <form id="StudentNoteForm" method="POST" action="/editNoteButton">
+        <input id="st_id" name="st_id">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="st_note_classtime">上課紀錄</label>
+              <select type="select" id="st_note_classtime" name="st_note_classtime" class="form-control">
+              <option value="" disabled selected>請選擇上課紀錄</option>
+              ${note_todo
+                .map((n) => `<option value="${n.classtime_id + " " + moment(n.class_date).format('YYYY-MM-DD')}">${n.class_schedule}</option>`)
+                .join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="st_note_course_id">學習課程</label>
+              <select type="text" id="st_note_course_id" name="st_note_course_id" class="form-control">
+                <option value="" disabled selected>請選擇學習課程</option>
+                ${course_data
+                  .map((c) => `<option value="${c.course_id}">${c.course_name}</option>`)
+                  .join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+              <div class="form-group">
+                <label for="st_note_last_problems">最後題數</label>
+                <input type="number" id="st_note_last_problems" name="st_note_last_problems" class="form-control">
+              </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="st_note_problems">解題數</label>
+              <input type="number" id="st_note_problems" name="st_note_problems" class="form-control">
+            </div>
+          </div>
+        </div>  
+        <span id="StudenNoteMessage" style="display: block; margin-bottom: .5rem; color: red; margin: 0;"></span>
+      </form>
+  `,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
+      },
+      {
+        text: "確認",
+        class: "btn btn-primary",
+        handler: function () {
+          if (!$("#st_note_classtime").val() || !$("#st_note_course_id").val() || !$("#st_note_last_problems").val() || !$("#st_note_problems").val()) { 
+            $("#StudenNoteMessage").text("請輸入完整資料!")
+            return;
+          }
+          $("#StudentNoteForm").submit();
+        },
+      },
+    ],
+  });
+}
 
+$("#delete_money_btn").fireModal({
+  title: `<span>刪除繳費紀錄</span>`,
+  body: `
+<form id="deleteMoneyForm" method="POST" action="/delete_money_btn" style="margin-bottom: -45px;">
+  <div style="margin-bottom: 15px;">
+    <label for="delete_money_st_id" style="font-weight: bold;">學號:</label>
+    <span id="delete_money_st_id"></span>
+  </div>
+  <div style="margin-bottom: 15px;">
+    <label for="delete_money_st_semester" style="font-weight: bold;">學期:</label>
+    <span id="delete_money_st_semester"></span>
+  </div>
+  <input type="input" style="display: none" id="money_id" name="money_id">
+  <input type="input" style="display: none" id="delete_money_st_id_input" name="delete_money_st_id_input">
+  <input type="input" style="display: none" id="semester_id" name="semester_id">
+  
+</form>
+`,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "確認",
+      class: "btn btn-danger",
+      handler: function () {
+        $("#deleteMoneyForm").submit();
+      },
+    },
+  ],
+});
 
 $("#modal-1").fireModal({ body: "Modal body text goes here." });
 

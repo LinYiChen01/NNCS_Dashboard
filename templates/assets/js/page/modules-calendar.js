@@ -38,6 +38,7 @@ $("#myEvent").fullCalendar({
         $('#fc_scheduleError_2').click();
       } else { 
         $('#classroomDateSelect').val(classroomDateSelect);
+        
         $('#fc_scheduleButton').click(); // 彈出排課選單
       } 
     }
@@ -45,72 +46,28 @@ $("#myEvent").fullCalendar({
 
   eventClick: function (event) {
     $('#fc_leaveDayDate').val(event.start.format('YYYY-MM-DD'));
+    $('#fc_notLeaveDayDate').val(event.start.format('YYYY-MM-DD'));
     var selectedTitile = event.title.split('\n');
-    $('#fc_leaveDayClassroom').val(selectedTitile[0]);
-    $('#fc_leaveDayClasstime').val(selectedTitile[1]);
-    $('#fc_attend_id').val(event['attend_id']);
+    
     if (event['status'] === '') {
+      $('#fc_leaveDayClassroom').val(selectedTitile[0]);
+      $('#fc_leaveDayClasstime').val(selectedTitile[1]);
+      $('#fc_attend_id').val(event['attend_id']);
       $('#fc_leaveButton').click();
-  }
+    }
+    if (event['status'] === '2') {
+      $("#st_notLeaveMsg").text('');
+      $('#fc_notLeaveDayClassroom').val(selectedTitile[0]);
+      $('#fc_notLeaveDayClasstime').val(selectedTitile[1]);
+      $('#fc_notAttend_id').val(event['attend_id']);
+      $('#fc_notLeaveButton').click(); 
+    }
   },
   events: event_data,
   eventOrder: 'title.split("\n")[1]'
 });
 
-// $('#confirmLeave').on('click', function () { 
-//   const leaveDate = $('#leaveDate').val(); // 获取选择的日期
-//   const leaveCourse = $('#leaveCourse').val(); // 获取选择的课程
-
-//   // 判断是否已选择日期和课程
-//   if (leaveDate && leaveCourse) { 
-//     // 删除与选择的日期和课程匹配的事件
-//     $('#myEvent').fullCalendar('removeEvents', function(event) {
-//       // 根据事件的标题和日期来匹配
-//       return event.title === leaveCourse && event.start.format('YYYY-MM-DD') === leaveDate;
-//     });
-    
-//     // 隐藏模态框
-//     $('#leaveModal').modal('hide');
-//   } else {
-//     // 如果没有选择日期或课程，显示错误信息
-//     $('#leaveMessage').text('请选择日期和课程').css('color', '#f36969');
-//   }
-// });
-
-// $('#confirmDayLeave').on('click', function () { 
-//   if (selectedEvent) { // 确保已选择了事件
-//     // 删除用户点击的事件
-//     $('#myEvent').fullCalendar('removeEvents', function(event) {
-//       return event._id === selectedEvent._id; // 只删除匹配的事件
-//     });
-//     $('#leaveDayModal').modal('hide'); // 隐藏模态框
-//     selectedEvent = null; // 清空 selectedEvent 变量
-//   } else {
-//     // 显示错误信息
-//     $('#leaveDayMessage').text('请选择日期和课程').css('color', '#f36969');
-//   }
-// });
-
-// 保存课程选择
-// $('#saveCourse').on('click', function() {
-//   const selectedDate = $('#courseDayModal').data('selectedDate');
-//   const selectedCourse = $('#courseSelect').val();
-//   $('#myEvent').fullCalendar('renderEvent', {
-//     title: selectedCourse,
-//     start: selectedDate,
-//     allDay: true,
-//     borderColor: "#6777ef",
-//     backgroundColor: "#fff",
-//     textColor: '#6777ef'
-//   });
-//   $('#courseDayModal').modal('hide');
-// });
-
-// 当弹出筛选模态框时清空数据
-
-
 $(document).ready(function () {
-  // 手动修改按钮的 HTML
   $('.fc-filterButton-button').html("<div class='ion-calendar'></div>");
 });
 

@@ -100,9 +100,8 @@
                   class="fas fa-calendar-alt"></i><span>我的課表</span></a></li>
             <li><a href="{{ url_for('certificate') }}" class="nav-link"><i
               class="fas fa-trophy"></i><span>我的證照</span></a></li>
-            <li class="menu-header">關於教室</li>
-            <li><a class="nav-link" href="blank.html"><i class="fas fa-graduation-cap"></i> <span>師資陣容</span></a></li>
-            <li><a class="nav-link" href="#"><i class="fas fa-pencil-ruler"></i> <span>課程規劃</span></a></li>
+            <li><a href="{{ url_for('st_note') }}" class="nav-link"><i
+              class="fas fa-book"></i><span>學習筆記</span></a></li>
           </ul>
       </div>
       <!-- Main Content -->
@@ -124,13 +123,13 @@
                 </div>
                 <div class="card-body">
                   <div class="fc-overflow">
-
                     <!-- 日曆 fullCalendar -->
                     <div id="myEvent"></div>
                     <br>
                     <span>上課期間為 {{start_class_date}} - {{end_class_date}}</span>
                     <button type="button" id="fc_scheduleButton" style="display: none;"></button>  <!--dayclick-->
                     <button type="button" id="fc_leaveButton" style="display: none;"></button>  <!--evenclick-->
+                    <button type="button" id="fc_notLeaveButton" style="display: none;"></button>  <!--取消請假-->
                     <button type="button" id="fc_scheduleError_1" style="display: none;"></button>  <!--fc_scheduleError 不可以選之期的日期進行排課-->
                     <button type="button" id="fc_scheduleError_2" style="display: none;"></button>  <!--fc_scheduleError 不可以選之期的日期進行排課-->
                     <button type="button" id="FilterModalButton" style="display: none;"></button>  <!--篩選日期按鈕-->
