@@ -166,15 +166,31 @@ def index():
             end_time = []
             
             for i in result:
-                
+                cursor.execute("""
+                               SELECT t.tr_id, tc.course_id, u.name 
+                               FROM `teachers` t JOIN tr_course tc 
+                               ON tc.user_id = t.user_id 
+                               JOIN users u 
+                               ON u.user_id = t.user_id 
+                               WHERE classtime_id=%s;""", 
+                               i['classtime_id'])
+                result2 = cursor.fetchall()
+                tr_data = []
+                for j in result2:
+                    tr_data.append({
+                        'tr_id': j['tr_id'],
+                        'tr_name': j['name'],
+                        'tr_course': j['course_id']
+                    })
                 classroom_data.append({
                     'classtime_id' : i['classtime_id'],
                     'classroom' : i['name'],
                     'class_week' : i['class_week'],
                     'start_time' : str(i['start_time'])[:-3],
-                    'end_time' : str(i['end_time'])[:-3] 
+                    'end_time' : str(i['end_time'])[:-3],
+                    'trs': tr_data
                 })
-
+                
                 classroom.append(i['name'])
                 classroom_area.append(i['name'][:2])
                 class_week.append(i['class_week'])
@@ -279,12 +295,14 @@ def index():
         classroom_attend_data = []
         for i in  result:
             # 額滿
-            if i['st_num'] == 2:
-            # if i['st_num'] == i['tr_max_st'] or  i['st_num'] == i['classroom_max_st']:
+            # if i['st_num'] == 2:
+            if i['st_num'] == i['tr_max_st'] or  i['st_num'] == i['classroom_max_st']:
                 classroom_attend_data.append({
                     'class_date': i['class_date'].strftime('%Y-%m-%d'),
                     'classtime_id': i['classtime_id'],
                 })
+
+            
 
         connection.close()
         return render_template("index.html", **locals())
@@ -638,6 +656,147 @@ def ad_index():
         return render_template("ad_index.html", **locals())
     else:
         return redirect(url_for('login'))
+
+@app.route('/st_attend', methods=['GET', 'POST'])
+def st_attend():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+    role = session.get('role')
+
+    if login_status == "True" and  role == '4':
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id))
+            result = cursor.fetchone()
+            name= result['name']
+            picture_data = result['picture']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+            cursor.execute("SELECT user_id, name FROM `users` WHERE role=3 AND status=1;")
+            result = cursor.fetchall()
+            tr_data = []
+            for i in result:
+                tr_data.append({
+                    "tr_id": i['user_id'],
+                    "tr_name": i['name']
+                })
+            course_data = []
+            cursor.execute("SELECT course_id, name FROM `courses`;")
+            result = cursor.fetchall()
+            for i in result:
+                course_data.append({
+                    "course_id": i['course_id'],
+                    "course_name": i['name']
+                })
+            
+
+            
+        return render_template("st_attend.html", **locals())
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route('/search_st_attend', methods=['POST'])
+def search_st_attend():
+    st_id = request.json.get('data')
+    attend_data = []
+
+    if st_id:
+        if st_id.isdigit():
+            connection = get_db_connection()
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                               SELECT a.attend_id, a.user_id, u.name, a.tr_id, a.tr_id2, a.classtime_id, cr.name as classroom_name, 
+                               c.class_week, c.start_time, c.end_time, a.status, a.adjust, a.class_date
+                               FROM `attend` a 
+                               JOIN users u ON u.user_id = a.user_id 
+                               JOIN classtime c ON a.classtime_id = c.classtime_id 
+                               JOIN classroom cr ON cr.classroom_id = c.classroom_id 
+                               WHERE a.user_id=%s ORDER BY a.class_date;
+                               """, (st_id))
+                result = cursor.fetchall()
+                for i in result:
+                    if i['tr_id'] and i['adjust'] == 0:
+                        tr_id = i['tr_id']
+                        cursor.execute("SELECT u.name from teachers tr JOIN users u ON u.user_id = tr.user_id WHERE tr.tr_id=%s;",(tr_id))
+                        result2 = cursor.fetchone()
+                    else:
+                        # 如果是代課老師就會使用user_id
+                        tr_id = i['tr_id2']
+                        cursor.execute("SELECT name FROM users WHERE user_id=%s",(tr_id))
+                        result2 = cursor.fetchone()
+                    
+
+                    if i['status']:
+                        if i['status'] == '1':
+                            status = '上課'
+                        elif i['status'] == '2':
+                            status = '請假'
+                        elif i['status'] == '3':
+                            status = '曠課'
+                    else:
+                        status = ''
+                    cursor.execute("""
+                                   SELECT s.course_id, c.name, s.progress, s.problems 
+                                   FROM `stprogress` s 
+                                   JOIN courses c ON c.course_id = s.course_id 
+                                   WHERE st_id=%s AND classtime_id=%s AND class_date=%s;""",(i['user_id'], i['classtime_id'], i['class_date']))
+                    result3 = cursor.fetchone()
+                    attend_data.append({
+                        "attend_id": i['attend_id'],
+                        "st_id": i['user_id'],
+                        "st_name": i['name'],
+                        "tr_id": tr_id,
+                        "tr_name": result2['name'],
+                        "classtime_id": i['classtime_id'],
+                        "classroom_name": i['classroom_name'],
+                        "class_week": i['class_week'],
+                        "start_time": str(i['start_time'])[:-3],
+                        "end_time": str(i['end_time'])[:-3],
+                        "status": status,
+                        "adjust": i['adjust'],
+                        "class_date": i['class_date'],
+                        "course_id": result3['course_id'] if result3 and result3.get('course_id') else "",
+                        "course_name": result3['name'] if result3 and result3.get('name') else "",
+                        "progress": result3['progress'] if result3 and result3.get('progress') else "",
+                        "problems": result3['problems'] if result3 and result3.get('problems') else ""
+                    })
+                return jsonify(attend_data)
+
+        else:
+            return jsonify("學號格式錯誤!")
+    else:
+        return jsonify("請輸入學號!")
+
+@app.route('/editStudentAttendButton', methods=['POST'])
+def editStudentAttendButton():
+    attend_id = request.json.get('st_attend_id')
+    tr2_id = request.json.get('st_tr2_attend')
+    course_id = request.json.get('st_course_attend')
+    st_last_problem_attend = request.json.get('st_last_problem_attend')
+    st_problems_attend = request.json.get('st_problems_attend')
+    course_id = request.json.get('st_course_attend')
+    
+    # connection = get_db_connection()
+    # with connection.cursor() as cursor:
+    #     cursor.execute("""
+    #                     SELECT a.attend_id, a.user_id, u.name, a.tr_id, a.tr_id2, a.classtime_id, cr.name as classroom_name, 
+    #                     c.class_week, c.start_time, c.end_time, a.status, a.adjust, a.class_date
+    #                     FROM `attend` a 
+    #                     JOIN users u ON u.user_id = a.user_id 
+    #                     JOIN classtime c ON a.classtime_id = c.classtime_id 
+    #                     JOIN classroom cr ON cr.classroom_id = c.classroom_id 
+    #                     WHERE a.user_id=%s ORDER BY a.class_date;
+    #                     """, (st_id))
+                
+    return jsonify(attend_id)
+
 
 
 @app.route('/st_note', methods=['GET', 'POST'])
@@ -1560,85 +1719,136 @@ def leaveStudentButton():
 def fc_scheduleButton():
     if request.method == 'POST':
         user_id = session.get('user_id')
-        print('user_id------------------', user_id)
         classroomDateSelect = request.form['classroomDateSelect']
-        fc_classroomAreaSelect = request.form['fc_classroomAreaSelect']
+        # fc_classroomAreaSelect = request.form['fc_classroomAreaSelect']
         fc_classroomSelect = request.form['fc_classroomSelect']
-        fc_timeslotSelect = request.form['fc_timeslotSelect'].split()
-        class_week = fc_timeslotSelect[0][-1]
-        start_time = fc_timeslotSelect[1][:5]
-        end_time = fc_timeslotSelect[1][6:]
+        fc_classtime_id = request.form['fc_timeslotSelect'].split()
+        # class_week = fc_timeslotSelect[0][-1]
+        # start_time = fc_timeslotSelect[1][:5]
+        # end_time = fc_timeslotSelect[1][6:]
+
+        tr_data = []
+        connection = get_db_connection()
         
-        try:
-            connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 找現在是第幾學期
+            cursor.execute("SELECT semester FROM `attend` WHERE user_id=%s AND status='' ORDER BY class_date ASC LIMIT 1;", 
+                           (user_id)) 
+            result = cursor.fetchone()
+            semester = result['semester']
 
-            # 找user的course_id
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT course_id FROM students WHERE st_id = %s;", (user_id,))
-                result = cursor.fetchone()
-                course_id = result['course_id']
+            # 先找那天的老師都有幾位學生
+            # 找找看是否有原時段的老師
+            cursor.execute("SELECT tr_id FROM `attend` WHERE user_id=%s AND classtime_id=%s AND semester=%s AND adjust=0 ORDER BY class_date DESC LIMIT 1;", 
+                           (user_id, fc_classtime_id, semester))
+            result = cursor.fetchone()
+            tr_id_old = result['tr_id']
+            print('tr_id_old', tr_id_old)
+            # 同時段的老師
+            cursor.execute("SELECT tr_id, COUNT(tr_id) as tr_st_num FROM `attend` WHERE class_date=%s AND classtime_id=%s GROUP BY tr_id;", 
+                           (classroomDateSelect, fc_classtime_id))
+            result = cursor.fetchall()
+            for i in result:
+                tr_data.append({
+                    'tr_id': i['tr_id'],
+                    'tr_st_num': i['tr_st_num']
+                })
+            # 調課的老師
+            cursor.execute("SELECT tr_id2, COUNT(tr_id2) as tr_st_num FROM `attend` WHERE class_date=%s AND classtime_id=%s AND adjust=1 GROUP BY tr_id;", 
+                           (classroomDateSelect, fc_classtime_id))
+            result = cursor.fetchall()
+            if result:
+                for i in result:
+                    tr_data.append({
+                        'tr_id': i['tr_id'],
+                        'tr_st_num': i['tr_st_num']
+                    })
+            tr_data.sort(key=lambda x: x['tr_st_num'])
+            print('tr_data', tr_data)
+            # 获取学生最少的老师信息
+            if tr_id_old in tr_data or tr_data == []:
+                min_tr_id = tr_id_old
+            else:
+                min_tr_id = tr_data[0]['tr_id']
+            
+            
+            cursor.execute("INSERT INTO attend (user_id, semester, tr_id2, classtime_id, class_date, adjust) VALUES (%s, %s, %s, %s, %s, %s)", 
+                            (user_id, semester, min_tr_id, fc_classtime_id, classroomDateSelect, 1))
+            connection.commit()
+            
+        # try:
+        #     connection = get_db_connection()
 
-            with connection.cursor() as cursor:
-                # 使用檢視表一次查詢所需數據
-                cursor.execute("""
-                    SELECT classtime_id FROM classroom_schedule 
-                    WHERE classroom_name=%s AND class_week=%s AND start_time=%s AND end_time=%s
-                """, (fc_classroomSelect, class_week, start_time, end_time))
-                result = cursor.fetchone()
-                classtime_id = result['classtime_id']
+        #     # 找user的course_id
+        #     with connection.cursor() as cursor:
+        #         cursor.execute("SELECT course_id FROM students WHERE st_id = %s;", (user_id,))
+        #         result = cursor.fetchone()
+        #         course_id = result['course_id']
+
+        #     with connection.cursor() as cursor:
+        #         # 使用檢視表一次查詢所需數據
+        #         cursor.execute("""
+        #             SELECT classtime_id FROM classroom_schedule 
+        #             WHERE classroom_name=%s AND class_week=%s AND start_time=%s AND end_time=%s
+        #         """, (fc_classroomSelect, class_week, start_time, end_time))
+        #         result = cursor.fetchone()
+        #         classtime_id = result['classtime_id']
             
 
-                # 查詢這是第幾學期
-                cursor.execute("SELECT semester FROM `attend` WHERE user_id=%s AND status='' ORDER BY `attend`.`semester` ASC LIMIT 1;", (user_id))
-                result = cursor.fetchone()
-                semester = result['semester']
+        #         # 查詢這是第幾學期
+        #         cursor.execute("SELECT semester FROM `attend` WHERE user_id=%s AND status='' ORDER BY `attend`.`semester` ASC LIMIT 1;", (user_id))
+        #         result = cursor.fetchone()
+        #         semester = result['semester']
 
-                # 插入數據到 attend 表
-                cursor.execute("INSERT INTO attend (user_id, semester, classtime_id, class_date) VALUES (%s, %s, %s, %s)", 
-                                (user_id, semester, classtime_id, classroomDateSelect))
-                try:
-                    # 去找被教次數最多的老師
-                    cursor.execute("SELECT tr_id, COUNT(*) AS count FROM st_classtime WHERE user_id = %s AND classtime_id = %s GROUP BY tr_id ORDER BY count DESC LIMIT 1;", 
-                                    (user_id, classtime_id))
-                    result = cursor.fetchone()
-                    tr_id = result['tr_id']
-                except:
-                    # 去找有誰可以教
-                    if course_id <= 9:
-                        # 如果 course_id 小於或等於 9
-                        cursor.execute("SELECT tr_id FROM teachers WHERE classtime_id = %s AND course_id >= 9;", 
-                                    (classtime_id,))
-                    else:
-                        # 如果 course_id 大於 9
-                        cursor.execute("SELECT tr_id FROM teachers WHERE classtime_id = %s AND course_id = %s;", 
-                                    (classtime_id, course_id))
-                    result = cursor.fetchall()
-                    tr_data = []
-                    for i in result:
-                        tr_data.append(i['tr_id'])
+        #         # 插入數據到 attend 表
+        #         cursor.execute("INSERT INTO attend (user_id, semester, classtime_id, class_date) VALUES (%s, %s, %s, %s)", 
+        #                         (user_id, semester, classtime_id, classroomDateSelect))
+        #         # 已經判斷好有老師可以教，現在去找要誰教
+
+
+        #         # try:
+        #         #     # 去找被教次數最多的老師
+        #         #     cursor.execute("SELECT tr_id, COUNT(*) AS count FROM st_classtime WHERE user_id = %s AND classtime_id = %s GROUP BY tr_id ORDER BY count DESC LIMIT 1;", 
+        #         #                     (user_id, classtime_id))
+        #         #     result = cursor.fetchone()
+        #         #     tr_id = result['tr_id']
+        #         # except:
+        #         #     # 去找有誰可以教
+        #         #     if course_id <= 9:
+        #         #         # 如果 course_id 小於或等於 9
+        #         #         cursor.execute("SELECT tr_id FROM teachers WHERE classtime_id = %s AND course_id >= 9;", 
+        #         #                     (classtime_id,))
+        #         #     else:
+        #         #         # 如果 course_id 大於 9
+        #         #         cursor.execute("SELECT tr_id FROM teachers WHERE classtime_id = %s AND course_id = %s;", 
+        #         #                     (classtime_id, course_id))
+        #         #     result = cursor.fetchall()
+        #         #     tr_data = []
+        #         #     for i in result:
+        #         #         tr_data.append(i['tr_id'])
                     
-                    # 查當日該時段的各老師的學生數
-                    # cursor.execute("SELECT tr_id, COUNT(*) AS st_num FROM st_classtime WHERE classtime_id=%s and class_date=%s GROUP BY tr_id ORDER BY count;", 
-                    #                 (classtime_id, classroomDateSelect))
-                    # result = cursor.fetchall()
-                    # tr_ok = []
-                    # for i in result:
-                    #     cursor.execute("SELECT st_num as max_st_num FROM teachers WHERE tr_id=%s;", (i['tr_id'],))
-                    #     result = cursor.fetchone()
-                    #     max_st_num = result['max_st_num']
+        #             # 查當日該時段的各老師的學生數
+        #             # cursor.execute("SELECT tr_id, COUNT(*) AS st_num FROM st_classtime WHERE classtime_id=%s and class_date=%s GROUP BY tr_id ORDER BY count;", 
+        #             #                 (classtime_id, classroomDateSelect))
+        #             # result = cursor.fetchall()
+        #             # tr_ok = []
+        #             # for i in result:
+        #             #     cursor.execute("SELECT st_num as max_st_num FROM teachers WHERE tr_id=%s;", (i['tr_id'],))
+        #             #     result = cursor.fetchone()
+        #             #     max_st_num = result['max_st_num']
 
-                    #     if i['st_num'] < max_st_num:
-                    #         tr_ok.append(i['tr_id'])
+        #             #     if i['st_num'] < max_st_num:
+        #             #         tr_ok.append(i['tr_id'])
 
-                    # tr_ok = sorted(tr_ok)
+        #             # tr_ok = sorted(tr_ok)
                 
-                # cursor.execute("INSERT INTO st_classtime (st_id, classtime_id, tr_id, class_date) VALUES (%s, %s, %s, %s)", 
-                #                (user_id, classtime_id, tr_ok[0], classroomDateSelect))
+        #         # cursor.execute("INSERT INTO st_classtime (st_id, classtime_id, tr_id, class_date) VALUES (%s, %s, %s, %s)", 
+        #         #                (user_id, classtime_id, tr_ok[0], classroomDateSelect))
                     
 
-                connection.commit()
-        finally:
-            connection.close()
+        #         connection.commit()
+        # finally:
+        #     connection.close()
         return redirect(url_for('index'))
     return redirect(url_for('login'))
 

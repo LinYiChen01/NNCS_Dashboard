@@ -384,6 +384,7 @@ if (window.location.pathname === "/index") {
         </div>
       </form>
       <div id="fc_scheduleMessage"></div>
+      <input id="st_schedule_tr_id" name="st_schedule_tr_id">
       `,
     buttons: [
       {
@@ -402,7 +403,7 @@ if (window.location.pathname === "/index") {
           const classroomDateSelect = $("#classroomDateSelect").val();
           const fc_classroomAreaSelect = $("#fc_classroomAreaSelect").val();
           const fc_classroomSelect = $("#fc_classroomSelect").val();
-          const fc_timeslotSelect = $("#fc_timeslotSelect").val();
+          const fc_timeslotSelect = $("#fc_timeslotSelect").text();
 
           // 檢查是否有空的欄位
           if (
@@ -520,32 +521,55 @@ $("#fc_classroomSelect").on("change", function () {
         item.class_week === selectedWeekdayChinese
       ) {
         let currentAttendanceText = "";
-        const matchingRecord = classroom_attend_data.find(
-          (attend) =>
-            attend.classtime_id === item.classtime_id &&
-            attend.class_date === $("#classroomDateSelect").val()
-        );
+        // 获取当前时段的所有教师数据
+        const teachers = item.trs; // 教师数组 [{tr_id, tr_name, tr_course}, ...]
 
-        if (matchingRecord) {
-          currentAttendanceText = ` (額滿)`;
+        // 判断是否有教师符合条件
+        const isEligible = teachers.some((teacher) => {
+            if (course_id < 10) {
+                return true; // 如果学生课程 ID < 10，任何老师都可以
+            } else {
+                return teacher.tr_course === course_id; // 必须有至少一个老师的课程 ID 匹配
+            }
+        });
+
+        if (!isEligible) {
+          currentAttendanceText = ` (無法選擇)`; // 没有符合条件的老师
+        } else {
+            // 判断是否时段已满
+            const matchingRecord = classroom_attend_data.find(
+                (attend) =>
+                    attend.classtime_id === item.classtime_id &&
+                    attend.class_date === $("#classroomDateSelect").val()
+            );
+
+            if (matchingRecord) {
+                currentAttendanceText = ` (額滿)`; // 如果该时段已满
+            }
         }
 
-        const classTime = `星期${item.class_week} ${item.start_time}-${item.end_time}${currentAttendanceText}`;
-        classTimes.push(classTime);
-      }
-    });
+        // const classTime = `星期${item.class_week} ${item.start_time}-${item.end_time}${currentAttendanceText}`;
+        classTimes.push({
+          classtime_id: item.classtime_id, // 时段唯一标识
+          time: `星期${item.class_week} ${item.start_time}-${item.end_time}${currentAttendanceText}`,
+        });
+    }
+});
 
     // 根據篩選的結果來填充時段選擇框
     $("#fc_timeslotSelect")
       .empty()
       .append('<option value="" disabled selected>請選擇上課時段</option>')
       .append(
-        classTimes.map((time) => {
-          // 判斷是否為額滿，然後根據條件添加樣式和 disabled
-          const isFull = time.includes("(額滿)"); // 檢查是否包含 "(額滿)"
-          return `<option value="${time}" style="${
-            isFull ? "color: red;" : ""
-          }" ${isFull ? "disabled" : ""}>${time}</option>`;
+        classTimes.map(({classtime_id, time,}) => {
+          const isFull = time.includes("(額滿)"); // 檢查是否為 "(額滿)"
+          const isUnavailable = time.includes("(無法選擇)"); // 檢查是否為 "(無法選擇)"
+          
+          // 根据不同条件设置样式和禁用状态
+          const style = isFull ? "color: red;" : isUnavailable ? "color: gray;" : "";
+          const disabled = isFull || isUnavailable ? "disabled" : "";
+    
+          return `<option value="${classtime_id}" style="${style}" ${disabled}>${time}</option>`;
         })
       );
 
@@ -2378,6 +2402,104 @@ $("#delete_money_btn").fireModal({
         $("#deleteMoneyForm").submit();
       },
     },
+  ],
+});
+
+
+$("#editStudentAttendButton").fireModal({
+  title: "修改學生出席紀錄",
+  body: `
+    <form id="st_attendForm" method="POST" action="/editStudentAttendButton">
+      <div style="margin-bottom: 15px;">
+        <label for="st_id_attend" style="font-weight: bold;">學號:</label>
+        <span id="st_id_attend" name="st_id_attend"></span>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label for="st_name_attend" style="font-weight: bold;">姓名:</label>
+        <span id="st_name_attend" name="st_name_attend"></span>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label for="st_date_attend" style="font-weight: bold;">上課日期:</label>
+        <span id="st_date_attend" name="st_date_attend"></span>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label for="st_classroom_attend" style="font-weight: bold;">上課教室:</label>
+        <span id="st_classroom_attend" name="st_classroom_attend"></span>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label for="st_classtime_attend" style="font-weight: bold;">上課時段:</label>
+        <span id="st_classtime_attend" name="st_classtime_attend"></span>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label for="st_tr_attend" style="font-weight: bold;">上課老師:</label>
+        <span id="st_tr_attend" name="st_tr_attend"></span>
+      </div>
+      <div class="form-group">
+        <label for="st_tr2_attend">調整上課老師</label>
+        <select name="st_tr2_attend" class="form-control" id="st_tr2_attend">
+          <option value="" disabled selected>請選擇老師</option>
+          ${tr_data
+            .map((t) => `<option value="${t.tr_id}">${t.tr_id + "-" + t.tr_name}</option>`)
+            .join("")}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="st_course_attend">學習課程</label>
+        <select name="st_course_attend" class="form-control" id="st_course_attend">
+          <option value="" disabled selected>請選擇課程</option>  
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="st_last_problem_attend">最後題數</label>
+        <input type="number" name="st_last_problem_attend" class="form-control" id="st_last_problem_attend">
+      </div>
+      <div class="form-group">
+        <label for="st_problems_attend">解題數</label>
+        <input type="number" name="st_problems_attend" class="form-control" id="st_problems_attend">
+      </div>
+      <input id="st_attend_id" name="st_attend_id">
+    </form>
+  `,
+  buttons: [
+    {
+      text: "取消",
+      class: "btn btn-secondary",
+      handler: function (modal) {
+        // 当用户点击取消按钮时，关闭模态框
+        modal.modal("hide");
+      },
+    },
+    {
+      text: "確認",
+      class: "btn btn-primary",
+      handler: function (modal) {
+          // 获取表单数据
+          var formData = $("#st_attendForm").serializeArray();
+
+          // 将数据转换为对象
+          var formDataObj = {};
+          formData.forEach(function(field) {
+              formDataObj[field.name] = field.value;
+          });
+          
+          // 使用 AJAX 将 JSON 数据发送到后端
+          $.ajax({
+              url: "/editStudentAttendButton",  // 后端 URL
+              method: "POST",  // 请求方法，假设是 POST
+              contentType: "application/json",  // 发送的数据类型
+              data: JSON.stringify(formDataObj),  // 发送的表单数据，转换为 JSON
+              success: function (response) {
+                  $("#searchInput").val(response);
+                  searchTable();
+                  console.log("成功提交:", response);
+                  modal.modal("hide");
+              },
+              error: function(xhr, status, error) {
+                  console.error("提交失败:", error);
+              }
+          });
+      }
+  }
   ],
 });
 

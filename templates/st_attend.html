@@ -103,7 +103,10 @@
               class="fas fa-calendar-check"></i><span>學生出席明細</span></a></li>
           </ul>
       </div>
-
+      <script>
+        tr_data = {{ tr_data| tojson | safe}};
+        course_data = {{ course_data| tojson | safe}};
+      </script>
       <!-- Main Content -->
       <div class="main-content">
         <section class="section">
@@ -112,7 +115,7 @@
             <div class="col-lg-12">
               <div class="card" style="height: calc(100% - 30px);">
                 <div class="card-header">
-                  <h4>學生資訊一覽</h4>
+                  <h4>學生出席紀錄一覽</h4>
                   <div class="card-header-form">
                     <div class="input-group">
                           <span class="clear-btn" id="clearButton" onclick="clearInput()">&times;</span>
@@ -123,22 +126,18 @@
                   </div>
                   </div>
                 </div>
-                <script>
-                    var st_data = {{ st_data| tojson | safe}};
-                    var course_name_data = {{course_name_data| tojson | safe}};
-                </script>
                 <div class="card-body table-responsive p-0" id="top-5-scroll_st_table" style="padding-top: inherit;">
-                    <button type="button" id="editStudentButton" style="display: none;"></button>
-                    <button type="button" id="leaveStudentButton" style="display: none;"></button>
+                    <button type="button" id="editStudentAttendButton" style="display: none;"></button>
                     <table class="table table-striped" id="studentTable">
                       <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
                         <tr>
-                            <th>學號</th>
-                            <th>學生姓名</th>
-                            <th>家長姓名</th>
-                            <th>連絡電話1</th>
-                            <th>連絡電話2</th>
-                            <th style="width: 142px;">操作</th>
+                            <th>上課日期</th>
+                            <th>上課教室</th>
+                            <th>上課時段</th>
+                            <th>上課進度</th>
+                            <th>授課老師</th>
+                            <th>紀錄</th>
+                            <th>操作</th>
                         </tr>
                       </thead>
                       <tbody id="studentTableBody">
@@ -146,9 +145,9 @@
                       </tbody>
                     </table>
                 </div>
-                <div class="card-footer text-right">
+                <!-- <div class="card-footer text-right">
                   <button class="btn btn-primary" id="st_insertDataButton">新增學生</button>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
@@ -182,7 +181,7 @@
   <!-- Page Specific JS File -->
   <script src="assets/js/page/bootstrap-modal.js"></script>
   <script src="assets/js/page/components-table.js"></script>
-  <script src="assets/js/page/ad_index.js"></script>
+  <script src="assets/js/page/st_attend.js"></script>
   
   <!-- Template JS File -->
   <script src="assets/js/scripts.js"></script>
