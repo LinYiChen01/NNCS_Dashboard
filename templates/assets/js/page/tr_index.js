@@ -39,7 +39,9 @@ function renderRecords(data) {
     document.querySelectorAll(".fa-info-circle").forEach((span) => {
       span.addEventListener("click", function () {
         const studentId = this.getAttribute("data-id");
-        const student = st_data.find((st) => st.st_id == studentId);
+        const student = data.find((st) => st.st_id == studentId);
+        console.log('st_data', st_data);
+        console.log('123', student.st_id);
         $("#st_info_input_edit").val(student.st_id);
         $("#st_info_name").val(student.st_name);
         $("#st_info_age").val(student.st_age);
@@ -126,18 +128,30 @@ document.getElementById('st_pay_date').addEventListener('change', function() {
     }),
     success: function (response) {
       if (response != '查無資料') {
-        renderRecords(response);  // 调用渲染学生数据的函数
-        console.log(response);
+        // console.log(response);
+        classtimes = response['classtimes'];
+        // console.log(';;;', classtimes);
+        renderRecords(response['st_data']);  // 调用渲染学生数据的函数
+        
       }
       else { 
         renderRecords([]);
+        classtimes = [];
       }
     }
   });
 });
 
 
-document.getElementById('tr_rollcall').addEventListener('click', function() {
-  $("#rollcall_date").val($("#st_pay_date").val());
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('tr_rollcall').addEventListener('click', function() {
+    $("#rollcall_date").val($("#st_pay_date").val());
+    const optionsHTML = Object.entries(classtimes)
+        .map(([key, c]) => `<option value="${key}">${c}</option>`)
+        .join('');
+    document.getElementById('rollcall_time').innerHTML = optionsHTML;
+    console.log(classtimes, ';;;;');
+  });
 });
+
 

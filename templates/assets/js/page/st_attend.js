@@ -59,6 +59,7 @@ function populateTable(data) {
         const attendId = this.getAttribute('data-id');
         const studentData = data.find(student => student.attend_id == attendId);
         $('#st_id_attend').text(studentData.st_id); 
+        $('#st_id_attend_input').val(studentData.st_id); 
         $('#st_name_attend').text(studentData.st_name); 
         $('#st_date_attend').text(studentData.st_id); 
         $('#st_classroom_attend').text(moment(studentData.class_date).format('YYYY-MM-DD')); 
@@ -79,6 +80,35 @@ function populateTable(data) {
                 .join("")
         );
         
+        if (studentData.status) {
+            // 将状态文字转换为对应的 value
+            let statusValue;
+            switch (studentData.status) {
+                case "上課":
+                    statusValue = "1";
+                    break;
+                case "請假":
+                    statusValue = "2";
+                    break;
+                case "曠課":
+                    statusValue = "3";
+                    break;
+                case "停課":
+                    statusValue = "4";
+                    break;
+                default:
+                    statusValue = ""; // 未知状态，设置为空
+            }
+        
+            // 设置 select 的值
+            $('#st_status_attend').val(statusValue);
+            console.log("匹配的状态值:", statusValue);
+        } else {
+            // 如果没有状态，设置为默认值
+            $('#st_status_attend').val("");
+            console.log("无状态数据，默认值为空");
+        }
+
         $('#st_last_problem_attend').val(studentData.progress); 
         $('#st_problems_attend').val(studentData.problems); 
         $('#st_attend_id').val(studentData.attend_id); 

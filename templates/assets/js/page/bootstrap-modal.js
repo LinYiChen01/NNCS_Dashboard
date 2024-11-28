@@ -2158,9 +2158,7 @@ if (window.location.pathname === "/tr_index") {
               <div class="form-group">
                 <label for="address">點名時段</label>
                 <select id="rollcall_time" name="rollcall_time" class="form-control">
-                ${Object.entries(classtimes).map(([key, c]) => {
-                  return `<option value="${key}">${c}</option>`;
-                }).join('')}
+
                 </select>
               </div>
             </div>
@@ -2405,10 +2403,10 @@ $("#delete_money_btn").fireModal({
   ],
 });
 
-
-$("#editStudentAttendButton").fireModal({
-  title: "修改學生出席紀錄",
-  body: `
+if (window.location.pathname === "/st_attend") {
+  $("#editStudentAttendButton").fireModal({
+    title: "修改學生出席紀錄",
+    body: `
     <form id="st_attendForm" method="POST" action="/editStudentAttendButton">
       <div style="margin-bottom: 15px;">
         <label for="st_id_attend" style="font-weight: bold;">學號:</label>
@@ -2435,12 +2433,22 @@ $("#editStudentAttendButton").fireModal({
         <span id="st_tr_attend" name="st_tr_attend"></span>
       </div>
       <div class="form-group">
+        <label for="st_status_attend">上課紀錄</label>
+        <select name="st_status_attend" class="form-control" id="st_status_attend">
+          <option value="" disabled selected>請選擇上課紀錄</option>
+          <option value="1">上課</option>
+          <option value="2">請假</option>
+          <option value="3">曠課</option>
+          <option value="4">停課</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label for="st_tr2_attend">調整上課老師</label>
         <select name="st_tr2_attend" class="form-control" id="st_tr2_attend">
           <option value="" disabled selected>請選擇老師</option>
           ${tr_data
-            .map((t) => `<option value="${t.tr_id}">${t.tr_id + "-" + t.tr_name}</option>`)
-            .join("")}
+        .map((t) => `<option value="${t.tr_id}">${t.tr_id + "-" + t.tr_name}</option>`)
+        .join("")}
         </select>
       </div>
       <div class="form-group">
@@ -2458,50 +2466,52 @@ $("#editStudentAttendButton").fireModal({
         <input type="number" name="st_problems_attend" class="form-control" id="st_problems_attend">
       </div>
       <input id="st_attend_id" name="st_attend_id">
+      <input id="st_id_attend_input" name="st_id_attend_input">
     </form>
   `,
-  buttons: [
-    {
-      text: "取消",
-      class: "btn btn-secondary",
-      handler: function (modal) {
-        // 当用户点击取消按钮时，关闭模态框
-        modal.modal("hide");
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          // 当用户点击取消按钮时，关闭模态框
+          modal.modal("hide");
+        },
       },
-    },
-    {
-      text: "確認",
-      class: "btn btn-primary",
-      handler: function (modal) {
+      {
+        text: "確認",
+        class: "btn btn-primary",
+        handler: function (modal) {
           // 获取表单数据
           var formData = $("#st_attendForm").serializeArray();
 
           // 将数据转换为对象
           var formDataObj = {};
-          formData.forEach(function(field) {
-              formDataObj[field.name] = field.value;
+          formData.forEach(function (field) {
+            formDataObj[field.name] = field.value;
           });
           
           // 使用 AJAX 将 JSON 数据发送到后端
           $.ajax({
-              url: "/editStudentAttendButton",  // 后端 URL
-              method: "POST",  // 请求方法，假设是 POST
-              contentType: "application/json",  // 发送的数据类型
-              data: JSON.stringify(formDataObj),  // 发送的表单数据，转换为 JSON
-              success: function (response) {
-                  $("#searchInput").val(response);
-                  searchTable();
-                  console.log("成功提交:", response);
-                  modal.modal("hide");
-              },
-              error: function(xhr, status, error) {
-                  console.error("提交失败:", error);
-              }
+            url: "/editStudentAttendButton",  // 后端 URL
+            method: "POST",  // 请求方法，假设是 POST
+            contentType: "application/json",  // 发送的数据类型
+            data: JSON.stringify(formDataObj),  // 发送的表单数据，转换为 JSON
+            success: function (response) {
+              $("#searchInput").val(response);
+              searchTable();
+              console.log("成功提交:", response);
+              modal.modal("hide");
+            },
+            error: function (xhr, status, error) {
+              console.error("提交失败:", error);
+            }
           });
+        }
       }
-  }
-  ],
-});
+    ],
+  });
+}
 
 $("#modal-1").fireModal({ body: "Modal body text goes here." });
 

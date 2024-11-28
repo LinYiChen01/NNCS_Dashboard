@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import filetype
 from flask import Flask, render_template, request, abort, session, redirect, url_for, make_response, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+import time
 from authlib.integrations.flask_client import OAuth
 import json
 import pymysql.cursors
@@ -18,17 +20,35 @@ from linebot.v3.messaging import (
     ApiClient,
     MessagingApi,
     ReplyMessageRequest,
-    TextMessage
+    TextMessage,
+    PushMessageRequest
 )
 from linebot.v3.webhooks import (
     MessageEvent,
     TextMessageContent
 )
+from linebot.models import (
+    PostbackAction, 
+    URIAction, 
+    MessageAction, 
+    TemplateSendMessage, 
+    ButtonsTemplate, 
+    TextMessage
+)
+from linebot.exceptions import InvalidSignatureError
+from linebot.v3.messaging.models import TextMessage
+from linebot.v3.webhooks import FollowEvent, PostbackEvent
 
-# Channel Access Token
-configuration = Configuration(access_token='ezTOh8SMwv3ATxslU3Wk4Bm5oAiP3cKadO+xnXZYiRNMOkl2R6w0IBuulijnc088OqwZJgjodYEcSiZO/n3mKfLVraN1GIFciPkcMANaPw4F8K1lyQKZ48SpGGp2KrxcVVQt8tu90S7R6EgIjazW9wdB04t89/1O/w1cDnyilFU=')
-# Channel Secret
-handler = WebhookHandler('8c6f630875f7495650df8b1827587a24')
+# Access Token 和 Channel Secret
+access_token = "ezTOh8SMwv3ATxslU3Wk4Bm5oAiP3cKadO+xnXZYiRNMOkl2R6w0IBuulijnc088OqwZJgjodYEcSiZO/n3mKfLVraN1GIFciPkcMANaPw4F8K1lyQKZ48SpGGp2KrxcVVQt8tu90S7R6EgIjazW9wdB04t89/1O/w1cDnyilFU="
+channel_secret = "8c6f630875f7495650df8b1827587a24"
+
+configuration = Configuration(access_token=access_token)
+api_client = ApiClient(configuration=configuration)
+messaging_api = MessagingApi(api_client=api_client)
+
+handler = WebhookHandler(channel_secret)
+
 
 # 資料庫
 def get_db_connection():
@@ -44,79 +64,221 @@ MAX_CONTENT_LENGTH = 64 * 1024
 
 
 app = Flask(__name__, static_folder='templates/assets')
-# scheduler = BackgroundScheduler()
+@app.route("/callback", methods=['POST'])
+def callback():
+    # 从请求头获取签名
+    signature = request.headers.get('X-Line-Signature', '')
+
+    # 从请求体获取事件数据
+    body = request.get_data(as_text=True)
+
+    try:
+        # 处理事件
+        handler.handle(body, signature)
+    except Exception as e:
+        print(f"Error: {e}")
+        abort(400)
+
+    return 'OK'
+
+
+# 資料庫連線
+def query_student_id(student_id):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT * FROM students WHERE student_id = %s"
+            cursor.execute(sql, (student_id,))
+            result = cursor.fetchone()
+            return result  # 返回查询结果
+    finally:
+        connection.close()
+
+
+# 查询数据库，检查是否已绑定
+def is_user_bound(line_id):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT st_id FROM students WHERE line_user_id = %s"
+            cursor.execute(sql, (line_id,))
+            result = cursor.fetchone()
+            return result  # 如果找到结果，返回用户数据
+    finally:
+        connection.close()
+
+# 插入或更新用户的绑定信息
+def bind_user(line_id, student_id):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            # 如果存在 line_id，则更新；否则插入
+            cursor.execute("UPDATE `students` SET `line_user_id`=%s WHERE `st_id`=%s", (line_id, student_id))
+            connection.commit()
+    finally:
+        connection.close()
+
+# 处理用户消息
+@handler.add(MessageEvent)
+def handle_message(event):
+    line_id = event.source.user_id  # 用户的 Line ID
+    user_message = event.message.text.strip()  # 用户发送的消息，去除多余空格
+
+    # 查询数据库，检查是否已绑定
+    bound_user = is_user_bound(line_id)
+
+    # 全局变量维护用户绑定状态
+    global user_status
+    if 'user_status' not in globals():
+        user_status = {}
+
+    # 初始化用户状态
+    if line_id not in user_status:
+        user_status[line_id] = {"status": 0, "student_id": None}
+
+    # 状态 0：用户发送 "我要綁定"
+    if user_message == "我要綁定" and user_status[line_id]["status"] == 0:
+        if bound_user:
+            # 如果已绑定
+            reply_message = TextMessage(text=f"您已綁定，無需重複綁定!")
+        else:
+            # 未绑定，提示输入学号
+            reply_message = TextMessage(text="請輸入學號:")
+            user_status[line_id]["status"] = 1  # 更新状态为等待输入学号
+        reply_request = ReplyMessageRequest(
+            reply_token=event.reply_token,
+            messages=[reply_message]
+        )
+        messaging_api.reply_message(reply_request)
+        return
+    else:
+        reply_message = TextMessage(text="很抱歉，我們無法進行回覆!")
+        user_status[line_id]["status"] = 0  # 更新状态为等待输入学号
+        reply_request = ReplyMessageRequest(
+            reply_token=event.reply_token,
+            messages=[reply_message]
+        )
+        messaging_api.reply_message(reply_request)
+
+    # 状态 1：用户输入学号
+    if user_message.isdigit() and user_status[line_id]["status"] == 1:
+        connection = get_db_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT st_id FROM students WHERE st_id = %s;", (user_message,))
+                result = cursor.fetchone()
+        finally:
+            connection.close()
+
+        if result:
+            # 学号有效，提示输入手机号码
+            reply_message = TextMessage(text="請輸入手機號碼:")
+            user_status[line_id]["status"] = 2  # 更新状态为等待输入手机号码
+            user_status[line_id]["student_id"] = user_message  # 暂存学号
+        else:
+            # 学号无效
+            reply_message = TextMessage(text="查無學號，請重新輸入:")
+        reply_request = ReplyMessageRequest(
+            reply_token=event.reply_token,
+            messages=[reply_message]
+        )
+        messaging_api.reply_message(reply_request)
+        return
+
+    # 状态 2：用户输入手机号码
+    if user_message.isdigit() and user_status[line_id]["status"] == 2:
+        phone_number = user_message
+        st_id = int(user_status[line_id]["student_id"])
+
+        connection = get_db_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT user_id FROM users WHERE user_id = %s AND (phone1 = %s OR phone2 = %s);",
+                    (st_id, phone_number, phone_number)
+                )
+                result = cursor.fetchone()
+        finally:
+            connection.close()
+
+        if result:
+            # 手机号码匹配，完成绑定
+            bind_user(line_id, st_id)
+            reply_message = TextMessage(text=f"綁定成功！")
+        else:
+            # 手机号码不匹配
+            reply_message = TextMessage(text="綁定失敗!")
+        user_status[line_id]["status"] = 0  # 重置状态
+        reply_request = ReplyMessageRequest(
+            reply_token=event.reply_token,
+            messages=[reply_message]
+        )
+        messaging_api.reply_message(reply_request)
+        return
+
+# 获取明天有课程的学生的 Line ID
+def get_tomorrow_classes():
+    tomorrow = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            query = """
+                SELECT s.line_user_id 
+                FROM `attend` a 
+                JOIN students s ON s.st_id = a.user_id 
+                WHERE a.class_date = %s AND a.status = '';
+            """
+            cursor.execute(query, (tomorrow,))
+            # cursor.execute(query, ('2024-11-26',))
+            
+            results = cursor.fetchall()
+        return [row["line_user_id"] for row in results if row["line_user_id"] != '']
+    finally:
+        connection.close()
+
+# 向学生发送通知
+def send_class_reminders(line_ids):
+    for line_id in line_ids:
+        try:
+            message = TextMessage(text="提醒您😊明天有課，請記得準時上課喔！\n無法到課記得在明天前請假，否則會登記為曠課!")
+            push_request = PushMessageRequest(to=line_id, messages=[message])
+            messaging_api.push_message(push_request)
+            print(f"通知已发送给用户 {line_id}")
+        except Exception as e:
+            print(f"发送消息给 {line_id} 时出错：{e}")
+
+
+# 定义定时任务执行的函数（每10秒执行一次）
+def scheduled_task():
+    # 记录当前时间，用于检测任务执行时间
+    start_time = time.time()
+    print(f"开始执行定时任务... {datetime.now()}")
+
+    # 查询明天有课的学生
+    line_ids = get_tomorrow_classes()
+    
+    # 发送上课提醒
+    send_class_reminders(line_ids)
+
+    # 打印任务执行耗时
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"任务执行完毕，耗时: {execution_time:.2f}秒")
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(scheduled_task, IntervalTrigger(seconds=10))  # 每10秒执行一次
 
 # def print_ok():
 #     print("Ok")
 
-# # 設定定時任務：從今晚21:30開始，每5分鐘執行一次
+# 設定定時任務：從今晚21:30開始，每5分鐘執行一次
+
+
 # scheduler.add_job(print_ok, 'cron', day_of_week='0-6', hour=22, minute=15)
 # scheduler.start()
 
 app.secret_key = os.urandom(24)  # 随机生成一个24字节的密钥
 
-# line webhook
-@app.route("/callback", methods=['POST'])
-def callback():
-    # get X-Line-Signature header value
-    signature = request.headers['X-Line-Signature']
-
-    # get request body as text
-    body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
-
-    # handle webhook body
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        app.logger.info("Invalid signature. Please check your channel access token/channel secret.")
-        abort(400)
-    return 'OK'
-
-# linebot 訊息處理
-@handler.add(MessageEvent, message=TextMessageContent)
-def handle_message(event):
-    user_input = event.message.text  # 獲取用戶輸入的訊息（帳號）
-
-    # 連接到資料庫
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        
-        # 查詢帳號和密碼
-        query = "SELECT acc, pwd FROM users WHERE acc = %s"
-        cursor.execute(query, (user_input,))
-        result = cursor.fetchone()
-        
-        if result:
-            acc = result['acc']
-            pwd = result['pwd']
-            reply_text = f"帳號: {acc}\n密碼: {pwd}"
-        else:
-            reply_text = "未找到該帳號。"
-        
-        # 回應用戶
-        with ApiClient(configuration) as api_client:
-            line_bot_api = MessagingApi(api_client)
-            line_bot_api.reply_message_with_http_info(
-                ReplyMessageRequest(
-                    reply_token=event.reply_token,
-                    messages=[TextMessage(text=reply_text)]
-                )
-            )
-        
-    except pymysql.MySQLError as err:
-        with ApiClient(configuration) as api_client:
-            line_bot_api = MessagingApi(api_client)
-            line_bot_api.reply_message_with_http_info(
-                ReplyMessageRequest(
-                    reply_token=event.reply_token,
-                    messages=[TextMessage(text="資料庫連接錯誤，請稍後再試。")]
-                )
-            )
-    finally:
-        cursor.close()
-        connection.close()
 
 # index 首頁
 @app.route("/")
@@ -446,9 +608,6 @@ def tr_index():
                         i['course_name'] = result['name']
                         i['course_progress'] = result['progress']
                         
-               
-
-        connection.close()
         return render_template("tr_index.html", **locals())
     else:
         return redirect(url_for('login'))
@@ -457,21 +616,24 @@ def tr_index():
 def choose_st_schedule():
     date = request.json.get('selected_date')
     tr_id = request.json.get('tr_id')
+    print('tr_id', tr_id)
     try:
         st_data = []
         connection = get_db_connection()
         with connection.cursor() as cursor:
             for i in tr_id:
-                cursor.execute("""SELECT 
-                                        a.*, u.name AS user_name, u.age, u.phone1, u.phone2, cr.name AS classroom_name, 
-                                        a.classtime_id,c.class_week, c.start_time, c.end_time, a.status, s.note, u.create_date
-                                    FROM `attend` a 
-                                        JOIN users u ON a.user_id = u.user_id
-                                        JOIN students s ON a.user_id = s.st_id 
-                                        JOIN classtime c ON c.classtime_id = a.classtime_id 
-                                        JOIN classroom cr ON cr.classroom_id = c.classroom_id 
-                                    WHERE a.tr_id=%s AND a.adjust=0 AND a.class_date=%s;""", 
-                            (i, date))
+                cursor.execute("""
+                               SELECT 
+                                    a.*, u.name AS user_name, u.age, u.phone1, u.phone2, cr.name AS classroom_name, 
+                                    a.classtime_id,c.class_week, c.start_time, c.end_time, a.status, s.note, u.create_date
+                                FROM `attend` a 
+                                    JOIN users u ON a.user_id = u.user_id
+                                    JOIN students s ON a.user_id = s.st_id 
+                                    JOIN classtime c ON c.classtime_id = a.classtime_id 
+                                    JOIN classroom cr ON cr.classroom_id = c.classroom_id 
+                                WHERE a.tr_id=%s AND a.adjust=0 AND a.class_date=%s;""", 
+                                (i, date))
+                print(i, date, 'yuhjkjh,k')
                 result = cursor.fetchall()
                 for j in result:
                     if j['status'] == '1':
@@ -567,7 +729,8 @@ def choose_st_schedule():
                         i['course_name'] = result['name']
                         i['course_progress'] = result['progress']
         if len(st_data) !=0:
-            return jsonify(st_data)
+            return jsonify({"st_data": st_data, "classtimes": classtimes})
+
         else:
             return jsonify("查無資料")          
     except :
@@ -693,10 +856,7 @@ def st_attend():
                 course_data.append({
                     "course_id": i['course_id'],
                     "course_name": i['name']
-                })
-            
-
-            
+                })  
         return render_template("st_attend.html", **locals())
     else:
         return redirect(url_for('login'))
@@ -776,6 +936,7 @@ def search_st_attend():
 
 @app.route('/editStudentAttendButton', methods=['POST'])
 def editStudentAttendButton():
+    st_id = request.json.get('st_id_attend_input') 
     attend_id = request.json.get('st_attend_id')
     tr2_id = request.json.get('st_tr2_attend')
     course_id = request.json.get('st_course_attend')
@@ -783,19 +944,11 @@ def editStudentAttendButton():
     st_problems_attend = request.json.get('st_problems_attend')
     course_id = request.json.get('st_course_attend')
     
-    # connection = get_db_connection()
-    # with connection.cursor() as cursor:
-    #     cursor.execute("""
-    #                     SELECT a.attend_id, a.user_id, u.name, a.tr_id, a.tr_id2, a.classtime_id, cr.name as classroom_name, 
-    #                     c.class_week, c.start_time, c.end_time, a.status, a.adjust, a.class_date
-    #                     FROM `attend` a 
-    #                     JOIN users u ON u.user_id = a.user_id 
-    #                     JOIN classtime c ON a.classtime_id = c.classtime_id 
-    #                     JOIN classroom cr ON cr.classroom_id = c.classroom_id 
-    #                     WHERE a.user_id=%s ORDER BY a.class_date;
-    #                     """, (st_id))
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("UPDATE `attend` SET `tr_id2`=%s, `adjust`= 1 WHERE `attend_id`=%s", (tr2_id, attend_id))
                 
-    return jsonify(attend_id)
+    return jsonify(st_id)
 
 
 
@@ -1136,7 +1289,7 @@ def insert_st_tuiton():
             currnet_st_id = st_id
             return jsonify({"success": True, "money_record": money_record, "currnet_st_id": currnet_st_id})
     except Exception as e:
-        print(e)
+        # print(e)
         return jsonify({"success": False, "message": str(e)})
     finally:
         connection.close()
@@ -1274,7 +1427,7 @@ def st_for_tr():
                 SELECT 
                     t.tr_id, 
                     a.classtime_id,
-                    COUNT(a.attend_id) AS st_num,
+                    COUNT(DISTINCT a.attend_id) AS st_num,
                     t.st_num AS tr_max
                 FROM 
                     attend a
@@ -1298,14 +1451,16 @@ def st_for_tr():
                 for j in result2:
                     tr_course_id.append(j['course_id'])
                 t = (i['tr_id'], i['classtime_id'], tr_course_id)
-                if i['st_num'] == i['tr_max']:
+                if i['st_num'] >= i['tr_max']:
                     remove_tr_id.add(i['tr_id'])
                 # if t not in check: 
                 tr_data.append({
                     'tr_id' : i['tr_id'],
                     'tr_name' : i['name'],
                     'tr_classtime_id' : i['classtime_id'],
-                    'tr_course_id' : tr_course_id
+                    'tr_course_id' : tr_course_id,
+                    'st_num': i['st_num'],
+                    'tr_max': i['tr_max']
                 })
                     # check.add(t)
 
@@ -1317,7 +1472,9 @@ def st_for_tr():
                     course['trs'].append({
                         'tr_id': tr['tr_id'],
                         'tr_name': tr['tr_name'],
-                        'tr_course_id' : tr['tr_course_id']
+                        'tr_course_id' : tr['tr_course_id'],
+                        'st_num': tr['st_num'],
+                        'tr_max': tr['tr_max']
                     })
 
         course_data = [course for course in course_data if course['trs']]
@@ -1426,12 +1583,10 @@ def st_scheduleButton():
             # 批量查询所有 class_week 数据
             cursor.execute("SELECT classtime_id, class_week FROM `classtime`;")
             class_week_map = {row['classtime_id']: week.index(row['class_week']) for row in cursor.fetchall()}
-            print(class_week_map)
 
             # 为课表添加星期数
             for i in st_schedule.keys():
                 st_schedule[i]['week'] = class_week_map.get(st_schedule[i]['classtime_id'])
-                print(f"st_schedule[{i}]['week']: {st_schedule[i]['week']}")
 
         if st_semester != 'new':
             # 更新现有学期的课程
@@ -1465,7 +1620,6 @@ def st_scheduleButton():
                             if days_ahead == 0:
                                 days_ahead = 7  # 跳到下一个相同的星期
                             current_date += timedelta(days=days_ahead)
-                            print('current_date', current_date, days_ahead)
                             num += 1
                     
                     # 批量执行 UPDATE 操作
@@ -1491,7 +1645,6 @@ def st_scheduleButton():
                     st_semester = result['semester'] + 1 if result['semester'] else 1
                     
                     current_date = class_start_date
-                    print(f'current_date: {current_date}')  # initial current_date
                     
                     num = 1
                     inserts = []
@@ -1504,7 +1657,6 @@ def st_scheduleButton():
                             if days_ahead == 0:
                                 days_ahead = 7
                             next_class_date = current_date + timedelta(days=days_ahead)
-                            print(f"Adding class on {next_class_date}")
                             
                             inserts.append(
                                 (st_semester, st_id, st_schedule[i]['tr_id'], st_schedule[i]['classtime_id'], next_class_date, '', 0)
@@ -1593,6 +1745,7 @@ def leave_st_scheduleButton():
                             break
         except:
             pass
+            # 改改改 pay_num +1
         return redirect(url_for('st_for_tr'))
     else:
         return redirect(url_for('login'))
@@ -1607,7 +1760,6 @@ def delete_money_btn():
 
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            print(st_id, semester_id, '1234567890-')
             cursor.execute("DELETE FROM `attend` WHERE `user_id`=%s AND `semester`=%s AND `status`='';", (st_id, semester_id))
             connection.commit()
             cursor.execute("UPDATE `money` SET `money_semester`= money_semester-1 WHERE `st_id`=%s AND `money_semester`> %s;", (st_id, semester_id))
@@ -1743,7 +1895,6 @@ def fc_scheduleButton():
                            (user_id, fc_classtime_id, semester))
             result = cursor.fetchone()
             tr_id_old = result['tr_id']
-            print('tr_id_old', tr_id_old)
             # 同時段的老師
             cursor.execute("SELECT tr_id, COUNT(tr_id) as tr_st_num FROM `attend` WHERE class_date=%s AND classtime_id=%s GROUP BY tr_id;", 
                            (classroomDateSelect, fc_classtime_id))
@@ -1764,7 +1915,6 @@ def fc_scheduleButton():
                         'tr_st_num': i['tr_st_num']
                     })
             tr_data.sort(key=lambda x: x['tr_st_num'])
-            print('tr_data', tr_data)
             # 获取学生最少的老师信息
             if tr_id_old in tr_data or tr_data == []:
                 min_tr_id = tr_id_old
@@ -2191,7 +2341,6 @@ def fc_notLeaveButton():
 
             result = cursor.fetchone()
             attend_count = result['attend_count']
-            print(attend_count)
             if attend_count > 19:
                 # 如果人数已满，返回状态
                 return jsonify({'status': 'full'})
@@ -2660,9 +2809,20 @@ def add_header(response):
     return response
 
 
+# if __name__ == "__main__":
+#     app.debug = True
+#     app.run()
+
 if __name__ == "__main__":
-    app.debug = True
-    app.run()
+    try:
+        # 启动定时任务调度器
+        scheduler.start()
+
+        # 启动 Flask 应用
+        app.run(debug=True, use_reloader=False)  # use_reloader=False 是为了防止调度器被多次启动
+    except (KeyboardInterrupt, SystemExit):
+        # 当程序终止时，关闭调度器
+        scheduler.shutdown()
 
 # if __name__ == "__main__":
 #     try:
