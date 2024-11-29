@@ -833,12 +833,97 @@ if (window.location.pathname === "/profiles") {
   });
 }
 
-function clearupdateForm() {
-  $("#updateForm")[0].reset();
-  $("#pic_msg").text("");
-  $("#submit_msg").text("");
-  $("#uploadedImage").attr("src", picture);
-  $("#uploadedImage").show();
+
+$("#tr_updateDataButton").on("click", function () {
+  tr_clearupdateForm();
+});
+
+if (window.location.pathname === "/tr_profiles") {
+  // updateDataButton Modal
+  $("#tr_updateDataButton").fireModal({
+    title: "更新資料",
+    body: `
+      <form id="tr_updateForm" method="POST" action="/update_tr_profile" enctype="multipart/form-data">
+          <div class="form-group">
+              <label for="tr_file">教師證:</label><br>
+              <input type="hidden" name="tr_img_data" value=${picture}>
+              <img src=${picture} id="tr_uploadedImage" alt="上傳的圖片" style="max-width: 100px; margin-bottom: .5rem;">
+              <span id="tr_pic_msg" style="display: block; margin-bottom: .5rem;"></span>
+              <input type="file" name="tr_file" id="tr_file" style="display:none;" accept="image/png, image/jpeg, image/jpg, image/webp">
+              <button type="button" id="tr_uploadButton" class="btn btn-primary">上傳照片</button>
+          </div>
+          <div class="form-group">
+              <label for="tr_phone1">聯絡電話-1<span style="color: red;">*</span></label>
+              <input type="text" class="form-control" id="tr_phone1" name="tr_phone1" value=${phone1}>
+          </div>
+          <div class="form-group">
+              <label for="tr_phone2">聯絡電話-2</label>
+              <input type="text" class="form-control" id="tr_phone2" name="tr_phone2" value=${phone2}>
+          </div>
+          <div class="form-group">
+              <label for="tr_email">Email<span style="color: red;">*</span></label>
+              <input type="email" class="form-control" id="tr_email" name="tr_email" value=${email}>
+          </div>
+          <div class="form-group">
+              <label for="tr_address">聯絡住址<span style="color: red;">*</span></label>
+              <input type="text" class="form-control" id="tr_address" name="tr_address" value=${address}>
+          </div>
+          <span id="tr_submit_msg" style="display: block; margin-bottom: .5rem; color: red;"></span>
+      </form>
+  `,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          // 當點擊取消按鈕時關閉模態框
+          tr_clearupdateForm();
+          modal.modal("hide");
+        },
+      },
+      {
+        text: "確認更改",
+        class: "btn btn-primary",
+        // submit: true,
+        handler: function (modal) {
+          var pic_msg = $("#tr_pic_msg").text();
+          var phone1 = $("#tr_phone1").val();
+          var phone2 = $("#tr_phone2").val();
+          var email = $("#tr_email").val();
+          var address = $("#tr_address").val();
+          var submit_msg = $("#tr_submit_msg");
+
+          // 定義電話和郵件的正則表達式
+          var phoneRegex = /^\d{10}$/; // 10 到 15 位數字
+          var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // 簡單的 Email 格式驗證
+
+          // 檢查資料完整性及格式
+          if (
+            pic_msg !== "" ||
+            phone1 === "" ||
+            !phoneRegex.test(phone1) ||
+            (phone2 !== "" && !phoneRegex.test(phone2)) ||
+            !emailRegex.test(email) ||
+            address === "" 
+          ) {
+            submit_msg.text("資料有誤，請重新確認!");
+            return; // 阻止表單提交
+          } else {
+            modal.modal("hide");
+            $("#tr_updateForm").submit(); // 提交表單
+          }
+        },
+      },
+    ],
+  });
+}
+
+function tr_clearupdateForm() {
+  $("#tr_updateForm")[0].reset();
+  $("#tr_pic_msg").text("");
+  $("#tr_submit_msg").text("");
+  $("#tr_uploadedImage").attr("src", picture);
+  $("#tr_uploadedImage").show();
 }
 
 $("#fc_scheduleError_1").fireModal({
@@ -2410,19 +2495,19 @@ if (window.location.pathname === "/st_attend") {
     <form id="st_attendForm" method="POST" action="/editStudentAttendButton">
       <div style="margin-bottom: 15px;">
         <label for="st_id_attend" style="font-weight: bold;">學號:</label>
-        <span id="st_id_attend" name="st_id_attend"></span>
+        <span id="st_id_attend"></span>
       </div>
       <div style="margin-bottom: 15px;">
         <label for="st_name_attend" style="font-weight: bold;">姓名:</label>
-        <span id="st_name_attend" name="st_name_attend"></span>
+        <span id="st_name_attend"></span>
       </div>
       <div style="margin-bottom: 15px;">
         <label for="st_date_attend" style="font-weight: bold;">上課日期:</label>
-        <span id="st_date_attend" name="st_date_attend"></span>
+        <span id="st_date_attend"></span>
       </div>
       <div style="margin-bottom: 15px;">
         <label for="st_classroom_attend" style="font-weight: bold;">上課教室:</label>
-        <span id="st_classroom_attend" name="st_classroom_attend"></span>
+        <span id="st_classroom_attend"></span>
       </div>
       <div style="margin-bottom: 15px;">
         <label for="st_classtime_attend" style="font-weight: bold;">上課時段:</label>
@@ -2465,8 +2550,11 @@ if (window.location.pathname === "/st_attend") {
         <label for="st_problems_attend">解題數</label>
         <input type="number" name="st_problems_attend" class="form-control" id="st_problems_attend">
       </div>
+      <span id="st_attend_msg" name="st_attend_msg" style="color:red;"></span>
+
       <input id="st_attend_id" name="st_attend_id">
       <input id="st_id_attend_input" name="st_id_attend_input">
+      <input id="st_date_attend_input" name="st_date_attend_input"> 
     </form>
   `,
     buttons: [
@@ -2484,30 +2572,48 @@ if (window.location.pathname === "/st_attend") {
         handler: function (modal) {
           // 获取表单数据
           var formData = $("#st_attendForm").serializeArray();
-
+      
           // 将数据转换为对象
           var formDataObj = {};
           formData.forEach(function (field) {
-            formDataObj[field.name] = field.value;
+              formDataObj[field.name] = field.value.trim(); // 去掉前后空格
           });
-          
-          // 使用 AJAX 将 JSON 数据发送到后端
+      
+          // 检查三个字段的值
+          var st_course_attend = formDataObj['st_course_attend'];
+          var st_last_problem_attend = formDataObj['st_last_problem_attend'];
+          var st_problems_attend = formDataObj['st_problems_attend'];
+      
+          // 判断是否全部为空或全部有值
+          var allEmpty = !st_course_attend && !st_last_problem_attend && !st_problems_attend;
+          var allFilled = st_course_attend && st_last_problem_attend && st_problems_attend;
+      
+          if (!allEmpty && !allFilled) {
+              // 如果既不是全空，也不是全有，提示用户
+              $("#st_attend_msg").text("請填完整資料!");
+              return; // 阻止后续逻辑执行
+          }
+          $("#st_attend_msg").text("");
+          // 如果条件满足，使用 AJAX 提交表单
           $.ajax({
-            url: "/editStudentAttendButton",  // 后端 URL
-            method: "POST",  // 请求方法，假设是 POST
-            contentType: "application/json",  // 发送的数据类型
-            data: JSON.stringify(formDataObj),  // 发送的表单数据，转换为 JSON
-            success: function (response) {
-              $("#searchInput").val(response);
-              searchTable();
-              console.log("成功提交:", response);
-              modal.modal("hide");
-            },
-            error: function (xhr, status, error) {
-              console.error("提交失败:", error);
-            }
+            
+              url: "/editStudentAttendButton",  // 后端 URL
+              method: "POST",  // 请求方法
+              contentType: "application/json",  // 发送的数据类型
+              data: JSON.stringify(formDataObj),  // 发送的表单数据，转换为 JSON
+              success: function (response) {
+                  // 提交成功后的操作
+                  $("#searchInput").val(response['st_id']);
+                  searchTable(); // 刷新表格
+                  console.log("成功提交:", response);
+                  modal.modal("hide"); // 隐藏模态框
+              },
+              error: function (xhr, status, error) {
+                  // 提交失败的处理
+                  console.error("提交失败:", error);
+              }
           });
-        }
+      }
       }
     ],
   });

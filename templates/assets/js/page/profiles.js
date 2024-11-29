@@ -93,7 +93,6 @@ var daysElapsed
 if (today.isBefore(start_class_date)) {
   // 如果今天早于开始日期
   daysElapsed = 0;
-  console.log('daysElapsed bbbb', daysElapsed);
 } else {
   // 计算日期差并加 2 天
   daysElapsed = today.diff(start_class_date, 'days') + 2;

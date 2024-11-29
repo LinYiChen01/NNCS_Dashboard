@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
+  <title>General Dashboard &mdash; Stisla</title>
+
+  <!-- General CSS Files -->
+  <link rel="stylesheet" href="assets/modules/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/modules/fontawesome/css/all.min.css">
+
+  <!-- CSS Libraries -->
+  <link rel="stylesheet" href="assets/modules/jqvmap/dist/jqvmap.min.css">
+  <link rel="stylesheet" href="assets/modules/weather-icon/css/weather-icons.min.css">
+  <link rel="stylesheet" href="assets/modules/weather-icon/css/weather-icons-wind.min.css">
+  <link rel="stylesheet" href="assets/modules/summernote/summernote-bs4.css">
+
+  <!-- Template CSS -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- 加载 Google API 客户端库 -->
+  <script src="https://apis.google.com/js/api.js"></script>
+
+  <!-- Start GA -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-94034622-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-94034622-3');
+  </script>
+  <!-- /END GA -->
+</head>
+<body>
+  <div id="app">
+    <div class="main-wrapper main-wrapper-1">
+      <div class="navbar-bg" style="height: 70px;"></div>
+      <nav class="navbar navbar-expand-lg main-navbar">
+        <form class="form-inline mr-auto">
+          <ul class="navbar-nav mr-3">
+            <li><a href="#" data-toggle="sidebar" class="nav-link nav-link-lg"><i class="fas fa-bars"></i></a></li>
+          </ul>
+        </form>
+        <ul class="navbar-nav navbar-right">
+          <li class="dropdown"><a href="#" data-toggle="dropdown"
+              class="nav-link dropdown-toggle  nav-link-lg nav-link-user">
+              <!-- <img alt="image" src={{session['photo']}} class="rounded-circle mr-1"> -->
+              <img alt="image" src="{{picture}}" class="rounded-circle mr-1">
+              <div class="d-sm-none d-lg-inline-block">{{name}}</div>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right">
+              <div class="dropdown-title" style="text-transform: none; margin: 0px 8px; font-size: 13px;">Hi,{{name}}!</div>
+              <div class="dropdown-divider" style="border-top-color: #868e96;"></div>
+              <a href="{{ url_for('logout') }}"  class="dropdown-item has-icon text-danger">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </a>
+            </div>
+          </li>
+        </ul>
+      </nav>
+      <div class="main-sidebar sidebar-style-2">
+        <aside id="sidebar-wrapper">
+          <div class="sidebar-brand">
+            <a href="index">NNCS-補習班學生資訊系統</a>
+          </div>
+          <div class="sidebar-brand sidebar-brand-sm">
+            <a href="index"><img src="assets/img/NNCS_Matting.png" height="40px" width="40px"></a>
+          </div>
+          <ul class="sidebar-menu">
+            <li class="menu-header">資訊管理</li>
+            <li><a href="{{ url_for('tr_profiles') }}" class="nav-link"><i
+                  class="fas fa-id-badge"></i><span>個人檔案</span></a></li>
+            <li class=active><a href="{{ url_for('tr_index') }}" class="nav-link"><i
+                  class="fas fa-user-edit"></i><span>課堂點名</span></a></li>
+          </ul>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <section class="section">
+          <br>
+
+          <div class="card profile-widget" style="margin-top: 15px;">
+            <div class="profile-widget-header">
+              <img alt="image" src="{{picture}}" class="rounded-circle profile-widget-picture">
+            </div>
+            <div class="profile-widget-description">
+              <div class="profile-widget-name">{{name}}<div class="text-muted d-inline font-weight-normal">
+                  【{{role}}】/ {{session['user_id']}}</div>
+              </div>
+              <div class="row">
+                <div class="form-group col-md-6 col-12">
+                  <label>聯絡電話-1</label>
+                  <input type="text" class="form-control" name="phone1" value="{{phone1}}" readonly
+                    style="pointer-events: none; background-color: #efeeee; border: none;">
+                </div>
+                <div class="form-group col-md-6 col-12">
+                  <label>聯絡電話-2</label>
+                  <input type="text" class="form-control" name="phone2" value="{{phone2}}" readonly
+                    style="pointer-events: none; background-color: #efeeee; border: none;">
+                </div>
+                <div class="form-group col-md-6 col-12">
+                  <label>Email</label>
+                  <input type="text" class="form-control" name="email" value="{{email}}" readonly
+                    style="pointer-events: none; background-color: #efeeee; border: none;">
+                </div>
+                <div class="form-group col-md-6 col-12">
+                  <label>聯絡住址</label>
+                  <input type="text" class="form-control" name="address" value="{{address}}" readonly
+                    style="pointer-events: none; background-color: #efeeee; border: none;">
+                </div>
+                <div class="form-group col-md-6 col-12">
+                  <label>授課時段</label><br>
+                  <span id="tr_schedule"></span>
+                </div>
+                <div class="form-group col-md-6 col-12">
+                  <label>授課科目</label><br>
+                  {% for course in course_data %}
+                      {{ course.name }}<br>
+                  {% endfor %}
+                  <span id="tr_course"></span>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer text-right">
+              <script>
+                picture = {{ picture| tojson | safe}};
+                name = {{ name| tojson | safe}};
+                address = {{ address| tojson | safe}};
+                phone1 = {{ phone1| tojson | safe}};
+                phone2 = {{ phone2| tojson | safe}};
+                email = {{ email| tojson | safe}};
+                tr_schedule = {{ tr_schedule| tojson | safe}};
+                tr_course = {{ tr_course| tojson | safe}};
+              </script>
+              
+              <button class="btn btn-primary" id="tr_updateDataButton">更新資料</button>
+            </div>
+          </div>
+        </section>
+      </div>
+      <footer class="main-footer">
+        <div class="footer-left">
+          組別: 113XXX 指導老師 : 林俊杰老師 &nbsp 專題組員: 11236001 林奕辰
+        </div>
+        <div class="footer-right"></div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- General JS Scripts -->
+  <script src="assets/modules/jquery.min.js"></script>
+  <script src="assets/modules/popper.js"></script>
+  <script src="assets/modules/tooltip.js"></script>
+  <script src="assets/modules/bootstrap/js/bootstrap.min.js"></script>
+  <script src="assets/modules/nicescroll/jquery.nicescroll.min.js"></script>
+  <script src="assets/modules/moment.min.js"></script>
+  <script src="assets/js/stisla.js"></script>
+
+  <!-- JS Libraies -->
+  <script src="assets/modules/simple-weather/jquery.simpleWeather.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js"></script>
+  <script src="assets/modules/chart.min.js"></script>
+
+  <script src="assets/modules/jqvmap/dist/jquery.vmap.min.js"></script>
+  <script src="assets/modules/jqvmap/dist/maps/jquery.vmap.world.js"></script>
+  <script src="assets/modules/summernote/summernote-bs4.js"></script>
+  <script src="assets/modules/chocolat/dist/js/jquery.chocolat.min.js"></script>
+
+  <!-- Page Specific JS File -->
+  <script src="assets/js/page/bootstrap-modal.js"></script>
+  <script src="assets/js/page/tr_profiles.js"></script>
+
+  <!-- Template JS File -->
+  <script src="assets/js/scripts.js"></script>
+  <script src="assets/js/custom.js"></script>
+</body>
+
+</html>

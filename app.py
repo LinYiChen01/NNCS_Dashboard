@@ -218,7 +218,7 @@ def handle_message(event):
 
 # 获取明天有课程的学生的 Line ID
 def get_tomorrow_classes():
-    tomorrow = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+    # tomorrow = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -228,8 +228,8 @@ def get_tomorrow_classes():
                 JOIN students s ON s.st_id = a.user_id 
                 WHERE a.class_date = %s AND a.status = '';
             """
-            cursor.execute(query, (tomorrow,))
-            # cursor.execute(query, ('2024-11-26',))
+            # cursor.execute(query, (tomorrow,))
+            cursor.execute(query, ('2024-11-26',))
             
             results = cursor.fetchall()
         return [row["line_user_id"] for row in results if row["line_user_id"] != '']
@@ -266,7 +266,7 @@ def scheduled_task():
     print(f"任务执行完毕，耗时: {execution_time:.2f}秒")
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(scheduled_task, IntervalTrigger(seconds=10))  # 每10秒执行一次
+# scheduler.add_job(scheduled_task, IntervalTrigger(seconds=10))  # 每10秒执行一次
 
 # def print_ok():
 #     print("Ok")
@@ -927,7 +927,7 @@ def search_st_attend():
                         "progress": result3['progress'] if result3 and result3.get('progress') else "",
                         "problems": result3['problems'] if result3 and result3.get('problems') else ""
                     })
-                return jsonify(attend_data)
+                return jsonify({"attend_data": attend_data})
 
         else:
             return jsonify("學號格式錯誤!")
@@ -936,19 +936,94 @@ def search_st_attend():
 
 @app.route('/editStudentAttendButton', methods=['POST'])
 def editStudentAttendButton():
-    st_id = request.json.get('st_id_attend_input') 
-    attend_id = request.json.get('st_attend_id')
-    tr2_id = request.json.get('st_tr2_attend')
-    course_id = request.json.get('st_course_attend')
-    st_last_problem_attend = request.json.get('st_last_problem_attend')
-    st_problems_attend = request.json.get('st_problems_attend')
-    course_id = request.json.get('st_course_attend')
-    
-    connection = get_db_connection()
-    with connection.cursor() as cursor:
-        cursor.execute("UPDATE `attend` SET `tr_id2`=%s, `adjust`= 1 WHERE `attend_id`=%s", (tr2_id, attend_id))
+    if request.method == 'POST':
+        st_id = int(request.json.get('st_id_attend_input'))
+        attend_id = request.json.get('st_attend_id')
+        tr2_id = request.json.get('st_tr2_attend')
+        st_status_attend = request.json.get('st_status_attend')
+        course_id = request.json.get('st_course_attend')
+        st_last_problem_attend = request.json.get('st_last_problem_attend')
+        st_problems_attend = request.json.get('st_problems_attend')
+        print('st_id', st_id)
+        print('attend_id', attend_id)
+        print('tr2_id', tr2_id)
+        print('st_status_attend', st_status_attend)
+        print('course_id', course_id)
+        print('st_last_problem_attend', st_last_problem_attend)
+        print('st_problems_attend', st_problems_attend)
+        attend_data = []
+
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            if tr2_id is not None:
+                cursor.execute("UPDATE `attend` SET `tr_id2`=%s, `adjust`= 1 WHERE `attend_id`=%s", (tr2_id, attend_id))
+                connection.commit()
+            if st_status_attend is not None:
+                cursor.execute("UPDATE `attend` SET `status`=%s WHERE `attend_id`=%s", (st_status_attend, attend_id))
+                connection.commit()
+            if course_id is not None and st_last_problem_attend is not None and st_problems_attend is not None:
+                cursor.execute("UPDATE `stprogress` SET `course_id`=%s, `progress`=%s, `problems`=%s WHERE `st_id`=%s AND `class_date`=%s AND `classtime_id`=%s", 
+                            (course_id, st_last_problem_attend, st_problems_attend, st_id, ))
+                connection.commit()
+            
+            cursor.execute("""
+                            SELECT a.attend_id, a.user_id, u.name, a.tr_id, a.tr_id2, a.classtime_id, cr.name as classroom_name, 
+                            c.class_week, c.start_time, c.end_time, a.status, a.adjust, a.class_date
+                            FROM `attend` a 
+                            JOIN users u ON u.user_id = a.user_id 
+                            JOIN classtime c ON a.classtime_id = c.classtime_id 
+                            JOIN classroom cr ON cr.classroom_id = c.classroom_id 
+                            WHERE a.user_id=%s ORDER BY a.class_date;
+                            """, (st_id))
+            result = cursor.fetchall()
+            for i in result:
+                if i['tr_id'] and i['adjust'] == 0:
+                    tr_id = i['tr_id']
+                    cursor.execute("SELECT u.name from teachers tr JOIN users u ON u.user_id = tr.user_id WHERE tr.tr_id=%s;",(tr_id))
+                    result2 = cursor.fetchone()
+                else:
+                    # 如果是代課老師就會使用user_id
+                    tr_id = i['tr_id2']
+                    cursor.execute("SELECT name FROM users WHERE user_id=%s",(tr_id))
+                    result2 = cursor.fetchone()
                 
-    return jsonify(st_id)
+
+                if i['status']:
+                    if i['status'] == '1':
+                        status = '上課'
+                    elif i['status'] == '2':
+                        status = '請假'
+                    elif i['status'] == '3':
+                        status = '曠課'
+                else:
+                    status = ''
+                cursor.execute("""
+                                SELECT s.course_id, c.name, s.progress, s.problems 
+                                FROM `stprogress` s 
+                                JOIN courses c ON c.course_id = s.course_id 
+                                WHERE st_id=%s AND classtime_id=%s AND class_date=%s;""",(i['user_id'], i['classtime_id'], i['class_date']))
+                result3 = cursor.fetchone()
+                attend_data.append({
+                    "attend_id": i['attend_id'],
+                    "st_id": i['user_id'],
+                    "st_name": i['name'],
+                    "tr_id": tr_id,
+                    "tr_name": result2['name'],
+                    "classtime_id": i['classtime_id'],
+                    "classroom_name": i['classroom_name'],
+                    "class_week": i['class_week'],
+                    "start_time": str(i['start_time'])[:-3],
+                    "end_time": str(i['end_time'])[:-3],
+                    "status": status,
+                    "adjust": i['adjust'],
+                    "class_date": i['class_date'],
+                    "course_id": result3['course_id'] if result3 and result3.get('course_id') else "",
+                    "course_name": result3['name'] if result3 and result3.get('name') else "",
+                    "progress": result3['progress'] if result3 and result3.get('progress') else "",
+                    "problems": result3['problems'] if result3 and result3.get('problems') else ""
+                })
+            return jsonify({"attend_data": attend_data, "st_id": st_id})
+            # return jsonify(attend_data)
 
 
 
@@ -1744,8 +1819,9 @@ def leave_st_scheduleButton():
                             num += 1
                             break
         except:
-            pass
-            # 改改改 pay_num +1
+            with connection.cursor() as cursor:
+                cursor.execute("UPDATE `students` SET `semester`=`semester`-1, `pay_num`=`pay_num`+1 WHERE `st_id`=%s;", (st_id,))
+                connection.commit()
         return redirect(url_for('st_for_tr'))
     else:
         return redirect(url_for('login'))
@@ -2471,7 +2547,7 @@ def tr_profiles():
     user_id = session.get('user_id')
     role = session.get('role')
 
-    if login_status == "True" and  role == '1':
+    if login_status == "True" and  role == '3':
         connection = get_db_connection()
         
         # 查user資料
@@ -2493,20 +2569,6 @@ def tr_profiles():
             role = '管理員' 
         picture_data = result['picture']
 
-        # 查students資料
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM students WHERE st_id = %s;", (user_id))
-            result = cursor.fetchone()
-        workplace = result['workplace']
-        profession = result['profession']
-        course_id = result['course_id']
-
-        # 查course_id 對應的course_name
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT name FROM courses WHERE course_id = %s;", (course_id))
-            result = cursor.fetchone()
-        course_name = result['name']
-
         # 確定圖片的 MIME 類型
         kind = filetype.guess(picture_data)
         mime_type = kind.mime
@@ -2515,62 +2577,43 @@ def tr_profiles():
         # 構建適用於前端的 Base64 數據 URL
         picture = f"data:{mime_type};base64,{encoded_img}"
 
+        # 查teacher資料
         with connection.cursor() as cursor:
-            cursor.execute("SELECT semester FROM `attend` WHERE user_id=%s ORDER BY `semester` DESC LIMIT 1;", (user_id))
-            # connection.commit()  # 確保插入操作被提交
-            result = cursor.fetchone()
-            semester = result['semester']
-
-        # 總共請假幾次
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT count(attend_id) as leave_num FROM `attend` WHERE user_id=%s AND semester=%s AND status='2'", (user_id, semester))
-            result = cursor.fetchone()
-            leave_num = result['leave_num']
-
-        # 總共上了多少課(含曠課)
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT count(attend_id) as class_num FROM `attend` WHERE user_id=%s AND semester=%s AND (status='1' OR status='3')", (user_id, semester))
-            result = cursor.fetchone()
-            class_num = result['class_num']
-
-        # 找出這學期第一次上課的日期 去計算結束日期
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT class_date FROM `attend` WHERE user_id=%s AND semester=%s  ORDER BY class_date ASC LIMIT 1;", (user_id, semester))
-            result = cursor.fetchone()
-            start_class_date = result['class_date']
-            end_class_date = start_class_date + timedelta(days=168)
-        
-        attend_data = []
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM `attend_view` WHERE st_id=%s AND semester=%s AND status != '' ORDER BY class_date ASC;", (user_id, semester))
+            cursor.execute("""
+                           SELECT t.classtime_id, cr.name, c.class_week, c.start_time, c.end_time, t.st_num 
+                           FROM `teachers` t 
+                           JOIN classtime c ON c.classtime_id = t.classtime_id 
+                           JOIN classroom cr ON cr.classroom_id = c.classroom_id 
+                           WHERE t.user_id=%s;""", (user_id))
             result = cursor.fetchall()
-        # start_class_date = result['class_date']
-        # end_class_date = start_class_date + timedelta(days=168)
-        
-        for i in result:
-            if i['status'] == '1':
-                i['status'] = '上課'
-            elif i['status'] == '2':
-                i['status'] = '請假'
-            elif i['status'] == '3':
-                i['status'] = '曠課'
-            elif i['status'] == '4':
-                i['status'] = '停課'
-            
-            attend_data.append(
-                {
-                'class_date': i['class_date'],
-                'classroom_name': i['classroom_name'],
-                'start_time': str(i['start_time'])[:-3],
-                'end_time': str(i['end_time'])[:-3],
-                'status': i['status'] 
+
+            tr_schedule = dict()
+            for i in result:
+                tr_schedule[i['classtime_id']] = {
+                    "classroom_name": i['name'],
+                    "class_week": i['class_week'],
+                    "start_time": str(i['start_time'])[:-3],
+                    "end_time":  str(i['end_time'])[:-3],
+                    "st_num": i['st_num']
                 }
-            )
 
-        connection.close()  # 確保連接被關閉
+            tr_course = dict()
+            cursor.execute("""
+                            SELECT t.course_id, c.name
+                            FROM `tr_course` t
+                            JOIN courses c
+                            ON c.course_id = t.course_id
+                            WHERE t.user_id=%s;""", (user_id))
+            result = cursor.fetchall()
+            for i in result:
+                tr_course[i['course_id']] = {'name': i['name']}
+            course_data = []
+            cursor.execute("SELECT name FROM `courses` WHERE course_id < 10;")
+            result = cursor.fetchall()
+            for i in result:
+                course_data.append(i)
 
-
-        return render_template("profiles.html", **locals())
+        return render_template("tr_profiles.html", **locals())
     
     else:
         # 未登入狀態下的處理
@@ -2619,6 +2662,42 @@ def update_profile():
         return redirect(url_for('profiles'))
     else:
         return redirect(url_for('login'))
+
+@app.route('/update_tr_profile', methods=['POST'])
+def update_tr_profile():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+    role = session.get('role')
+
+    if login_status == "True" and  role == '3':
+        phone1 = request.form.get('tr_phone1')
+        phone2 = request.form.get('tr_phone2')
+        email = request.form.get('tr_email')
+        address = request.form.get('tr_address')
+        # 處理圖片
+        picture = request.files.get('tr_file')
+        
+        if picture.filename != '': # 有更新傳圖片
+            picture = picture.read()
+        else:
+            # 沒有更新圖片
+            match = re.match(r'data:(.*?);base64,(.*)', request.form['tr_img_dataf'])
+            base64_data = match.group(2)  # Base64 编码的数据
+            picture_data = base64.b64decode(base64_data)  # 解码为二进制数据
+            picture = picture_data
+
+        # Update the users table
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        sql = "UPDATE users SET picture = %s, phone1 = %s, phone2 = %s, email = %s, address = %s WHERE user_id = %s;"
+        cursor.execute(sql, (picture, phone1, phone2, email, address, user_id))
+        connection.commit()
+
+        return redirect(url_for('tr_profiles'))
+    else:
+        return redirect(url_for('login'))
+
+
 
 @app.route("/certificate")
 def certificate():
@@ -2809,20 +2888,20 @@ def add_header(response):
     return response
 
 
-# if __name__ == "__main__":
-#     app.debug = True
-#     app.run()
-
 if __name__ == "__main__":
-    try:
-        # 启动定时任务调度器
-        scheduler.start()
+    app.debug = True
+    app.run()
 
-        # 启动 Flask 应用
-        app.run(debug=True, use_reloader=False)  # use_reloader=False 是为了防止调度器被多次启动
-    except (KeyboardInterrupt, SystemExit):
-        # 当程序终止时，关闭调度器
-        scheduler.shutdown()
+# if __name__ == "__main__":
+#     try:
+#         # 启动定时任务调度器
+#         scheduler.start()
+
+#         # 启动 Flask 应用
+#         app.run(debug=True, use_reloader=False)  # use_reloader=False 是为了防止调度器被多次启动
+#     except (KeyboardInterrupt, SystemExit):
+#         # 当程序终止时，关闭调度器
+#         scheduler.shutdown()
 
 # if __name__ == "__main__":
 #     try:

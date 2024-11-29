@@ -25,7 +25,7 @@ function searchTable() {
         success: function(response) {
             // 更新表格
             // console.log('response', response);
-            populateTable(response);
+            populateTable(response['attend_data']);
         },
         error: function(xhr, status, error) {
             console.error('查询失败:', error);
@@ -62,7 +62,10 @@ function populateTable(data) {
         $('#st_id_attend_input').val(studentData.st_id); 
         $('#st_name_attend').text(studentData.st_name); 
         $('#st_date_attend').text(studentData.st_id); 
-        $('#st_classroom_attend').text(moment(studentData.class_date).format('YYYY-MM-DD')); 
+        $('#st_classtime_id_attend').val(studentData.classtime_id)
+        $('#st_date_attend').text(moment(studentData.class_date).format('YYYY-MM-DD')); 
+        $('#st_date_attend_input').val(moment(studentData.class_date).format('YYYY-MM-DD')); 
+        $('#st_classroom_attend').text(studentData.classroom_name); 
         $('#st_classtime_attend').text("禮拜 " + studentData.class_week + " " + studentData.start_time + "-" + studentData.end_time); 
         $('#st_tr_attend').text(studentData.tr_name); 
         if (studentData.course_id != "") {
@@ -116,15 +119,5 @@ function populateTable(data) {
         $('#editStudentAttendButton').click();
     });
  });
-    
- document.querySelectorAll('.leave-btn').forEach(button => {
-    button.addEventListener('click', function() {
-        const studentId = this.getAttribute('data-id');
-        const studentData = data.find(student => student.st_id == studentId);
-        $('#st_id_leave').text(studentData.st_id); 
-        $('#st_name_leave').text(studentData.st_name); 
-        $('#leaveStudentButton').click();
-    });
-});
 }
 
