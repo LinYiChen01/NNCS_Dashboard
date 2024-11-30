@@ -38,8 +38,8 @@ function populateTable(data, data2) {
         const dataID = this.getAttribute('data-id').split(" ");
         const trID = dataID[0];
         const userID = dataID[1];
-
         const trData = data.find(tr => tr.user_id == userID);
+        $('#tr_pwd_edit').hide(); 
         $('#tr_id_edit').text(trData.user_id); 
         $('#tr_name_edit').val(trData.tr_name); 
         $('#tr_course_name_choose').text('已選授課項目：' + trData.course_name);
@@ -55,7 +55,10 @@ function populateTable(data, data2) {
         
         const trInfo = data2.find(tr => tr.user_id == userID);
         $('#tr_acc_edit').val(trInfo.tr_acc); 
-        $('#tr_pwd_edit').val(trInfo.tr_pwd); 
+        $("#tr_pwd_reset").click(function () {
+            $('#tr_pwd_edit').show(); // Show the password reset field
+        });
+         
         $('#tr_age_edit').val(trInfo.tr_age); 
         $('#tr_address_edit').val(trInfo.tr_address); 
         $('#tr_phone1_edit').val(trInfo.tr_phone1); 

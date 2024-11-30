@@ -133,6 +133,18 @@ $(function() {
     }).niceScroll();
   }
 
+  if($("#top-5-scroll_ad_cert1").length) {
+    $("#top-5-scroll_ad_cert1").css({
+      height: 200
+    }).niceScroll();
+  }
+
+  if($("#top-5-scroll_ad_cert2").length) {
+    $("#top-5-scroll_ad_cert2").css({
+      height: 300
+    }).niceScroll();
+  }
+
   $(".main-content").css({
     minHeight: $(window).outerHeight() - 95
   })

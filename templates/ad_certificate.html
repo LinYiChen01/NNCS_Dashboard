@@ -1,11 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
-  <title>NNCS 補習班學生資訊系統</title>
-  <link rel="icon" href="assets/img/NNCS_Matting.png" type="image/png type">
+  <title>General Dashboard &mdash; Stisla</title>
 
   <!-- General CSS Files -->
   <link rel="stylesheet" href="assets/modules/bootstrap/css/bootstrap.min.css">
@@ -13,22 +11,15 @@
 
   <!-- CSS Libraries -->
   <link rel="stylesheet" href="assets/modules/jqvmap/dist/jqvmap.min.css">
+  <link rel="stylesheet" href="assets/modules/weather-icon/css/weather-icons.min.css">
+  <link rel="stylesheet" href="assets/modules/weather-icon/css/weather-icons-wind.min.css">
   <link rel="stylesheet" href="assets/modules/summernote/summernote-bs4.css">
-  <link rel="stylesheet" href="assets/modules/owlcarousel2/dist/assets/owl.carousel.min.css">
-  <link rel="stylesheet" href="assets/modules/owlcarousel2/dist/assets/owl.theme.default.min.css">
+
   <!-- Template CSS -->
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/components.css">
 <!-- Start GA -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-94034622-3"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'UA-94034622-3');
-</script>
-<!-- /END GA -->
 <style>
   /* 搜尋的X */
   .clear-btn {
@@ -45,9 +36,19 @@
   .clear-btn:hover {
       color: #000; /* 懸停顏色 */
   }
-</style>
 
-</head>
+  .btn-left {
+    margin-right: auto !important;
+  }
+</style>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-94034622-3');
+</script>
+<!-- /END GA --></head>
 
 <body>
   <div id="app">
@@ -61,20 +62,19 @@
         </form>
         <ul class="navbar-nav navbar-right">
           <li class="dropdown"><a href="#" data-toggle="dropdown"
-            class="nav-link dropdown-toggle  nav-link-lg nav-link-user">
-            <img alt="image" src="{{picture}}" class="rounded-circle mr-1">
-
-            <div class="d-sm-none d-lg-inline-block">{{name}}</div>
-          </a>
-          <div class="dropdown-menu dropdown-menu-right">
-            <div class="dropdown-title" style="text-transform: none; margin: 0px 8px; font-size: 13px;">Hi, {{name}}!
-            </div>
-            <div class="dropdown-divider" style="border-top-color: #98a6ad;"></div>
-            <a href="{{ url_for('logout') }}" class="dropdown-item has-icon text-danger">
-              <i class="fas fa-sign-out-alt"></i> Logout
+              class="nav-link dropdown-toggle  nav-link-lg nav-link-user">
+              <!-- <img alt="image" src={{session['photo']}} class="rounded-circle mr-1"> -->
+              <img alt="image" src="{{picture}}" class="rounded-circle mr-1">
+              <div class="d-sm-none d-lg-inline-block">{{name}}</div>
             </a>
-          </div>
-        </li>
+            <div class="dropdown-menu dropdown-menu-right">
+              <div class="dropdown-title" style="text-transform: none; margin: 0px 8px; font-size: 13px;">Hi,{{name}}!</div>
+              <div class="dropdown-divider" style="border-top-color: #868e96;"></div>
+              <a href="{{ url_for('logout') }}"  class="dropdown-item has-icon text-danger">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </a>
+            </div>
+          </li>
         </ul>
       </nav>
       <div class="main-sidebar sidebar-style-2">
@@ -109,10 +109,41 @@
         <section class="section">
           <br>
           <div class="row">
-            <div class="col-lg-12">
-              <div class="card" style="height: calc(100% - 30px);">
+            <div class="col-lg-12 col-md-12 col-12 col-sm-12">
+              <div class="card">
                 <div class="card-header">
-                  <h4>學生資訊一覽</h4>
+                  <h4>學生證照審核</h4>
+                </div>
+                <script>
+                  st_cert = {{st_cert | tojson | safe}};
+                </script>
+                <div class="card-body table-responsive p-0" id="top-5-scroll_ad_cert1" style="padding-top: inherit;" >
+                    <button style="display: none;" id="ad_cert_check"></button>
+                    <button style="display: none;" id="ad_cert_delete"></button>
+                    
+                    <table class="table table-striped ">
+                      <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
+                        <tr>
+                          <th>學號</th>
+                          <th>認證單位</th>
+                          <th>認證科目</th>
+                          <th>考照日期</th>
+                          <th style="width: 100px;">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody id="cert-table-body">                         
+                        <!-- js動態顯示 -->
+                      </tbody>
+                    </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-12 col-md-12 col-12 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <h4>學生證照一覽</h4>
                   <div class="card-header-form">
                     <div class="input-group">
                           <span class="clear-btn" id="clearButton" onclick="clearInput()">&times;</span>
@@ -120,34 +151,25 @@
                           <div class="input-group-btn">
                               <button class="btn btn-primary" onclick="searchTable()"><i class="fas fa-search"></i></button>
                           </div>
-                  </div>
+                    </div>
                   </div>
                 </div>
-                <script>
-                    var st_data = {{ st_data| tojson | safe}};
-                    var course_name_data = {{course_name_data| tojson | safe}};
-                </script>
-                <div class="card-body table-responsive p-0" id="top-5-scroll_st_table" style="padding-top: inherit;">
-                    <button type="button" id="editStudentButton" style="display: none;"></button>
-                    <button type="button" id="leaveStudentButton" style="display: none;"></button>
-                    <table class="table table-striped" id="studentTable">
+                <div class="card-body table-responsive p-0" id="top-5-scroll_ad_cert2" style="padding-top: inherit;" >
+                    <button style="display: none;" id="ad_cert_check"></button>
+                    <table class="table table-striped ">
                       <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
                         <tr>
-                            <th>學號</th>
-                            <th>學生姓名</th>
-                            <th>家長姓名</th>
-                            <th>連絡電話1</th>
-                            <th>連絡電話2</th>
-                            <th style="width: 142px;">操作</th>
+                          <th>學號</th>
+                          <th>認證單位</th>
+                          <th>認證科目</th>
+                          <th>考照日期</th>
+                          <th style="width: 100px;">操作</th>
                         </tr>
                       </thead>
-                      <tbody id="studentTableBody">
-                          <!-- 新的學生資料將會在這裡插入 -->
+                      <tbody id="cert-table-ok-body">                         
+                        <!-- js動態顯示 -->
                       </tbody>
                     </table>
-                </div>
-                <div class="card-footer text-right">
-                  <button class="btn btn-primary" id="st_insertDataButton">新增學生</button>
                 </div>
               </div>
             </div>
@@ -173,16 +195,16 @@
   <script src="assets/js/stisla.js"></script>
   
   <!-- JS Libraies -->
-  <!-- <script src="assets/modules/jquery.sparkline.min.js"></script> -->
+  <script src="assets/modules/simple-weather/jquery.simpleWeather.min.js"></script>
   <script src="assets/modules/chart.min.js"></script>
-  <script src="assets/modules/owlcarousel2/dist/owl.carousel.min.js"></script>
+  <script src="assets/modules/jqvmap/dist/jquery.vmap.min.js"></script>
+  <script src="assets/modules/jqvmap/dist/maps/jquery.vmap.world.js"></script>
   <script src="assets/modules/summernote/summernote-bs4.js"></script>
   <script src="assets/modules/chocolat/dist/js/jquery.chocolat.min.js"></script>
 
   <!-- Page Specific JS File -->
   <script src="assets/js/page/bootstrap-modal.js"></script>
-  <script src="assets/js/page/components-table.js"></script>
-  <script src="assets/js/page/ad_index.js"></script>
+  <script src="assets/js/page/ad_certificate.js"></script>
   
   <!-- Template JS File -->
   <script src="assets/js/scripts.js"></script>

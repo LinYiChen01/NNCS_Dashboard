@@ -957,7 +957,6 @@ if (window.location.pathname === "/certificate") {
     <form id="updateForm" method="POST" action="/cert_updateDataButton" enctype="multipart/form-data">
         <div class="form-group">
             <label for="cert_name">認證單位<span style="color: red;">*</span></label>
-            <input type="text" id="cert_name_hidden" name="cert_name_hidden" style="display:none;">
             <select class="form-control" id="cert_name" name="cert_name" onchange="toggleCustomCertName()">
                 <option value="" disabled selected>選擇認證單位</option>
                 ${names
@@ -966,13 +965,11 @@ if (window.location.pathname === "/certificate") {
                   <option value="${name}">${name}</option>`
                   )
                   .join("")}
-                <option value="其他">其他</option>
             </select>
             <input type="text" class="form-control mt-2" id="cert_name_other" name="cert_name_other" placeholder="請輸入認證單位" style="display:none;">
         </div>
         <div class="form-group">
             <label for="cert_program">認證科目<span style="color: red;">*</span></label>
-            <input type="text" id="cert_program_hidden" name="cert_program_hidden" style="display:none;">
             <select class="form-control" id="cert_program" name="cert_program" onchange="toggleCustomCertProgram()">
                 <option value="" disabled selected>選擇認證科目</option>
                 ${programs
@@ -981,7 +978,6 @@ if (window.location.pathname === "/certificate") {
                   <option value="${program}">${program}</option>`
                   )
                   .join("")}
-                <option value="其他">其他</option>
             </select>
             <input type="text" class="form-control mt-2" id="cert_program_other" name="cert_program_other" placeholder="請輸入認證科目" style="display:none;">
         </div>
@@ -1020,11 +1016,7 @@ if (window.location.pathname === "/certificate") {
           // 檢查必填欄位
           if (
             !certName ||
-            (certName === "其他" &&
-              !document.getElementById("cert_name_other").value) ||
             !certProgram ||
-            (certProgram === "其他" &&
-              !document.getElementById("cert_program_other").value) ||
             !certDate ||
             fileInput.files.length === 0
           ) {
@@ -1044,48 +1036,7 @@ if (window.location.pathname === "/certificate") {
             return; // 結束函數，防止提交
           }
 
-          // 檢查 "其他" 輸入是否與現有選項重複
-          let finalCertName = certName;
-          let finalCertProgram = certProgram;
-
-          if (certName === "其他") {
-            finalCertName = document.getElementById("cert_name_other").value;
-
-            // 檢查是否重複，忽略大小寫
-            const isDuplicateCertName = names.some(
-              (name) => name.toLowerCase() === finalCertName.toLowerCase()
-            );
-            if (isDuplicateCertName) {
-              $("#cert_updateDataMessage").html(
-                '<span style="color:red;">此認證單位已存在，請從下拉選單中選擇!</span>'
-              );
-              return; // 結束函數，防止提交
-            }
-          }
-
-          if (certProgram === "其他") {
-            finalCertProgram =
-              document.getElementById("cert_program_other").value;
-
-            // 檢查是否重複，忽略大小寫
-            const isDuplicateCertProgram = programs.some(
-              (program) =>
-                program.toLowerCase() === finalCertProgram.toLowerCase()
-            );
-            if (isDuplicateCertProgram) {
-              $("#cert_updateDataMessage").html(
-                '<span style="color:red;">此認證科目已存在，請從下拉選單中選擇!</span>'
-              );
-              return; // 結束函數，防止提交
-            }
-          }
-
-          // 如果所有驗證都通過，進行提交
-          document.getElementById("cert_name_hidden").value = finalCertName;
-          document.getElementById("cert_program_hidden").value =
-            finalCertProgram;
-
-          // $("#updateForm").submit();
+          $("#updateForm").submit();
         },
       },
     ],
@@ -1135,6 +1086,20 @@ if (window.location.pathname === "/ad_index") {
             <div class="form-group">
               <label for="age">年齡 <span style="color: red">*</span></label>
               <input type="number" name="age" class="form-control" id="age" required>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="acc">帳號 <span style="color: red">*</span></label>
+              <input type="text" name="acc" class="form-control" id="acc" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="pwd">密碼 <span style="color: red">*</span></label>
+              <input type="text" name="pwd" class="form-control" id="pwd" required>
             </div>
           </div>
         </div>
@@ -1312,7 +1277,10 @@ if (window.location.pathname === "/ad_index") {
         <div class="col-md-6">
           <div class="form-group">
             <label for="st_pwd">密碼</label>
-            <input type="text" id="st_pwd_edit" name="st_pwd" class="form-control">
+            <div class="d-flex align-items-center">
+              <button id="st_pwd_reset" type="button" class="btn btn-primary" style="margin-right: 10px;">重設密碼</button>
+              <input type="text" id="st_pwd_edit" name="st_pwd" class="form-control" style="display: none;">
+            </div>
           </div>
         </div>
       </div>
@@ -1439,10 +1407,12 @@ if (window.location.pathname === "/ad_index") {
           
           Message.text("");
           // 檢查所有必填字段
-          if (!stName || !stAge || !stAcc || !stPwd || !stTuition || !stParent || !stPhone1 || !stEmail || !stAddress || !stWorkplace || !stProfession) {
+          if (!stName || !stAge || !stAcc || 
+            (!stPwd && $("#st_pwd_edit").is(":visible")) || // Check if stPwd is required when it's visible
+            !stTuition || !stParent || !stPhone1 || !stEmail || !stAddress || !stWorkplace || !stProfession) {
             Message.text("請輸入完整資料!");
             return;
-          }
+        }
 
           // 驗證 email 格式
           const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1769,7 +1739,10 @@ if (window.location.pathname === "/tr_manage") {
         <div class="col-md-6">
           <div class="form-group">
             <label for="tr_pwd">密碼</label>
-            <input type="text" id="tr_pwd_edit" name="tr_pwd" class="form-control">
+            <div class="d-flex align-items-center">
+              <button id="tr_pwd_reset" type="button" class="btn btn-primary" style="margin-right: 10px;">重設密碼</button>
+              <input type="text" id="tr_pwd_edit" name="tr_pwd" class="form-control" style="display: none;">
+            </div>
           </div>
         </div>
       </div>
@@ -1876,11 +1849,14 @@ if (window.location.pathname === "/tr_manage") {
           
           Message.text("");
           // 檢查所有必填字段
-          if (!trName || !trAge || !trAcc || !trPwd || !trCourseId || !trPhone1 || !trEmail || !trAddress) {
+          if (!trName || !trAge || !trAcc || 
+            (!trPwd && $("#tr_pwd_edit").is(":visible")) || // Check if stPwd is required when it's visible
+            !trCourseId || !trPhone1 || !trEmail || !trAddress) {
             Message.text("請輸入完整資料!");
             return;
-          }
-  
+        }
+
+
           // 驗證 email 格式
           const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailPattern.test(trEmail)) {
@@ -2555,6 +2531,8 @@ if (window.location.pathname === "/st_attend") {
       <input id="st_attend_id" name="st_attend_id">
       <input id="st_id_attend_input" name="st_id_attend_input">
       <input id="st_date_attend_input" name="st_date_attend_input"> 
+      <input id="st_classtime_id_attend" name="st_classtime_id_attend"> 
+      
     </form>
   `,
     buttons: [
@@ -2618,6 +2596,107 @@ if (window.location.pathname === "/st_attend") {
     ],
   });
 }
+
+
+if (window.location.pathname === "/ad_certificate") {
+  $("#ad_cert_check").fireModal({
+    title: "檢視學生證照",
+    body: `
+    <form id="adCertForm" method="POST" action="/ad_cert_check">
+        <div class="form-group">
+            <label for="cert_name">認證單位:</label>
+            <span id="cert_name"></span>
+        </div>
+        <div class="form-group">
+            <label for="cert_program">認證科目:</label>
+            <span id="cert_program"></span>
+        </div>
+        <div class="form-group">
+            <label for="cert_date">考照日期:</label>
+            <span id="cert_date"></span>
+        </div>
+        <div class="form-group">
+            <label for="cert_file">證照圖片:</label><br>
+            <img src='' id="cert_file" alt="上傳的圖片" style="max-width: 100px; margin-bottom: .5rem;">
+        </div>
+        <input type="text" id="check_result" name="check_result">
+        <input type="text" id="cert_id" name="cert_id">
+        
+    </form>
+    
+  `,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary btn-left",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
+      },
+      {
+        text: "不通過",
+        class: "btn btn-danger",
+        handler: function () {
+          document.getElementById("check_result").value = "no"; 
+          $("#adCertForm").submit();
+        },
+      },
+      {
+        text: "通過",
+        class: "btn btn-primary",
+        handler: function () {
+          document.getElementById("check_result").value = "yes"; 
+          $("#adCertForm").submit();
+        },
+      },
+    ],
+  });
+
+  $("#ad_cert_delete").fireModal({
+    title: "修改學生證照紀錄",
+    body: `
+    <form id="adCertDeleteForm" method="POST" action="/ad_cert_delete">
+        <div class="form-group">
+            <label for="cert_name_del">認證單位:</label>
+            <span id="cert_name_del"></span>
+        </div>
+        <div class="form-group">
+            <label for="cert_program_del">認證科目:</label>
+            <span id="cert_program_del"></span>
+        </div>
+        <div class="form-group">
+            <label for="cert_date_del">考照日期:</label>
+            <span id="cert_date_del"></span>
+        </div>
+        <div class="form-group">
+            <label for="cert_file_del">證照圖片:</label><br>
+            <img src='' id="cert_file_del" alt="上傳的圖片" style="max-width: 100px; margin-bottom: .5rem;">
+        </div>
+        <input type="text" id="cert_id_del" name="cert_id_del">
+        
+    </form>
+    
+  `,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
+      },
+      {
+        text: "不通過",
+        class: "btn btn-danger",
+        handler: function () {
+          $("#adCertDeleteForm").submit();
+        },
+      },
+    ],
+  });
+}
+
+
 
 $("#modal-1").fireModal({ body: "Modal body text goes here." });
 

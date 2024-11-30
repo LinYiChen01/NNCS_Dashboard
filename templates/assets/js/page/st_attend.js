@@ -116,6 +116,7 @@ function populateTable(data) {
         $('#st_problems_attend').val(studentData.problems); 
         $('#st_attend_id').val(studentData.attend_id); 
         
+        
         $('#editStudentAttendButton').click();
     });
  });

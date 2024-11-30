@@ -1,4 +1,5 @@
 import os
+from flask_bcrypt import Bcrypt
 import base64, re
 from datetime import datetime, timedelta
 import filetype
@@ -278,7 +279,7 @@ scheduler = BackgroundScheduler()
 # scheduler.start()
 
 app.secret_key = os.urandom(24)  # 随机生成一个24字节的密钥
-
+bcrypt = Bcrypt(app)
 
 # index 首頁
 @app.route("/")
@@ -820,6 +821,60 @@ def ad_index():
     else:
         return redirect(url_for('login'))
 
+
+@app.route('/ad_certificate', methods=['GET', 'POST'])
+def ad_certificate():
+    login_status = session.get('login_status')
+    user_id = session.get('user_id')
+    role = session.get('role')
+
+    if login_status == "True" and  role == '4':
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE user_id = %s;", (user_id))
+            result = cursor.fetchone()
+            name= result['name']
+            picture_data = result['picture']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+
+        st_cert = []
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT c.*, ce.name, ce.program FROM `certrecords` c JOIN certs ce ON ce.cert_id = c.cert_id;")
+            result = cursor.fetchall()
+        for i in result:
+            picture_data = i['cert_pic']
+            # 確定圖片的 MIME 類型
+            kind = filetype.guess(picture_data)
+            mime_type = kind.mime
+            # 將二進制數據編碼為 Base64 字符串
+            encoded_img = base64.b64encode(picture_data).decode('utf-8')
+            # 構建適用於前端的 Base64 數據 URL
+            picture = f"data:{mime_type};base64,{encoded_img}"
+
+            st_cert.append({
+                'st_id' : i['user_id'],
+                'cert_id' : i['certrecord_id'],
+                'cert_name' : i['name'],
+                'cert_program' : i['program'],
+                'cert_pic' : picture,
+                'cert_date' : i['cert_date'],
+                'cert_status': i['status']
+                
+            })
+        
+        return render_template("ad_certificate.html", **locals())
+    else:
+        return redirect(url_for('login'))
+
+
+
 @app.route('/st_attend', methods=['GET', 'POST'])
 def st_attend():
     login_status = session.get('login_status')
@@ -944,13 +999,9 @@ def editStudentAttendButton():
         course_id = request.json.get('st_course_attend')
         st_last_problem_attend = request.json.get('st_last_problem_attend')
         st_problems_attend = request.json.get('st_problems_attend')
-        print('st_id', st_id)
-        print('attend_id', attend_id)
-        print('tr2_id', tr2_id)
-        print('st_status_attend', st_status_attend)
-        print('course_id', course_id)
-        print('st_last_problem_attend', st_last_problem_attend)
-        print('st_problems_attend', st_problems_attend)
+        st_date_attend = request.json.get('st_date_attend_input')
+        st_classtime_id_attend = request.json.get('st_classtime_id_attend')
+    
         attend_data = []
 
         connection = get_db_connection()
@@ -963,7 +1014,7 @@ def editStudentAttendButton():
                 connection.commit()
             if course_id is not None and st_last_problem_attend is not None and st_problems_attend is not None:
                 cursor.execute("UPDATE `stprogress` SET `course_id`=%s, `progress`=%s, `problems`=%s WHERE `st_id`=%s AND `class_date`=%s AND `classtime_id`=%s", 
-                            (course_id, st_last_problem_attend, st_problems_attend, st_id, ))
+                            (course_id, st_last_problem_attend, st_problems_attend, st_id, st_date_attend, st_classtime_id_attend))
                 connection.commit()
             
             cursor.execute("""
@@ -1177,6 +1228,35 @@ def returnStudentButton():
             cursor.execute("UPDATE `users` SET `status`='1' WHERE `user_id`=%s", (st_id))
             connection.commit()
         return redirect(url_for('st_leave'))
+    else:
+        return redirect(url_for('login'))
+    
+
+@app.route('/ad_cert_check', methods=['POST'])
+def ad_cert_check():
+    if request.method == 'POST':
+        cert_id = request.form['cert_id']
+        check_result = request.form['check_result']
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            if check_result == "no":
+                cursor.execute("UPDATE `certrecords` SET `status`='3' WHERE `certrecord_id`=%s", (cert_id))
+            else:
+                cursor.execute("UPDATE `certrecords` SET `status`='1' WHERE `certrecord_id`=%s", (cert_id))
+            connection.commit()
+        return redirect(url_for('ad_certificate'))
+    else:
+        return redirect(url_for('login'))
+    
+@app.route('/ad_cert_delete', methods=['POST'])
+def ad_cert_delete():
+    if request.method == 'POST':
+        cert_id = request.form['cert_id_del']
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE `certrecords` SET `status`='2' WHERE `certrecord_id`=%s", (cert_id))
+            connection.commit()
+        return redirect(url_for('ad_certificate'))
     else:
         return redirect(url_for('login'))
 
@@ -1855,6 +1935,9 @@ def st_insertDataButton():
     if request.method == 'POST':
         name = request.form['name']
         age = request.form['age']
+        acc = request.form['acc']
+        pwd = request.form['pwd']
+        
         email = request.form['email']
         address = request.form['address']
         tuition = request.form['tuition']
@@ -1865,22 +1948,23 @@ def st_insertDataButton():
         workplace = request.form['workplace']
         profession = request.form['profession']
         note = request.form['note'] 
+
+        # 加密密码
+        hashed_password = bcrypt.generate_password_hash(pwd).decode('utf-8')
+
         # 預設圖片
         with open('templates/assets/img/avatar/avatar-1.png', 'rb') as file:
             picture = file.read()
 
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            cursor.execute("INSERT INTO users (name, age, address, phone1, phone2, email, picture, create_date, role, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
-                                   (name, age, address, phone1, phone2, email, picture, datetime.today(), '1', '1'))
+            cursor.execute("INSERT INTO users (name, age, acc, pwd, address, phone1, phone2, email, picture, create_date, role, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+                                   (name, age, acc, hashed_password, address, phone1, phone2, email, picture, datetime.today(), '1', '1'))
             
         with connection.cursor() as cursor:
             cursor.execute("SELECT user_id FROM users ORDER BY user_id DESC LIMIT 1;")
             result = cursor.fetchone()
             st_id = result['user_id']
-
-        with connection.cursor() as cursor:
-            cursor.execute("UPDATE users SET acc=%s, pwd=%s WHERE user_id=%s;", ('st'+str(st_id), 'st'+str(st_id), st_id))
         
         
         with connection.cursor() as cursor:
@@ -1899,7 +1983,7 @@ def editStudentButton():
         name = request.form['st_name']
         age = request.form['st_age']
         acc = request.form['st_acc']
-        pwd = request.form['st_pwd']
+        pwd = request.form['st_pwd']  # The password field
         course_id = request.form['st_course_name']
         tuition = request.form['st_tuition']
         parent = request.form['st_parent']
@@ -1913,13 +1997,25 @@ def editStudentButton():
 
         connection = get_db_connection()
 
-        with connection.cursor() as cursor:
-            cursor.execute("UPDATE users SET acc=%s, pwd=%s, name=%s, age=%s, address=%s, phone1=%s, phone2=%s, email=%s WHERE user_id=%s;", 
-                           (acc, pwd, name, age, address, phone1, phone2, email, st_id))
-        
+        # If password is provided (not empty), update the password in the database
+        if pwd:
+            # Hash the password before storing it
+            hashed_password = bcrypt.generate_password_hash(pwd).decode('utf-8')
+
+            with connection.cursor() as cursor:
+                cursor.execute("UPDATE users SET acc=%s, pwd=%s, name=%s, age=%s, address=%s, phone1=%s, phone2=%s, email=%s WHERE user_id=%s;", 
+                               (acc, hashed_password, name, age, address, phone1, phone2, email, st_id))
+        else:
+            # If password is not provided, just update other fields
+            with connection.cursor() as cursor:
+                cursor.execute("UPDATE users SET acc=%s, name=%s, age=%s, address=%s, phone1=%s, phone2=%s, email=%s WHERE user_id=%s;", 
+                               (acc, name, age, address, phone1, phone2, email, st_id))
+
+        # Update student-specific fields in the 'students' table
         with connection.cursor() as cursor:
             cursor.execute("UPDATE students SET workplace=%s, profession=%s, parent=%s, tuition=%s, course_id=%s, note=%s WHERE st_id=%s;", 
                            (workplace, profession, parent, tuition, course_id, note, st_id))
+
         connection.commit() 
         return redirect(url_for('ad_index'))
     else:
@@ -2234,41 +2330,61 @@ def editTeacherButton():
         tr_classtime_id = request.form['tr_classtime_edit']
         tr_st_num = request.form['tr_st_num']
 
-        # 初始化当前选中的课程列表
+        # Encrypt the password if it's being updated
+        if tr_pwd:  # Only hash password if it's provided
+            hashed_password = bcrypt.generate_password_hash(tr_pwd).decode('utf-8')
+        else:
+            hashed_password = None  # No password update, so don't modify it
+
+        # Initialize current course list
         current_course_val = []
 
-        # 连接数据库
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # 更新用户信息
-            cursor.execute("""
-                UPDATE `users` 
-                SET `acc`=%s, `pwd`=%s, `name`=%s, `age`=%s, `address`=%s, `phone1`=%s, `phone2`=%s, `email`=%s 
-                WHERE `user_id`=%s
-            """, (tr_acc, tr_pwd, tr_name, tr_age, tr_address, tr_phone1, tr_phone2, tr_email, tr_id))
+            # Update user information
+            if hashed_password:  # If password is provided, update it
+                cursor.execute("""
+                    UPDATE `users` 
+                    SET `acc`=%s, `pwd`=%s, `name`=%s, `age`=%s, `address`=%s, `phone1`=%s, `phone2`=%s, `email`=%s 
+                    WHERE `user_id`=%s
+                """, (tr_acc, hashed_password, tr_name, tr_age, tr_address, tr_phone1, tr_phone2, tr_email, tr_id))
+            else:  # If password is not provided, do not update it
+                cursor.execute("""
+                    UPDATE `users` 
+                    SET `acc`=%s, `name`=%s, `age`=%s, `address`=%s, `phone1`=%s, `phone2`=%s, `email`=%s 
+                    WHERE `user_id`=%s
+                """, (tr_acc, tr_name, tr_age, tr_address, tr_phone1, tr_phone2, tr_email, tr_id))
             connection.commit()
 
-            # 更新可接納學生數
-            cursor.execute("UPDATE `teachers` SET `st_num`=%s,`status`=%s WHERE `user_id`=%s AND `classtime_id`=%s", (tr_st_num, "1", tr_id, tr_classtime_id))
+            # Update the number of students in the class
+            cursor.execute("UPDATE `teachers` SET `st_num`=%s, `status`=%s WHERE `user_id`=%s AND `classtime_id`=%s", 
+                           (tr_st_num, "1", tr_id, tr_classtime_id))
             connection.commit()
 
-
-            # 获取当前已选课程
+            # Get current courses
             cursor.execute("SELECT course_id FROM `tr_course` WHERE user_id=%s;", (tr_id,))
             result = cursor.fetchall()
             for i in result:
                 current_course_val.append(i['course_id'])
 
-            # 找出新增的课程
-            if tr_course_val_choose != current_course_val:
-                new_course = set(tr_course_val_choose) - set(current_course_val)
+            # Find the new courses to be added
+            new_courses = set(tr_course_val_choose) - set(current_course_val)
 
-                # 批量插入新增的课程
+            # Find the courses to be removed (courses that are in the current list but not in the new list)
+            removed_courses = set(current_course_val) - set(tr_course_val_choose)
+
+            # Insert new courses
+            if new_courses:
                 insert_query = "INSERT INTO `tr_course` (`user_id`, `course_id`) VALUES (%s, %s)"
-                cursor.executemany(insert_query, [(tr_id, int(i)) for i in sorted(new_course)])
+                cursor.executemany(insert_query, [(tr_id, int(i)) for i in sorted(new_courses)])
                 connection.commit()
 
-        # 返回渲染的模板，确保变量的明确传递
+            # Remove unassigned courses
+            if removed_courses:
+                delete_query = "DELETE FROM `tr_course` WHERE `user_id`=%s AND `course_id` IN (%s)"
+                cursor.execute(delete_query, (tr_id, ','.join(map(str, removed_courses))))
+                connection.commit()
+
         return redirect(url_for('tr_manage'))
     else:
         return redirect(url_for('login'))
@@ -2301,35 +2417,39 @@ def tr_insertDataButton():
         tr_course_id = [int(i) for i in request.form['tr_course_val_choose_insert'].split(',')]
         tr_st_num = request.form['tr_st_num_insert']
         
-         # 預設圖片
+        # Encrypt password using bcrypt
+        hashed_password = bcrypt.generate_password_hash(tr_pwd).decode('utf-8')
+
+        # Default image
         with open('templates/assets/img/avatar/avatar-4.png', 'rb') as file:
             picture = file.read()
         
-
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # 新增老師資料
+            # Insert teacher data into users table with hashed password
             cursor.execute("""INSERT INTO `users`(`acc`, `pwd`, `name`, `age`, `address`, `phone1`, `phone2`, `email`, `picture`, `create_date`, `role`, `status`) 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
-                           (tr_acc, tr_pwd, tr_name, tr_age, tr_address, tr_phone1, tr_phone2, tr_email, picture, datetime.today(), "3", "1"))
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
+                            (tr_acc, hashed_password, tr_name, tr_age, tr_address, tr_phone1, tr_phone2, tr_email, picture, datetime.today(), "3", "1"))
             connection.commit()
 
             cursor.execute("SELECT user_id FROM `users` ORDER BY `user_id` DESC LIMIT 1;")
             result = cursor.fetchone()
             tr_id = result['user_id']
 
+            # Insert into teachers table for classtime
             for i in tr_classtime_id:
                 cursor.execute("INSERT INTO `teachers`(`user_id`, `classtime_id`, `st_num`, `status`) VALUES (%s, %s, %s, %s)", 
-                           (tr_id, i, tr_st_num, "1"))
+                               (tr_id, i, tr_st_num, "1"))
                 connection.commit()
                 
+            # Insert into tr_course table for courses
             for i in tr_course_id:
                 cursor.execute("INSERT INTO `tr_course`(`user_id`, `course_id`) VALUES (%s, %s)", (tr_id, i))
                 connection.commit()
+
         return redirect(url_for('tr_manage'))
     else:
         return redirect(url_for('login'))
-
 
 @app.route('/searchTeacher', methods=['POST'])
 def searchTeacher():
@@ -2762,8 +2882,8 @@ def cert_updateDataButton():
     role = session.get('role')
 
     if login_status == "True" and  role == '1':
-        cert_name = request.form.get('cert_name_hidden')
-        cert_program = request.form.get('cert_program_hidden')
+        cert_name = request.form.get('cert_name')
+        cert_program = request.form.get('cert_program')
         certDate = datetime.strptime(request.form.get('cert_date'), '%Y-%m-%d')
         picture = request.files.get('file')
         picture = picture.read()
@@ -2835,42 +2955,65 @@ def login():
         try:
             connection = get_db_connection()
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM users WHERE acc=%s AND pwd=%s AND pwd !='' AND LENGTH(acc) = %s AND LENGTH(pwd) = %s;", (acc, pwd, len(acc), len(pwd)))
+                cursor.execute("SELECT * FROM users WHERE acc=%s", (acc,))
                 result = cursor.fetchone()
-            if result:
-                if result['status'] != '2':
-                    session['login_status'] = "True"
-                    session['user_id'] = result['user_id']
-                    session['role'] = result['role']
-                    session['status'] = result['status']
+                
+                if result:
+                    stored_password = result['pwd']
 
-                    if session['role'] == '1':  # 學生
-                        return redirect(url_for('index'))
-                    
-                    elif session['role'] == '3':  # 老師
-                        return redirect(url_for('tr_index'))
-                    
-                    elif session['role'] == '4':  # 管理員
-                        return redirect(url_for('ad_index')) 
+                    # 如果是明文密码并且匹配成功
+                    if stored_password == pwd:
+                        # 明文密码加密并更新到数据库
+                        hashed_password = bcrypt.generate_password_hash(pwd).decode('utf-8')
+                        cursor.execute("UPDATE users SET pwd=%s WHERE acc=%s", (hashed_password, acc))
+                        connection.commit()
+
+                        # 登录成功后存储会话数据
+                        session['login_status'] = "True"
+                        session['user_id'] = result['user_id']
+                        session['role'] = result['role']
+                        session['status'] = result['status']
+
+                        # 根据角色跳转到不同页面
+                        if session['role'] == '1':  # 学生
+                            return redirect(url_for('index'))
+                        
+                        elif session['role'] == '3':  # 老师
+                            return redirect(url_for('tr_index'))
+                        
+                        elif session['role'] == '4':  # 管理员
+                            return redirect(url_for('ad_index')) 
+
+                    # 如果是加密密码，进行验证
+                    elif bcrypt.check_password_hash(stored_password, pwd):
+                        session['login_status'] = "True"
+                        session['user_id'] = result['user_id']
+                        session['role'] = result['role']
+                        session['status'] = result['status']
+
+                        # 根据角色跳转到不同页面
+                        if session['role'] == '1':  # 学生
+                            return redirect(url_for('index'))
+                        
+                        elif session['role'] == '3':  # 老师
+                            return redirect(url_for('tr_index'))
+                        
+                        elif session['role'] == '4':  # 管理员
+                            return redirect(url_for('ad_index')) 
+                    else:
+                        session['login_status'] = "False"
+                        return render_template('login.html', error="密码错误")
+
                 else:
-                    # 用户被停权
-                    session.clear()  # 清空会话
                     session['login_status'] = "False"
-                    session['status'] = "2"
-                    return render_template("login.html")  # 在此页面显示模态框
-
-            else:
-                # 用户信息无效，显示模态框1
-                session.clear()  # 清空会话
-                session['login_status'] = "False"
-                return render_template("login.html")  # 在此页面显示模态框
+                    return render_template('login.html', error="用户不存在")
 
         except Exception as e:
-            return render_template("login.html", error="發生錯誤，請再試一次。")
+            return render_template('login.html', error="发生错误，请稍后再试")
         finally:
             connection.close()
-    
-    return render_template("login.html")
+
+    return render_template('login.html')
 
 
 # 登出

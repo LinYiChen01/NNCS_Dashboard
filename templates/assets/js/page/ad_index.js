@@ -37,9 +37,12 @@ function populateTable(data) {
     button.addEventListener('click', function() {
         const studentId = this.getAttribute('data-id');
         const studentData = data.find(student => student.st_id == studentId);
+        $('#st_pwd_edit').hide();
         $('#st_id_edit').text(studentData.st_id); 
-        $('#st_acc_edit').val(studentData.st_acc); 
-        $('#st_pwd_edit').val(studentData.st_pwd); 
+        $('#st_acc_edit').val(studentData.st_acc);
+        $("#st_pwd_reset").click(function () {
+            $('#st_pwd_edit').show(); // Show the password reset field
+        });
         $('#st_name_edit').val(studentData.st_name); 
         $('#st_age_edit').val(studentData.st_age); 
         $('#st_address_edit').val(studentData.st_address); 
