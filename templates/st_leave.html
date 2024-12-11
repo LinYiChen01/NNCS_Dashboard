@@ -80,7 +80,7 @@
       <div class="main-sidebar sidebar-style-2">
         <aside id="sidebar-wrapper">
           <div class="sidebar-brand">
-            <a href="index">NNCS-補習班學生資訊系統</a>
+            <a>NNCS-補習班學生資訊系統</a>
           </div>
           <div class="sidebar-brand sidebar-brand-sm">
             <a href="index"><img src="assets/img/NNCS_Matting.png" height="40px" width="40px"></a>
@@ -89,16 +89,18 @@
             <li class="menu-header">資訊管理</li>
             <li><a href="{{ url_for('tr_manage') }}" class="nav-link"><i
                   class="fas fa-chalkboard-teacher"></i><span>老師資訊管理</span></a></li>
-            <li class=active><a href="{{ url_for('ad_index') }}" class="nav-link"><i
+            <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
                   class="fas fa-child"></i><span>學生資訊管理</span></a></li>
             <li><a href="{{ url_for('st_for_tr') }}" class="nav-link"><i
                   class="fas fa-user-friends"></i><span>學生與授課老師管理</span></a></li>      
-            <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
-              class="fas fa-school"></i><span>教室資訊管理</span></a></li>
-            <li><a href="{{ url_for('ad_index') }}" class="nav-link"><i
+            <li><a href="{{ url_for('ad_certificate') }}" class="nav-link"><i
+              class="fas fa-id-card"></i><span>證照管理</span></a></li>
+            <li class=active><a href="{{ url_for('st_leave') }}" class="nav-link"><i
               class="fas fa-box"></i><span>封存人員管理</span></a></li>
             <li><a href="{{ url_for('ad_money') }}" class="nav-link"><i
               class="fas fa-dollar-sign"></i><span>財務管理</span></a></li>
+            <li><a href="{{ url_for('st_attend') }}" class="nav-link"><i
+              class="fas fa-calendar-check"></i><span>學生出席明細</span></a></li>
           </ul>
       </div>
 
@@ -150,7 +152,7 @@
       </div>
       <footer class="main-footer">
         <div class="footer-left">
-          組別: 113XXX 指導老師 : 林俊杰老師 &nbsp 專題組員: 11236001 林奕辰
+          組別: 113201 指導老師 : 林俊杰老師 &nbsp 專題組員: 11236001 林奕辰
         </div>
         <div class="footer-right"></div>
       </footer>

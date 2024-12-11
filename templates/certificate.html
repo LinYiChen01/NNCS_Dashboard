@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
-  <title>General Dashboard &mdash; Stisla</title>
+  <title>NNCS 補習班學生資訊系統</title>
+  <link rel="icon" href="assets/img/NNCS_Matting.png" type="image/png type">
 
   <!-- General CSS Files -->
   <link rel="stylesheet" href="assets/modules/bootstrap/css/bootstrap.min.css">
@@ -59,7 +60,7 @@
       <div class="main-sidebar sidebar-style-2">
         <aside id="sidebar-wrapper">
           <div class="sidebar-brand">
-            <a href="index">NNCS-補習班學生資訊系統</a>
+            <a>NNCS-補習班學生資訊系統</a>
           </div>
           <div class="sidebar-brand sidebar-brand-sm">
             <a href="index"><img src="assets/img/NNCS_Matting.png" height="40px" width="40px"></a>
@@ -70,11 +71,10 @@
                   class="fas fa-id-badge"></i><span>個人檔案</span></a></li>
             <li><a href="{{ url_for('index') }}" class="nav-link"><i
                   class="fas fa-calendar-alt"></i><span>我的課表</span></a></li>
-            <li class=active><a href="{{ url_for('certificate') }}" class="nav-link"><i
+            <li  class=active><a href="{{ url_for('certificate') }}" class="nav-link"><i
               class="fas fa-trophy"></i><span>我的證照</span></a></li>
-            <li class="menu-header">關於教室</li>
-            <li><a class="nav-link" href="blank.html"><i class="fas fa-graduation-cap"></i> <span>師資陣容</span></a></li>
-            <li><a class="nav-link" href="#"><i class="fas fa-pencil-ruler"></i> <span>課程規劃</span></a></li>
+            <li><a href="{{ url_for('st_note') }}" class="nav-link"><i
+              class="fas fa-book"></i><span>學習紀錄</span></a></li>
           </ul>
       </div>
 
@@ -99,6 +99,7 @@
                     </ul>
                   </div>
                 </div>
+                <button id="cert_btn" style="display: none;"></button>
                 <script>
                   cert_record = {{cert_record | tojson | safe}};
                   cert_data = {{cert_data | tojson | safe}};
@@ -169,7 +170,7 @@
       </div>
       <footer class="main-footer">
         <div class="footer-left">
-          組別: 113XXX 指導老師 : 林俊杰老師 &nbsp 專題組員: 11236001 林奕辰
+          組別: 113201 指導老師 : 林俊杰老師 &nbsp 專題組員: 11236001 林奕辰
         </div>
         <div class="footer-right"></div>
       </footer>

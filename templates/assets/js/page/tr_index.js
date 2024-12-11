@@ -128,9 +128,7 @@ document.getElementById('st_pay_date').addEventListener('change', function() {
     }),
     success: function (response) {
       if (response != '查無資料') {
-        // console.log(response);
         classtimes = response['classtimes'];
-        // console.log(';;;', classtimes);
         renderRecords(response['st_data']);  // 调用渲染学生数据的函数
         
       }
@@ -150,7 +148,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .map(([key, c]) => `<option value="${key}">${c}</option>`)
         .join('');
     document.getElementById('rollcall_time').innerHTML = optionsHTML;
-    console.log(classtimes, ';;;;');
   });
 });
 

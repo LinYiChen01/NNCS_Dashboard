@@ -28,22 +28,23 @@ function filterTable(filter) {
 // 渲染表格數據
 function renderTable(data) {
   var tableBody = document.getElementById('cert-table-body');
-  tableBody.innerHTML = '';  // 清空表格
+  tableBody.innerHTML = ''; // 清空表格
 
-  data.forEach(function(item, index) {
+  data.forEach(function (item, index) {
     var row = document.createElement('tr');
-    
+
     // 根据 cert_status 确定按钮样式
     let statusButton;
     if (getStatusText(item.cert_status) === '已通過') {
-        statusButton = `<div class="btn btn-outline-success">${getStatusText(item.cert_status)}</div>`;
+      statusButton = `<div class="btn btn-outline-success">${getStatusText(item.cert_status)}</div>`;
     } else if (getStatusText(item.cert_status) === '審核中') {
-        statusButton = `<div class="btn btn-outline-warning">${getStatusText(item.cert_status)}</div>`;
+      statusButton = `<div class="btn btn-outline-warning">${getStatusText(item.cert_status)}</div>`;
     } else if (getStatusText(item.cert_status) === '未通過') {
-        statusButton = `<div class="btn btn-outline-danger">${getStatusText(item.cert_status)}</div>`;
+      // 给未通过按钮添加 data-cert-id 属性用于区分
+      statusButton = `<div class="btn btn-outline-danger cert_btn" data-cert-id="${item.certrecord_id}">${getStatusText(item.cert_status)}</div>`;
     }
 
-    // 将 row.innerHTML 设置为完整的字符串
+    // 设置行内容
     row.innerHTML = `
       <td>${index + 1}</td>
       <td>${item.cert_name}</td>
@@ -53,8 +54,37 @@ function renderTable(data) {
     `;
 
     tableBody.appendChild(row);
-});
+  });
+
+  // 绑定点击事件
+  bindDangerButtonClick(data);
 }
+
+function bindDangerButtonClick(data) {
+  // 使用事件委托方式绑定 .btn-outline-danger 按钮
+  document.getElementById('cert-table-body').addEventListener('click', function (event) {
+    if (event.target.classList.contains('btn-outline-danger')) {
+      const certId = event.target.getAttribute('data-cert-id');
+      const certData = data.find(cert => cert.certrecord_id == certId);
+      $("#cert_id_edit").val(certData.certrecord_id);
+      $("#cert_name_edit").val(certData.cert_name);
+      $("#cert_program_edit").val(certData.cert_program);
+      $("#cert_date_edit").val(moment(certData.cert_date).format('YYYY-MM-DD'));
+      $("#file_edit").val();
+      
+      // 预览图片
+      const imageElement = document.getElementById("uploadedImage_edit");
+      if (certData.cert_pic) {
+        imageElement.src = certData.cert_pic; // 设置 Base64 图片地址
+        imageElement.style.display = "block"; // 显示图片
+      } else {
+        imageElement.style.display = "none"; // 如果没有图片，隐藏预览
+      }
+      $('#cert_btn').click();
+    }
+  });
+}
+
 
 // 將狀態數字轉換為文本
 function getStatusText(status) {
@@ -129,10 +159,17 @@ var pic_msg = document.getElementById("pic_msg"); // 获取 msg 元素
 var img_data = document.getElementById("uploadedImage");
 var submit_msg = document.getElementById("submit_msg");
 
+var pic_msg_edit = document.getElementById("pic_msg_edit"); // 获取 msg 元素
+var img_data_edit = document.getElementById("uploadedImage_edit");
+var submit_msg_edit = document.getElementById("submit_msg_edit");
+
 document.getElementById("uploadButton").addEventListener("click", function() {
   document.getElementById("file").click();
 });
 
+document.getElementById("uploadButton_edit").addEventListener("click", function () {
+  document.getElementById("file_edit").click();
+});
 
 function detectFileType(file) {
   return new Promise((resolve, reject) => {
@@ -201,6 +238,45 @@ document.getElementById("file").addEventListener("change", async function () {
       img_data.style.display = 'none'; // 隐藏图片
       pic_msg.textContent = "無法辨識圖片檔案，請更換圖片上傳";
       pic_msg.style.color = "red";
+      // $("#updateModal").modal("show");
+    }
+  }
+});
+
+document.getElementById("file_edit").addEventListener("change", async function () {
+  var file = this.files[0];
+  if (file) {
+    // 验证文件大小
+    if (file.size > MAX_FILE_SIZE) {
+      img_data_edit.style.display = 'none'; // 隐藏图片
+      pic_msg_edit.textContent = `上傳圖片過大，圖片大小最大為 ${MAX_FILE_SIZE / 1024 / 1024} MB。`;
+      pic_msg_edit.style.color = "red";
+      return;
+    }
+    
+    try {
+      const fileType = await detectFileType(file);
+      if (fileType && ALLOWED_EXTENSIONS.includes(fileType)) {
+        // 文件有效，读取并显示
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          pic_msg_edit.textContent = ''
+          img_data_edit.src = e.target.result;
+          img_data_edit.style.display = 'block'; // 显示图片
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // img_data.src = "";
+        img_data_edit.style.display = 'none'; // 隐藏图片
+        pic_msg_edit.textContent = "僅能上傳圖片副檔名為: jpg、jpeg、png、webp";
+        pic_msg_edit.style.color = "red";
+        // $("#updateModal").modal("show");
+      }
+    } catch (error) {
+      // img_data.src = "";
+      img_data_edit.style.display = 'none'; // 隐藏图片
+      pic_msg_edit.textContent = "無法辨識圖片檔案，請更換圖片上傳";
+      pic_msg_edit.style.color = "red";
       // $("#updateModal").modal("show");
     }
   }

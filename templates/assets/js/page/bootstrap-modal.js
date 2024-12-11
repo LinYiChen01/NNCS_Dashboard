@@ -526,26 +526,26 @@ $("#fc_classroomSelect").on("change", function () {
 
         // 判断是否有教师符合条件
         const isEligible = teachers.some((teacher) => {
-            if (course_id < 10) {
-                return true; // 如果学生课程 ID < 10，任何老师都可以
-            } else {
-                return teacher.tr_course === course_id; // 必须有至少一个老师的课程 ID 匹配
-            }
+          if (course_id < 10) {
+            return true; // 如果学生课程 ID < 10，任何老师都可以
+          } else {
+            return teacher.tr_course === course_id; // 必须有至少一个老师的课程 ID 匹配
+          }
         });
 
         if (!isEligible) {
           currentAttendanceText = ` (無法選擇)`; // 没有符合条件的老师
         } else {
-            // 判断是否时段已满
-            const matchingRecord = classroom_attend_data.find(
-                (attend) =>
-                    attend.classtime_id === item.classtime_id &&
-                    attend.class_date === $("#classroomDateSelect").val()
-            );
+          // 判断是否时段已满
+          const matchingRecord = classroom_attend_data.find(
+            (attend) =>
+              attend.classtime_id === item.classtime_id &&
+              attend.class_date === $("#classroomDateSelect").val()
+          );
 
-            if (matchingRecord) {
-                currentAttendanceText = ` (額滿)`; // 如果该时段已满
-            }
+          if (matchingRecord) {
+            currentAttendanceText = ` (額滿)`; // 如果该时段已满
+          }
         }
 
         // const classTime = `星期${item.class_week} ${item.start_time}-${item.end_time}${currentAttendanceText}`;
@@ -553,22 +553,26 @@ $("#fc_classroomSelect").on("change", function () {
           classtime_id: item.classtime_id, // 时段唯一标识
           time: `星期${item.class_week} ${item.start_time}-${item.end_time}${currentAttendanceText}`,
         });
-    }
-});
+      }
+    });
 
     // 根據篩選的結果來填充時段選擇框
     $("#fc_timeslotSelect")
       .empty()
       .append('<option value="" disabled selected>請選擇上課時段</option>')
       .append(
-        classTimes.map(({classtime_id, time,}) => {
+        classTimes.map(({ classtime_id, time }) => {
           const isFull = time.includes("(額滿)"); // 檢查是否為 "(額滿)"
           const isUnavailable = time.includes("(無法選擇)"); // 檢查是否為 "(無法選擇)"
-          
+
           // 根据不同条件设置样式和禁用状态
-          const style = isFull ? "color: red;" : isUnavailable ? "color: gray;" : "";
+          const style = isFull
+            ? "color: red;"
+            : isUnavailable
+            ? "color: gray;"
+            : "";
           const disabled = isFull || isUnavailable ? "disabled" : "";
-    
+
           return `<option value="${classtime_id}" style="${style}" ${disabled}>${time}</option>`;
         })
       );
@@ -650,7 +654,7 @@ $("#fc_leaveButton").fireModal({
   buttons: [
     {
       text: "取消",
-      class: "btn btn-secondary",
+      class: "btn btn-secondary btn-left",
       handler: function (modal) {
         // 当用户点击取消按钮时，关闭模态框
         modal.modal("hide");
@@ -720,10 +724,10 @@ $("#fc_notLeaveButton").fireModal({
           success: function (response) {
             if (response.status === "full") {
               // 如果人数已满，则显示提示信息
-              $("#st_notLeaveMsg").text('人數已滿，無法上課!');
+              $("#st_notLeaveMsg").text("人數已滿，無法上課!");
             } else if (response.status === "success") {
               // 如果更新成功，关闭模态框
-              window.location.reload()
+              window.location.reload();
               modal.modal("hide");
             }
           },
@@ -735,7 +739,6 @@ $("#fc_notLeaveButton").fireModal({
     },
   ],
 });
-
 
 $("#updateDataButton").on("click", function () {
   clearupdateForm();
@@ -833,7 +836,6 @@ if (window.location.pathname === "/profiles") {
   });
 }
 
-
 $("#tr_updateDataButton").on("click", function () {
   tr_clearupdateForm();
 });
@@ -904,7 +906,7 @@ if (window.location.pathname === "/tr_profiles") {
             !phoneRegex.test(phone1) ||
             (phone2 !== "" && !phoneRegex.test(phone2)) ||
             !emailRegex.test(email) ||
-            address === "" 
+            address === ""
           ) {
             submit_msg.text("資料有誤，請重新確認!");
             return; // 阻止表單提交
@@ -1131,7 +1133,12 @@ if (window.location.pathname === "/ad_index") {
               <label for="course_id">學習進度 <span style="color: red">*</span></label>
               <select name="course_id" class="form-control" id="course_id" required>
                 <option value="" disabled selected>請選擇學習進度</option>
-                ${course_name_data.map(course => `<option value="${course.course_id}">${course.name}</option>`).join('')}
+                ${course_name_data
+                  .map(
+                    (course) =>
+                      `<option value="${course.course_id}">${course.name}</option>`
+                  )
+                  .join("")}
               </select>
             </div>
           </div> 
@@ -1226,7 +1233,17 @@ if (window.location.pathname === "/ad_index") {
             return;
           }
 
-          if (!userId || !age || !email || !phone1 || !tuition || !address || !parent || !workplace || !profession) {
+          if (
+            !userId ||
+            !age ||
+            !email ||
+            !phone1 ||
+            !tuition ||
+            !address ||
+            !parent ||
+            !workplace ||
+            !profession
+          ) {
             message.text("請輸入完整資料!");
             return;
           }
@@ -1238,10 +1255,10 @@ if (window.location.pathname === "/ad_index") {
 }
 
 if (window.location.pathname === "/ad_index") {
-  const textarea = document.getElementById('note');
-  textarea.addEventListener('input', function () {
+  const textarea = document.getElementById("note");
+  textarea.addEventListener("input", function () {
     // 設置高度並強制使用 !important
-    this.setAttribute('style', `height: ${this.scrollHeight}px !important;`);
+    this.setAttribute("style", `height: ${this.scrollHeight}px !important;`);
   });
 
   $("#editStudentButton").fireModal({
@@ -1389,30 +1406,40 @@ if (window.location.pathname === "/ad_index") {
         text: "送出",
         class: "btn btn-primary",
         handler: function (modal) {
-          const Message = $('#editStudenMessage');
-          $('#st_id_input_edit').val($('#st_id_edit').text());
-          const stName = $('#st_name_edit').val().trim();
-          const stAge = $('#st_age_edit').val();
-          const stAcc = $('#st_acc_edit').val().trim();
-          const stPwd = $('#st_pwd_edit').val().trim();
-          const stCourseId = $('#st_course_name_edit').val();
-          const stTuition = $('#st_tuition_edit').val();
-          const stParent = $('#st_parent_edit').val().trim();
-          const stPhone1 = $('#st_phone1_edit').val().trim();
-          const stEmail = $('#st_email_edit').val().trim();
-          const stAddress = $('#st_address_edit').val().trim();
-          const stWorkplace = $('#st_workplace_edit').val().trim();
-          const stProfession = $('#st_profession_edit').val().trim();
-          const stNote = $('#st_note_edit').val().trim();
-          
+          const Message = $("#editStudenMessage");
+          $("#st_id_input_edit").val($("#st_id_edit").text());
+          const stName = $("#st_name_edit").val().trim();
+          const stAge = $("#st_age_edit").val();
+          const stAcc = $("#st_acc_edit").val().trim();
+          const stPwd = $("#st_pwd_edit").val().trim();
+          const stCourseId = $("#st_course_name_edit").val();
+          const stTuition = $("#st_tuition_edit").val();
+          const stParent = $("#st_parent_edit").val().trim();
+          const stPhone1 = $("#st_phone1_edit").val().trim();
+          const stEmail = $("#st_email_edit").val().trim();
+          const stAddress = $("#st_address_edit").val().trim();
+          const stWorkplace = $("#st_workplace_edit").val().trim();
+          const stProfession = $("#st_profession_edit").val().trim();
+          const stNote = $("#st_note_edit").val().trim();
+
           Message.text("");
           // 檢查所有必填字段
-          if (!stName || !stAge || !stAcc || 
+          if (
+            !stName ||
+            !stAge ||
+            !stAcc ||
             (!stPwd && $("#st_pwd_edit").is(":visible")) || // Check if stPwd is required when it's visible
-            !stTuition || !stParent || !stPhone1 || !stEmail || !stAddress || !stWorkplace || !stProfession) {
+            !stTuition ||
+            !stParent ||
+            !stPhone1 ||
+            !stEmail ||
+            !stAddress ||
+            !stWorkplace ||
+            !stProfession
+          ) {
             Message.text("請輸入完整資料!");
             return;
-        }
+          }
 
           // 驗證 email 格式
           const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1432,7 +1459,7 @@ if (window.location.pathname === "/ad_index") {
       },
     ],
   });
-} 
+}
 
 if (window.location.pathname === "/ad_index") {
   $("#leaveStudentButton").fireModal({
@@ -1462,7 +1489,7 @@ if (window.location.pathname === "/ad_index") {
         text: "確認",
         class: "btn btn-danger",
         handler: function (modal) {
-          $("#st_id_leave_input").val($("#st_id_leave").text())
+          $("#st_id_leave_input").val($("#st_id_leave").text());
           $("#leaveStudentForm").submit();
         },
       },
@@ -1515,8 +1542,8 @@ $("#st_scheduleButton").fireModal({
       <div class="form-group" id="st_schedule_info">
         <span style="font-weight: 600; color: #34395e; font-size: 12px;">目前已選擇:</span><br>
         <span id="currentSelection" style="font-weight: 600; color: #34395e; font-size: 12px;"></span><br>
-        <input id="currentSelection_val" name="currentSelection_val"></input>
-        <input id="old_classtime_id" name="old_classtime_id"></input>
+        <input id="currentSelection_val" style="display:none" name="currentSelection_val"></input>
+        <input id="old_classtime_id" style="display:none" name="old_classtime_id"></input>
       </div>
       <span id="search_st_info_msg" style="display: block; margin-bottom: .5rem; color: red;"></span>
     </form>
@@ -1526,7 +1553,6 @@ $("#st_scheduleButton").fireModal({
       text: "取消",
       class: "btn btn-secondary btn-left", // 将取消按钮置左
       handler: function (modal) {
-        
         modal.modal("hide");
       },
     },
@@ -1548,7 +1574,7 @@ $("#st_scheduleButton").fireModal({
         } else {
           $("#search_st_info").submit();
         }
-      }
+      },
     },
   ],
 });
@@ -1557,46 +1583,51 @@ function addClassTime() {
   const classtime = $("#search_classtime_id option:selected");
   const teacher = $("#search_tr_id option:selected");
 
-  if (classtime.val() !== "" && teacher.val() !== '') {
-      // 获取当前已选择的内容
-      let currentSelections = $("#currentSelection").html();
-      let currentSelection_val = $("#currentSelection_val").val();
+  if (classtime.val() !== "" && teacher.val() !== "") {
+    // 获取当前已选择的内容
+    let currentSelections = $("#currentSelection").html();
+    let currentSelection_val = $("#currentSelection_val").val();
 
-      // 创建要添加的新条目
-      const newEntry = `${classtime.text()} ${teacher.text()}`;
-      const newEntryVal = `${classtime.val()} ${teacher.val()}`;
+    // 创建要添加的新条目
+    const newEntry = `${classtime.text()} ${teacher.text()}`;
+    const newEntryVal = `${classtime.val()} ${teacher.val()}`;
 
-      // 检查当前选择中是否已有相同的 classtime
-      const existingEntryRegex = new RegExp(`^${classtime.text()}\\s+.*?$`, 'gm'); // 用正则匹配当前的 classtime
+    // 检查当前选择中是否已有相同的 classtime
+    const existingEntryRegex = new RegExp(`^${classtime.text()}\\s+.*?$`, "gm"); // 用正则匹配当前的 classtime
 
-      if (existingEntryRegex.test(currentSelections)) {
-          // 如果已有相同的 classtime，替换成最新的 teacher
-          currentSelections = currentSelections.replace(existingEntryRegex, newEntry);
-      } else {
-          // 如果当前选择为空，直接添加
-          currentSelections = currentSelections 
-              ? `${currentSelections}<br>${newEntry}`  // 用逗号分隔
-              : newEntry;
-      }
+    if (existingEntryRegex.test(currentSelections)) {
+      // 如果已有相同的 classtime，替换成最新的 teacher
+      currentSelections = currentSelections.replace(
+        existingEntryRegex,
+        newEntry
+      );
+    } else {
+      // 如果当前选择为空，直接添加
+      currentSelections = currentSelections
+        ? `${currentSelections}<br>${newEntry}` // 用逗号分隔
+        : newEntry;
+    }
 
-      // 更新 currentSelection_val，确保根据 classtime 和 teacher 的值进行更新
-      const existingValRegex = new RegExp(`^${classtime.val()}\\s+.*?$`, 'gm'); // 用正则匹配当前的 classtime ID
+    // 更新 currentSelection_val，确保根据 classtime 和 teacher 的值进行更新
+    const existingValRegex = new RegExp(`^${classtime.val()}\\s+.*?$`, "gm"); // 用正则匹配当前的 classtime ID
 
-      if (existingValRegex.test(currentSelection_val)) {
-          // 如果已有相同的 classtime ID，替换成最新的
-          currentSelection_val = currentSelection_val.replace(existingValRegex, newEntryVal);
-      } else {
-          currentSelection_val = currentSelection_val 
-              ? `${currentSelection_val}, ${newEntryVal}`  // 使用逗号分隔
-              : newEntryVal;
-      }
+    if (existingValRegex.test(currentSelection_val)) {
+      // 如果已有相同的 classtime ID，替换成最新的
+      currentSelection_val = currentSelection_val.replace(
+        existingValRegex,
+        newEntryVal
+      );
+    } else {
+      currentSelection_val = currentSelection_val
+        ? `${currentSelection_val}, ${newEntryVal}` // 使用逗号分隔
+        : newEntryVal;
+    }
 
-      // 更新界面和隐藏输入框的值
-      $("#currentSelection").html(currentSelections);
-      $("#currentSelection_val").val(currentSelection_val);
-      $("#search_classtime_id").val("");
-      $("#search_tr_id").val("");
-
+    // 更新界面和隐藏输入框的值
+    $("#currentSelection").html(currentSelections);
+    $("#currentSelection_val").val(currentSelection_val);
+    $("#search_classtime_id").val("");
+    $("#search_tr_id").val("");
   }
 }
 
@@ -1609,8 +1640,6 @@ function search_st_info_form() {
   $("#search_classtime_id").closest(".form-group").hide(); // 隐藏上课时段的 div
   $("#search_tr_id").closest(".form-group").hide(); // 隐藏授课老师的 div
 }
-
-
 
 $("#edit_st_scheduleButton").fireModal({
   title: `<span>編輯學生資訊</span>`,
@@ -1647,13 +1676,12 @@ $("#edit_st_scheduleButton").fireModal({
       text: "確認",
       class: "btn btn-primary",
       handler: function () {
-        $("#st_id_edit_input").val($("#st_id_edit").text())
+        $("#st_id_edit_input").val($("#st_id_edit").text());
         $("#editStudentForm").submit();
       },
     },
   ],
 });
-
 
 $("#leave_st_scheduleButton").fireModal({
   title: `<span>刪除學生資訊</span>`,
@@ -1675,9 +1703,9 @@ $("#leave_st_scheduleButton").fireModal({
         <label for="st_tr_name_forTr">授課老師</label>
         <input class="form-control" id="st_tr_name_forTr_leave" readonly style="pointer-events: none; background-color: #efeeee; border: none;"></input>
       </div>
-      <input type="input"  id="semester_forTr_leave" name="semester_forTr_leave">
-      <input type="input"  id="st_id_forTr_leave_input" name="st_id_forTr_leave_input">
-      <input type="input"  id="classtime_id_forTr_leave" name="classtime_id_forTr_leave">
+      <input type="input" style="display:none" id="semester_forTr_leave" name="semester_forTr_leave">
+      <input type="input" style="display:none" id="st_id_forTr_leave_input" name="st_id_forTr_leave_input">
+      <input type="input" style="display:none" id="classtime_id_forTr_leave" name="classtime_id_forTr_leave">
       
     </form>
 `,
@@ -1700,12 +1728,12 @@ $("#leave_st_scheduleButton").fireModal({
   ],
 });
 
-$("#st_pay_add").fireModal({ 
+$("#st_pay_add").fireModal({
   title: "學生繳費",
-  body: `<span id=st_pay_add_message></span>` 
+  body: `<span id=st_pay_add_message></span>`,
 });
 
-if (window.location.pathname === "/tr_manage") { 
+if (window.location.pathname === "/tr_manage") {
   $("#editTeacherButton").fireModal({
     size: "modal-lg",
     title: `<span>老師資料【<span id="tr_id_edit"></span>】</span>`,
@@ -1754,7 +1782,10 @@ if (window.location.pathname === "/tr_manage") {
               <select id="tr_course_name_edit" name="tr_course_name" class="form-control" style="flex: 1; margin-right: 10px;">
                 <option value="" selected disabled>請選擇授課項目</option>
                 ${course_data
-                  .map((c) => `<option value="${c['course_id']}">${c['course_name']}</option>`)
+                  .map(
+                    (c) =>
+                      `<option value="${c["course_id"]}">${c["course_name"]}</option>`
+                  )
                   .join("")}
               </select>
               <button id="add-course-btn" type="button" class="btn btn-primary">新增</button>
@@ -1762,7 +1793,7 @@ if (window.location.pathname === "/tr_manage") {
           </div>
           <div class="form-group mt-3">
             <label id="tr_course_name_choose">已選授課項目：</label><br>
-            <input type="text" id="tr_course_val_choose" name="tr_course_val_choose"></input>
+            <input type="text" style="display:none" id="tr_course_val_choose" name="tr_course_val_choose"></input>
           </div>
         </div>
       </div>
@@ -1836,26 +1867,32 @@ if (window.location.pathname === "/tr_manage") {
         text: "送出",
         class: "btn btn-primary",
         handler: function () {
-          const Message = $('#editTeacherMessage');
-          $('#tr_id_input_edit').val($('#tr_id_edit').text());
-          const trName = $('#tr_name_edit').val().trim();
-          const trAge = $('#tr_age_edit').val();
-          const trAcc = $('#tr_acc_edit').val().trim();
-          const trPwd = $('#tr_pwd_edit').val().trim();
-          const trCourseId = $('#tr_course_val_choose').val();
-          const trPhone1 = $('#tr_phone1_edit').val().trim();
-          const trEmail = $('#tr_email_edit').val().trim();
-          const trAddress = $('#tr_address_edit').val().trim();
-          
+          const Message = $("#editTeacherMessage");
+          $("#tr_id_input_edit").val($("#tr_id_edit").text());
+          const trName = $("#tr_name_edit").val().trim();
+          const trAge = $("#tr_age_edit").val();
+          const trAcc = $("#tr_acc_edit").val().trim();
+          const trPwd = $("#tr_pwd_edit").val().trim();
+          const trCourseId = $("#tr_course_val_choose").val();
+          const trPhone1 = $("#tr_phone1_edit").val().trim();
+          const trEmail = $("#tr_email_edit").val().trim();
+          const trAddress = $("#tr_address_edit").val().trim();
+
           Message.text("");
           // 檢查所有必填字段
-          if (!trName || !trAge || !trAcc || 
+          if (
+            !trName ||
+            !trAge ||
+            !trAcc ||
             (!trPwd && $("#tr_pwd_edit").is(":visible")) || // Check if stPwd is required when it's visible
-            !trCourseId || !trPhone1 || !trEmail || !trAddress) {
+            !trCourseId ||
+            !trPhone1 ||
+            !trEmail ||
+            !trAddress
+          ) {
             Message.text("請輸入完整資料!");
             return;
-        }
-
+          }
 
           // 驗證 email 格式
           const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1870,9 +1907,6 @@ if (window.location.pathname === "/tr_manage") {
     ],
   });
 }
-
-
-
 
 $("#leaveTeacherButton").fireModal({
   title: `<span>刪除時段</span>`,
@@ -1907,16 +1941,15 @@ $("#leaveTeacherButton").fireModal({
       text: "刪除",
       class: "btn btn-danger",
       handler: function () {
-        if ($("#st_num").val() > 0) { 
-          $("#leave_tr_error_msg").text("無法刪除，該老師負責時段還有學生!");        
-          return
+        if ($("#st_num").val() > 0) {
+          $("#leave_tr_error_msg").text("無法刪除，該老師負責時段還有學生!");
+          return;
         }
         $("#leaveStudentForm").submit();
       },
     },
   ],
 });
-
 
 if (window.location.pathname === "/tr_manage") {
   $("#tr_insertDataButton").fireModal({
@@ -1995,15 +2028,15 @@ if (window.location.pathname === "/tr_manage") {
             </div>
             <div class="form-group mt-3">
               <label id="tr_classtime_choose_insert">已選授課時段：</label><br>
-              <input type="text" id="tr_classtimeid_choose_insert" name="tr_classtimeid_choose_insert"></input>
+              <input type="text" style="display:none" id="tr_classtimeid_choose_insert" name="tr_classtimeid_choose_insert"></input>
             </div>
           </div>
         </div>
         <div class="row">
           <div class="col-md-12">
             <div class="form-group">
-                  <input type="text" id="have_st">
-                  <input type="text" id="tr_classtime_edit" name="tr_classtime_edit">
+                  <input style="display:none" type="text" id="have_st">
+                  <input style="display:none" type="text" id="tr_classtime_edit" name="tr_classtime_edit">
                   <label for="tr_st_num" id="tr_classtime_st_num_edit">可接納學生數</label>
                   <select id="tr_st_num_insert" name="tr_st_num_insert" class="form-control">
                     <option value="8">8</option>
@@ -2025,7 +2058,10 @@ if (window.location.pathname === "/tr_manage") {
                 <select id="tr_course_name_insert" name="tr_course_name_insert" class="form-control" style="flex: 1; margin-right: 10px;">
                   <option value="" selected disabled>請選擇授課項目</option>
                   ${course_data
-                    .map((c) => `<option value="${c['course_id']}">${c['course_name']}</option>`)
+                    .map(
+                      (c) =>
+                        `<option value="${c["course_id"]}">${c["course_name"]}</option>`
+                    )
                     .join("")}
                 </select>
                 <button id="add_course_btn_insert" type="button" class="btn btn-primary">新增</button>
@@ -2033,7 +2069,7 @@ if (window.location.pathname === "/tr_manage") {
             </div>
             <div class="form-group mt-3">
               <label id="tr_course_name_choose_insert">已選授課項目：</label><br>
-              <input type="text" id="tr_course_val_choose_insert" name="tr_course_val_choose_insert"></input>
+              <input type="text" style="display:none" id="tr_course_val_choose_insert" name="tr_course_val_choose_insert"></input>
             </div>
           </div>
         </div>
@@ -2065,10 +2101,10 @@ if (window.location.pathname === "/tr_manage") {
           const tr_course_id = $("#tr_course_val_choose_insert").val();
           const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           const phonePattern = /^[0-9]{10}$/;
-  
+
           // 清空之前的錯誤訊息
           message.text("");
-  
+
           if (!emailPattern.test(email)) {
             message.text("Email 格式錯誤!");
             return;
@@ -2077,19 +2113,28 @@ if (window.location.pathname === "/tr_manage") {
             message.text("電話號碼格式錯誤!");
             return;
           }
-  
-          if (!tr_acc || !tr_pwd || !tr_name || !age || !email || !phone1 || !address || !tr_classtime || !tr_course_id) {
+
+          if (
+            !tr_acc ||
+            !tr_pwd ||
+            !tr_name ||
+            !age ||
+            !email ||
+            !phone1 ||
+            !address ||
+            !tr_classtime ||
+            !tr_course_id
+          ) {
             message.text("請輸入完整資料!");
             return;
           }
-  
+
           $("#teacherDataForm").submit();
         },
       },
     ],
   });
 }
-
 
 $("#tr_insetTimeButton").fireModal({
   title: `<span>新增老師授課時段</span>`,
@@ -2153,7 +2198,6 @@ $("#tr_insetTimeButton").fireModal({
       text: "取消",
       class: "btn btn-secondary btn-left", // 将取消按钮置左
       handler: function (modal) {
-        
         modal.modal("hide");
       },
     },
@@ -2162,17 +2206,18 @@ $("#tr_insetTimeButton").fireModal({
       class: "btn btn-primary",
       handler: function () {
         const tr_id = $("#search_tr_id").val().trim();
-        const tr_classtimeid_choose_search = $("#tr_classtimeid_choose_search").val();
+        const tr_classtimeid_choose_search = $(
+          "#tr_classtimeid_choose_search"
+        ).val();
         if (!tr_id || !tr_classtimeid_choose_search) {
           $("#search_tr_info_msg").text("請選擇完整資料！");
         } else {
           $("#search_tr_info").submit();
         }
-      }
+      },
     },
   ],
 });
-
 
 $("#returnStudentButton").fireModal({
   title: `<span>學生復學</span>`,
@@ -2191,7 +2236,7 @@ $("#returnStudentButton").fireModal({
 `,
   buttons: [
     {
-      text: "快逃!!",
+      text: "取消",
       class: "btn btn-secondary",
       handler: function (modal) {
         modal.modal("hide");
@@ -2201,15 +2246,14 @@ $("#returnStudentButton").fireModal({
       text: "確認",
       class: "btn btn-danger",
       handler: function () {
-        $("#st_id_return_input").val($("#st_id_return").text())
+        $("#st_id_return_input").val($("#st_id_return").text());
         $("#returnStudentForm").submit();
       },
     },
   ],
 });
 
-
-if (window.location.pathname === "/tr_index") { 
+if (window.location.pathname === "/tr_index") {
   $("#tr_rollcall").fireModal({
     title: "學生點名紀錄",
     body: `
@@ -2228,8 +2272,7 @@ if (window.location.pathname === "/tr_index") {
       <input type="text" style="display:none" id="rollcall" name="rollcall">
       <input type="date" style="display:none" id="rollcall_date" name="rollcall_date">
     </form>
-    `
-    ,
+    `,
     buttons: [
       {
         text: "取消",
@@ -2242,32 +2285,36 @@ if (window.location.pathname === "/tr_index") {
         text: "送出",
         class: "btn btn-primary",
         handler: function () {
-          const selectedClasstime = $("#rollcall_time").val();  // 获取选中的时段
-          let allStudentsMarked = true;  // 假设所有学生都已点名
-  
+          const selectedClasstime = $("#rollcall_time").val(); // 获取选中的时段
+          let allStudentsMarked = true; // 假设所有学生都已点名
+
           // 遍历 attendanceRecords 对象，检查与选中时段相关的学生
           for (let studentId in attendanceRecords) {
             const student = attendanceRecords[studentId];
-            if (student.classtime_id == selectedClasstime && student.status == '') {
-              allStudentsMarked = false;  // 如果有学生未点名
-              break;  // 找到未点名的学生后停止检查
+            if (
+              student.classtime_id == selectedClasstime &&
+              student.status == ""
+            ) {
+              allStudentsMarked = false; // 如果有学生未点名
+              break; // 找到未点名的学生后停止检查
             }
           }
           // 根据所有学生是否已点名，更新消息
           if (allStudentsMarked) {
-            $("#rollcall_msg").text('確定送出點名紀錄');
+            $("#rollcall_msg").text("確定送出點名紀錄");
             $("#rollcall").val(JSON.stringify(attendanceRecords));
             $("#trRollcallForm").submit();
           } else {
-            $("#rollcall_msg").html('<span style="color:red;">尚有學生未點名!</span>');
-            return
+            $("#rollcall_msg").html(
+              '<span style="color:red;">尚有學生未點名!</span>'
+            );
+            return;
           }
         },
       },
     ],
   });
 }
-
 
 $("#st_info").fireModal({
   size: "modal-lg",
@@ -2345,7 +2392,6 @@ $("#st_info").fireModal({
       text: "確認",
       class: "btn btn-primary",
       handler: function () {
-
         if ($("#st_info_note").val().length > 100) {
           $("#StudenInfoMessage").text("備註不能超過 100 字!");
           return;
@@ -2356,7 +2402,7 @@ $("#st_info").fireModal({
   ],
 });
 
-if (window.location.pathname === "/st_note") { 
+if (window.location.pathname === "/st_note") {
   $("#editNoteButton").fireModal({
     title: `<span>新增學習紀錄</span>`,
     body: `
@@ -2369,7 +2415,14 @@ if (window.location.pathname === "/st_note") {
               <select type="select" id="st_note_classtime" name="st_note_classtime" class="form-control">
               <option value="" disabled selected>請選擇上課紀錄</option>
               ${note_todo
-                .map((n) => `<option value="${n.classtime_id + " " + moment(n.class_date).format('YYYY-MM-DD')}">${n.class_schedule}</option>`)
+                .map(
+                  (n) =>
+                    `<option value="${
+                      n.classtime_id +
+                      " " +
+                      moment(n.class_date).format("YYYY-MM-DD")
+                    }">${n.class_schedule}</option>`
+                )
                 .join("")}
               </select>
             </div>
@@ -2382,7 +2435,10 @@ if (window.location.pathname === "/st_note") {
               <select type="text" id="st_note_course_id" name="st_note_course_id" class="form-control">
                 <option value="" disabled selected>請選擇學習課程</option>
                 ${course_data
-                  .map((c) => `<option value="${c.course_id}">${c.course_name}</option>`)
+                  .map(
+                    (c) =>
+                      `<option value="${c.course_id}">${c.course_name}</option>`
+                  )
                   .join("")}
               </select>
             </div>
@@ -2417,8 +2473,13 @@ if (window.location.pathname === "/st_note") {
         text: "確認",
         class: "btn btn-primary",
         handler: function () {
-          if (!$("#st_note_classtime").val() || !$("#st_note_course_id").val() || !$("#st_note_last_problems").val() || !$("#st_note_problems").val()) { 
-            $("#StudenNoteMessage").text("請輸入完整資料!")
+          if (
+            !$("#st_note_classtime").val() ||
+            !$("#st_note_course_id").val() ||
+            !$("#st_note_last_problems").val() ||
+            !$("#st_note_problems").val()
+          ) {
+            $("#StudenNoteMessage").text("請輸入完整資料!");
             return;
           }
           $("#StudentNoteForm").submit();
@@ -2508,8 +2569,13 @@ if (window.location.pathname === "/st_attend") {
         <select name="st_tr2_attend" class="form-control" id="st_tr2_attend">
           <option value="" disabled selected>請選擇老師</option>
           ${tr_data
-        .map((t) => `<option value="${t.tr_id}">${t.tr_id + "-" + t.tr_name}</option>`)
-        .join("")}
+            .map(
+              (t) =>
+                `<option value="${t.tr_id}">${
+                  t.tr_id + "-" + t.tr_name
+                }</option>`
+            )
+            .join("")}
         </select>
       </div>
       <div class="form-group">
@@ -2528,10 +2594,10 @@ if (window.location.pathname === "/st_attend") {
       </div>
       <span id="st_attend_msg" name="st_attend_msg" style="color:red;"></span>
 
-      <input id="st_attend_id" name="st_attend_id">
-      <input id="st_id_attend_input" name="st_id_attend_input">
-      <input id="st_date_attend_input" name="st_date_attend_input"> 
-      <input id="st_classtime_id_attend" name="st_classtime_id_attend"> 
+      <input style="display:none" id="st_attend_id" name="st_attend_id">
+      <input style="display:none" id="st_id_attend_input" name="st_id_attend_input">
+      <input style="display:none" id="st_date_attend_input" name="st_date_attend_input"> 
+      <input style="display:none" id="st_classtime_id_attend" name="st_classtime_id_attend"> 
       
     </form>
   `,
@@ -2550,53 +2616,53 @@ if (window.location.pathname === "/st_attend") {
         handler: function (modal) {
           // 获取表单数据
           var formData = $("#st_attendForm").serializeArray();
-      
+
           // 将数据转换为对象
           var formDataObj = {};
           formData.forEach(function (field) {
-              formDataObj[field.name] = field.value.trim(); // 去掉前后空格
+            formDataObj[field.name] = field.value.trim(); // 去掉前后空格
           });
-      
+
           // 检查三个字段的值
-          var st_course_attend = formDataObj['st_course_attend'];
-          var st_last_problem_attend = formDataObj['st_last_problem_attend'];
-          var st_problems_attend = formDataObj['st_problems_attend'];
-      
+          var st_course_attend = formDataObj["st_course_attend"];
+          var st_last_problem_attend = formDataObj["st_last_problem_attend"];
+          var st_problems_attend = formDataObj["st_problems_attend"];
+
           // 判断是否全部为空或全部有值
-          var allEmpty = !st_course_attend && !st_last_problem_attend && !st_problems_attend;
-          var allFilled = st_course_attend && st_last_problem_attend && st_problems_attend;
-      
+          var allEmpty =
+            !st_course_attend && !st_last_problem_attend && !st_problems_attend;
+          var allFilled =
+            st_course_attend && st_last_problem_attend && st_problems_attend;
+
           if (!allEmpty && !allFilled) {
-              // 如果既不是全空，也不是全有，提示用户
-              $("#st_attend_msg").text("請填完整資料!");
-              return; // 阻止后续逻辑执行
+            // 如果既不是全空，也不是全有，提示用户
+            $("#st_attend_msg").text("請填完整資料!");
+            return; // 阻止后续逻辑执行
           }
           $("#st_attend_msg").text("");
           // 如果条件满足，使用 AJAX 提交表单
           $.ajax({
-            
-              url: "/editStudentAttendButton",  // 后端 URL
-              method: "POST",  // 请求方法
-              contentType: "application/json",  // 发送的数据类型
-              data: JSON.stringify(formDataObj),  // 发送的表单数据，转换为 JSON
-              success: function (response) {
-                  // 提交成功后的操作
-                  $("#searchInput").val(response['st_id']);
-                  searchTable(); // 刷新表格
-                  console.log("成功提交:", response);
-                  modal.modal("hide"); // 隐藏模态框
-              },
-              error: function (xhr, status, error) {
-                  // 提交失败的处理
-                  console.error("提交失败:", error);
-              }
+            url: "/editStudentAttendButton", // 后端 URL
+            method: "POST", // 请求方法
+            contentType: "application/json", // 发送的数据类型
+            data: JSON.stringify(formDataObj), // 发送的表单数据，转换为 JSON
+            success: function (response) {
+              // 提交成功后的操作
+              $("#searchInput").val(response["st_id"]);
+              searchTable(); // 刷新表格
+              console.log("成功提交:", response);
+              modal.modal("hide"); // 隐藏模态框
+            },
+            error: function (xhr, status, error) {
+              // 提交失败的处理
+              console.error("提交失败:", error);
+            },
           });
-      }
-      }
+        },
+      },
     ],
   });
 }
-
 
 if (window.location.pathname === "/ad_certificate") {
   $("#ad_cert_check").fireModal({
@@ -2619,8 +2685,8 @@ if (window.location.pathname === "/ad_certificate") {
             <label for="cert_file">證照圖片:</label><br>
             <img src='' id="cert_file" alt="上傳的圖片" style="max-width: 100px; margin-bottom: .5rem;">
         </div>
-        <input type="text" id="check_result" name="check_result">
-        <input type="text" id="cert_id" name="cert_id">
+        <input style="display:none" type="text" id="check_result" name="check_result">
+        <input style="display:none" type="text" id="cert_id" name="cert_id">
         
     </form>
     
@@ -2637,7 +2703,7 @@ if (window.location.pathname === "/ad_certificate") {
         text: "不通過",
         class: "btn btn-danger",
         handler: function () {
-          document.getElementById("check_result").value = "no"; 
+          document.getElementById("check_result").value = "no";
           $("#adCertForm").submit();
         },
       },
@@ -2645,7 +2711,7 @@ if (window.location.pathname === "/ad_certificate") {
         text: "通過",
         class: "btn btn-primary",
         handler: function () {
-          document.getElementById("check_result").value = "yes"; 
+          document.getElementById("check_result").value = "yes";
           $("#adCertForm").submit();
         },
       },
@@ -2672,7 +2738,7 @@ if (window.location.pathname === "/ad_certificate") {
             <label for="cert_file_del">證照圖片:</label><br>
             <img src='' id="cert_file_del" alt="上傳的圖片" style="max-width: 100px; margin-bottom: .5rem;">
         </div>
-        <input type="text" id="cert_id_del" name="cert_id_del">
+        <input style="display:none" type="text" id="cert_id_del" name="cert_id_del">
         
     </form>
     
@@ -2696,7 +2762,124 @@ if (window.location.pathname === "/ad_certificate") {
   });
 }
 
+if (window.location.pathname === "/certificate") {
+  // 初始化模态框
+  $("#cert_btn").fireModal({
+    title: "修改證照資料",
+    body: `
+    <form id="certForm" method="POST" action="/cert_edit" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="cert_name_edit">認證單位<span style="color: red;">*</span></label>
+            <select class="form-control" id="cert_name_edit" name="cert_name_edit">
+                <option value="" disabled selected>選擇認證單位</option>
+                ${names
+                  .map(
+                    (name) => `
+                  <option value="${name}">${name}</option>`
+                  )
+                  .join("")}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="cert_program_edit">認證科目<span style="color: red;">*</span></label>
+            <select class="form-control" id="cert_program_edit" name="cert_program_edit">
+                <option value="" disabled selected>選擇認證科目</option>
+                ${programs
+                  .map(
+                    (program) => `
+                  <option value="${program}">${program}</option>`
+                  )
+                  .join("")}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="cert_date_edit">考照日期<span style="color: red;">*</span></label>
+            <input type="date" class="form-control" id="cert_date_edit" name="cert_date_edit" value=''>
+        </div>
+        <div class="form-group">
+            <label for="file_edit">證照圖片<span style="color: red;">*</span></label><br>
+            <img src='' id="uploadedImage_edit" alt="上傳的圖片" style="max-width: 100px; margin-bottom: .5rem; display: none">
+            <span id="pic_msg_edit" style="display: block; margin-bottom: .5rem;"></span>
+            <input type="file" name="file_edit" id="file_edit" style="display:none;" accept="image/png, image/jpeg, image/jpg, image/webp">
+            <button type="button" id="uploadButton_edit" class="btn btn-primary">上傳照片</button>
+        </div>
+        <span id="submit_msg_edit" style="display: block; margin-bottom: .5rem; color: red;"></span>
+        <input style="display:none" type="text" id="cert_id_edit" name="cert_id_edit">
+    </form>
+    <div id="cert_EditMessage"></div>
+  `,
+    buttons: [
+      {
+        text: "取消",
+        class: "btn btn-secondary",
+        handler: function (modal) {
+          modal.modal("hide");
+        },
+      },
+      {
+        text: "送出",
+        class: "btn btn-primary",
+        handler: function () {
+          const certName = document.getElementById("cert_name_edit").value;
+          const certProgram =
+            document.getElementById("cert_program_edit").value;
+          const certDate = document.getElementById("cert_date_edit").value;
 
+          // 檢查必填欄位
+          if (!certName || !certProgram || !certDate) {
+            $("#cert_EditMessage").html(
+              '<span style="color:red;">請輸入完整的證照資料!</span>'
+            );
+            return; // 結束函數，防止提交
+          }
+
+          // 確保日期不超過今天
+          const today = new Date();
+          const selectedDate = new Date(certDate);
+          if (selectedDate > today) {
+            $("#cert_EditMessage").html(
+              '<span style="color:red;">考照日期格式錯誤!</span>'
+            );
+            return; // 結束函數，防止提交
+          }
+
+          $("#certForm").submit();
+        },
+      },
+    ],
+  });
+
+  // 点击按钮时填充数据
+  document.querySelectorAll(".btn-outline-danger").forEach((button) => {
+    button.addEventListener("click", function () {
+      const certId = this.getAttribute("data-cert-id");
+
+      // 从后台获取之前的上传资料
+      fetch(`/certificate/get_data?cert_id=${certId}`)
+        .then((response) => response.json())
+        .then((data) => {
+          // 填充表单字段
+          document.getElementById("cert_name_edit").value = data.cert_name;
+          document.getElementById("cert_program_edit").value =
+            data.cert_program;
+          document.getElementById("cert_date_edit").value = data.cert_date;
+
+          const filePreview = document.getElementById("file_edit");
+          if (data.file_url) {
+            filePreview.src = data.file_url;
+            filePreview.style.display = "block";
+          } else {
+            filePreview.style.display = "none";
+          }
+
+          $("#cert_btn").click(); // 显示模态框
+        })
+        .catch((error) => {
+          console.error("获取证照资料失败:", error);
+        });
+    });
+  });
+}
 
 $("#modal-1").fireModal({ body: "Modal body text goes here." });
 
