@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import filetype
 from flask import Flask, render_template, request, abort, session, redirect, url_for, make_response, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
 import time
 from authlib.integrations.flask_client import OAuth
@@ -145,12 +146,20 @@ def handle_message(event):
             messaging_api.reply_message(reply_request)
         else:
             # 提醒使使用者發送正確的訊息
-            reply_message = TextMessage(text="請輸入 '我要綁定' 開始綁定流程!")
-            reply_request = ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[reply_message]
-            )
-            messaging_api.reply_message(reply_request)
+            if bound_user:
+                reply_message = TextMessage(text="很抱歉我們無法回復訊息😓")
+                reply_request = ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[reply_message]
+                )
+                messaging_api.reply_message(reply_request)
+            else:
+                reply_message = TextMessage(text="請輸入 '我要綁定' 開始綁定流程!")
+                reply_request = ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[reply_message]
+                )
+                messaging_api.reply_message(reply_request)
         return
 
     # 狀態 1：用戶輸入學號
@@ -247,9 +256,9 @@ def send_class_reminders(line_ids):
             message = TextMessage(text="提醒您😊明天有課，請記得準時上課喔！\n無法到課記得在明天前請假，否則會登記為曠課!")
             push_request = PushMessageRequest(to=line_id, messages=[message])
             messaging_api.push_message(push_request)
-            print(f"通知已发送给用户 {line_id}")
+            print(f"通知已發送給用戶 {line_id}")
         except Exception as e:
-            print(f"发送消息给 {line_id} 时出错：{e}")
+            print(f"發送消息給 {line_id} 時出錯：{e}")
 # ------LINE Bot-------
 
 # 自動執行LINE Bot上課通知訊息發送
@@ -267,6 +276,7 @@ def scheduled_task():
     print(f"結束執行 花費: {execution_time:.2f}秒")
 
 scheduler = BackgroundScheduler()
+# scheduler.add_job(scheduled_task, IntervalTrigger(seconds=10)) # 10秒執行
 scheduler.add_job(scheduled_task, CronTrigger(hour=19, minute=25)) # 19:25自動發送訊息
 
 
@@ -367,7 +377,7 @@ def index():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -475,9 +485,10 @@ def fc_leaveButton():
             with connection.cursor() as cursor:
                 cursor.execute("SELECT semester, classtime_id FROM attend WHERE attend_id=%s;", (fc_attend_id,))
                 result = cursor.fetchone()
-                semester = result['semester']
-                classtime_id = result['classtime_id']
-                cursor.execute("DELETE FROM `attend` WHERE semester=%s AND user_id=%s AND classtime_id=%s AND status='';", (semester, user_id, classtime_id,))
+                cursor.execute("DELETE FROM `attend` WHERE attend_id=%s;", (fc_attend_id))
+                # semester = result['semester']
+                # classtime_id = result['classtime_id']
+                # cursor.execute("DELETE FROM `attend` WHERE semester=%s AND user_id=%s AND classtime_id=%s AND status='';", (semester, user_id, classtime_id,))
         
         connection.commit()
         connection.close()
@@ -492,11 +503,11 @@ def fc_notLeaveButton():
         fc_leaveDayDate = request.form['fc_notLeaveDayDate']
         fc_attend_id = request.form['fc_notAttend_id']
 
-        # 连接到数据库
+        # 連接到資料庫
         connection = get_db_connection()
         with connection.cursor() as cursor:
 
-            # 查询该日期和时段的上课人数
+            # 查詢該日期和時段的上課人數
             cursor.execute("""
                 SELECT COUNT(attend_id) as attend_count 
                 FROM attend
@@ -506,10 +517,10 @@ def fc_notLeaveButton():
             result = cursor.fetchone()
             attend_count = result['attend_count']
             if attend_count > 19:
-                # 如果人数已满，返回状态
+                # 如果人數已滿，返回狀態
                 return jsonify({'status': 'full'})
 
-            # 如果人数未满，更新记录为上课状态
+            # 如果人數未滿，更新記錄為上課狀態
             cursor.execute("""
                 UPDATE attend
                 SET status = ''
@@ -517,7 +528,7 @@ def fc_notLeaveButton():
             """, (fc_attend_id,))
             connection.commit()
 
-            # 返回更新成功的状态
+            # 返回更新成功的狀態
             return jsonify({'status': 'success'})
    
 # 學習進度
@@ -538,7 +549,7 @@ def st_note():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -586,7 +597,7 @@ def st_note():
             result = cursor.fetchall()
             for i in result:
                 note_todo.append({
-                    'classtime_id' : i['user_id'],
+                    'classtime_id' : i['classtime_id'],
                     'class_date': i['class_date'],
                     'class_schedule': str(i['classroom_name'] + " 禮拜" + i['class_week'] + " " + str(i['start_time'])[:-3] + "-" + str(i['end_time'])[:-3])
                 })
@@ -667,7 +678,7 @@ def profiles():
         # 確定圖片的 MIME 類型
         kind = filetype.guess(picture_data)
         mime_type = kind.mime
-        # 將二進制數據編碼為 Base64 字符串
+        # 將二進制數據編碼為 Base64 字串
         encoded_img = base64.b64encode(picture_data).decode('utf-8')
         # 構建適用於前端的 Base64 數據 URL
         picture = f"data:{mime_type};base64,{encoded_img}"
@@ -751,8 +762,8 @@ def update_profile():
         else:
             # 沒有更新圖片
             match = re.match(r'data:(.*?);base64,(.*)', request.form['img_data'])
-            base64_data = match.group(2)  # Base64 编码的数据
-            picture_data = base64.b64decode(base64_data)  # 解码为二进制数据
+            base64_data = match.group(2)  # Base64 編碼的資料
+            picture_data = base64.b64decode(base64_data)  # 解碼為二進位資料
             picture = picture_data
 
         # Update the users table
@@ -793,7 +804,7 @@ def certificate():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -809,7 +820,7 @@ def certificate():
                     kind = filetype.guess(picture_data)
                     mime_type = kind.mime
 
-                    # 將二進制數據編碼為 Base64 字符串
+                    # 將二進制數據編碼為 Base64 字串
                     encoded_img = base64.b64encode(picture_data).decode('utf-8')
                     # 構建適用於前端的 Base64 數據 URL
                     picture = f"data:{mime_type};base64,{encoded_img}"
@@ -972,7 +983,7 @@ def tr_index():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -1067,7 +1078,7 @@ def tr_index():
                     # 確定圖片的 MIME 類型
                     kind = filetype.guess(picture_data)
                     mime_type = kind.mime
-                    # 將二進制數據編碼為 Base64 字符串
+                    # 將二進制數據編碼為 Base64 字串
                     encoded_img = base64.b64encode(picture_data).decode('utf-8')
                     # 構建適用於前端的 Base64 數據 URL
                     picture = f"data:{mime_type};base64,{encoded_img}"
@@ -1159,6 +1170,7 @@ def choose_st_schedule():
                         'st_note': j['note'],
                         'st_create_date': j['create_date']
                     })
+                    print(st_data, 'klklkl')
                 cursor.execute("""SELECT 
                                         a.*, u.name AS user_name, u.age, u.phone1, u.phone2, cr.name AS classroom_name, 
                                         a.classtime_id, c.class_week, c.start_time, c.end_time, s.note, u.create_date
@@ -1205,33 +1217,41 @@ def choose_st_schedule():
                     # 確定圖片的 MIME 類型
                     kind = filetype.guess(picture_data)
                     mime_type = kind.mime
-                    # 將二進制數據編碼為 Base64 字符串
+                    # 將二進制數據編碼為 Base64 字串
                     encoded_img = base64.b64encode(picture_data).decode('utf-8')
                     # 構建適用於前端的 Base64 數據 URL
                     picture = f"data:{mime_type};base64,{encoded_img}"
                     i['picture'] = picture
                     cursor.execute("SELECT MAX(class_date) AS last_date FROM attend WHERE (class_date < %s OR (class_date = %s AND classtime_id !=%s)) AND user_id=%s AND status=1;",
                                     (date, date, i['classtime_id'], i['st_id']))
+                    
                     result = cursor.fetchone()
                     last_date = result['last_date']
                     if last_date:
-                        cursor.execute(""" 
-                                    SELECT c.name, s.progress
-                                                FROM `stprogress` s
-                                                JOIN courses c
-                                                ON c.course_id = s.course_id
-                                                WHERE s.st_id=%s AND s.classtime_id=%s AND s.class_date=%s;
-                                        """, 
-                                        (i['st_id'], i['classtime_id'], last_date))
-                        result = cursor.fetchone()
-                        i['course_name'] = result['name']
-                        i['course_progress'] = result['progress']
+                        try:
+                            cursor.execute(""" 
+                                            SELECT c.name, s.progress
+                                            FROM `stprogress` s
+                                            JOIN courses c
+                                            ON c.course_id = s.course_id
+                                            WHERE s.st_id=%s AND s.classtime_id=%s AND s.class_date<=%s
+                                            ORDER BY s.class_date DESC LIMIT 1;
+                                            """, 
+                                            (i['st_id'], i['classtime_id'], last_date))
+                            result = cursor.fetchone()
+                            i['course_name'] = result['name']
+                            i['course_progress'] = result['progress']
+                        except:
+                            i['course_name'] = '-'
+                            i['course_progress'] = ''
         if len(st_data) !=0:
             return jsonify({"st_data": st_data, "classtimes": classtimes})
 
         else:
+            print('123111')
             return jsonify("查無資料")          
-    except :
+    except Exception as e:
+        print(f"Error occurred: {e}")  # 打印具体的异常信息
         return jsonify('查無資料')    
 
 # st_info 老師查看學生的詳細資料
@@ -1281,7 +1301,7 @@ def tr_profiles():
         # 確定圖片的 MIME 類型
         kind = filetype.guess(picture_data)
         mime_type = kind.mime
-        # 將二進制數據編碼為 Base64 字符串
+        # 將二進制數據編碼為 Base64 字串
         encoded_img = base64.b64encode(picture_data).decode('utf-8')
         # 構建適用於前端的 Base64 數據 URL
         picture = f"data:{mime_type};base64,{encoded_img}"
@@ -1348,8 +1368,8 @@ def update_tr_profile():
         else:
             # 沒有更新圖片
             match = re.match(r'data:(.*?);base64,(.*)', request.form['tr_img_dataf'])
-            base64_data = match.group(2)  # Base64 编码的数据
-            picture_data = base64.b64decode(base64_data)  # 解码为二进制数据
+            base64_data = match.group(2)  # Base64 編碼的資料
+            picture_data = base64.b64decode(base64_data)  # 解碼為二進位資料
             picture = picture_data
 
         # Update the users table
@@ -1387,7 +1407,7 @@ def ad_index():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -1401,7 +1421,7 @@ def ad_index():
             # 確定圖片的 MIME 類型
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -1459,7 +1479,7 @@ def st_insertDataButton():
         profession = request.form['profession']
         note = request.form['note'] 
 
-        # 加密密码
+        # 加密密碼
         hashed_password = bcrypt.generate_password_hash(pwd).decode('utf-8')
 
         # 預設圖片
@@ -1566,7 +1586,7 @@ def ad_certificate():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -1580,7 +1600,7 @@ def ad_certificate():
             # 確定圖片的 MIME 類型
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -1648,7 +1668,7 @@ def st_attend():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -1851,7 +1871,7 @@ def st_leave():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -1904,7 +1924,7 @@ def ad_money():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -1918,7 +1938,7 @@ def ad_money():
             # 確定圖片的 MIME 類型
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -2100,7 +2120,7 @@ def st_for_tr():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -2339,11 +2359,11 @@ def search_st_info():
                 return jsonify({'st_name': '<span style="color: red">查無資料!</span>'})
 
         except Exception as e:
-            # 记录错误信息（可选）
+            # 記錄錯誤資訊（可選）
             return jsonify({'st_name': '<span style="color: red">查無資料!</span>'})
 
         finally:
-            connection.close()  # 确保连接关闭
+            connection.close()  # 確保連接關閉
 
 # st_scheduleButton 管理員新增學生上課時段
 @app.route('/st_scheduleButton', methods=['POST'])
@@ -2355,7 +2375,7 @@ def st_scheduleButton():
         currentSelection_val = request.form['currentSelection_val'].split(', ')
         st_schedule = {}
         
-        # 构建课表信息
+        # 構建課表信息
         if old_classtime_id != ['']:
             for i in range(len(old_classtime_id)):
                 c, t = old_classtime_id[i].split()
@@ -2365,21 +2385,21 @@ def st_scheduleButton():
             c, t = currentSelection_val[i].split()
             st_schedule[len(st_schedule) + i] = {'classtime_id': int(c), 'tr_id': int(t), 'week': ''}
 
-        # 获取星期数映射
+        # 獲取星期數映射
         week = ['一', '二', '三', '四', '五', '六', '日']
         connection = get_db_connection()
 
         with connection.cursor() as cursor:
-            # 批量查询所有 class_week 数据
+            # 批量查詢所有 class_week 資料
             cursor.execute("SELECT classtime_id, class_week FROM `classtime`;")
             class_week_map = {row['classtime_id']: week.index(row['class_week']) for row in cursor.fetchall()}
 
-            # 为课表添加星期数
+            # 為課表添加星期數
             for i in st_schedule.keys():
                 st_schedule[i]['week'] = class_week_map.get(st_schedule[i]['classtime_id'])
 
         if st_semester != 'new':
-            # 更新现有学期的课程
+            # 更新現有學期的課程
             with connection.cursor() as cursor:
                 try:
                     cursor.execute(
@@ -2393,7 +2413,7 @@ def st_scheduleButton():
                     class_num = len(attend_id)
                     class_start_date = min(i['class_date'] for i in result) if result else None
                     if not class_start_date:
-                        return "No classes to update.", 400  # 提示无可更新课程
+                        return "No classes to update.", 400  # 提示無可更新課程
 
                     current_date = class_start_date
                     num = 1
@@ -2405,14 +2425,14 @@ def st_scheduleButton():
                             updates.append(
                                 (st_schedule[i]['tr_id'], st_schedule[i]['classtime_id'], current_date, attend_id[num - 1])
                             )
-                            # 更新到下一个课时的日期
+                            # 更新到下一個課時的日期
                             days_ahead = (st_schedule[i]['week'] - current_date.weekday() + 7) % 7
                             if days_ahead == 0:
-                                days_ahead = 7  # 跳到下一个相同的星期
+                                days_ahead = 7  # 跳到下一個相同的星期
                             current_date += timedelta(days=days_ahead)
                             num += 1
                     
-                    # 批量执行 UPDATE 操作
+                    # 批量執行 UPDATE 操作
                     cursor.executemany(
                         """UPDATE `attend` SET `tr_id`=%s, `classtime_id`=%s, `class_date`=%s
                         WHERE `attend_id`=%s;""", updates
@@ -2423,11 +2443,11 @@ def st_scheduleButton():
                     raise e
 
         else:
-            # 为新学期插入新课程
+            # 為新學期插入新課程
             class_start_date = datetime.strptime(request.form['search_semester_start_date'], '%Y-%m-%d')
             with connection.cursor() as cursor:
                 try:
-                    # 获取最新学期编号
+                    # 獲取最新學期編號
                     cursor.execute(
                         "SELECT MAX(semester) as semester FROM `attend` WHERE `user_id`=%s;", (st_id,)
                     )
@@ -2442,7 +2462,7 @@ def st_scheduleButton():
                         for i in st_schedule.keys():
                             if num > 20:
                                 break
-                            # 计算下次上课的日期
+                            # 計算下次上課的日期
                             days_ahead = (st_schedule[i]['week'] - current_date.weekday() + 7) % 7
                             if days_ahead == 0:
                                 days_ahead = 7
@@ -2455,13 +2475,13 @@ def st_scheduleButton():
                             current_date = next_class_date  # 更新 current_date
                             num += 1
                     
-                    # 批量执行 INSERT 操作
+                    # 批量執行 INSERT 操作
                     cursor.executemany(
                         """INSERT INTO `attend`(`semester`, `user_id`, `tr_id`, `classtime_id`, `class_date`, `status`, `adjust`)
                         VALUES (%s, %s, %s, %s, %s, %s, %s);""", inserts
                     )
                     
-                    # 更新学生信息
+                    # 更新學生資訊
                     cursor.execute(
                         "UPDATE `students` SET `semester`=`semester`+1, `pay_num`=`pay_num`-1 WHERE `st_id`=%s;", 
                         (st_id,)
@@ -2550,7 +2570,7 @@ def fc_scheduleButton():
         classroomDateSelect = request.form['classroomDateSelect']
         # fc_classroomAreaSelect = request.form['fc_classroomAreaSelect']
         fc_classroomSelect = request.form['fc_classroomSelect']
-        fc_classtime_id = request.form['fc_timeslotSelect'].split()
+        fc_classtime_id = request.form['fc_timeslotSelect'].split()[0]
         # class_week = fc_timeslotSelect[0][-1]
         # start_time = fc_timeslotSelect[1][:5]
         # end_time = fc_timeslotSelect[1][6:]
@@ -2570,7 +2590,12 @@ def fc_scheduleButton():
             cursor.execute("SELECT tr_id FROM `attend` WHERE user_id=%s AND classtime_id=%s AND semester=%s AND adjust=0 ORDER BY class_date DESC LIMIT 1;", 
                            (user_id, fc_classtime_id, semester))
             result = cursor.fetchone()
-            tr_id_old = result['tr_id']
+            print('u', user_id, 'fc_classtime_id', fc_classtime_id, 'semester', semester)
+            if result:  # 检查 result 是否不是 None
+                tr_id_old = result['tr_id']
+            else:
+                tr_id_old = ''
+
             # 同時段的老師
             cursor.execute("SELECT tr_id, COUNT(tr_id) as tr_st_num FROM `attend` WHERE class_date=%s AND classtime_id=%s GROUP BY tr_id;", 
                            (classroomDateSelect, fc_classtime_id))
@@ -2591,7 +2616,8 @@ def fc_scheduleButton():
                         'tr_st_num': i['tr_st_num']
                     })
             tr_data.sort(key=lambda x: x['tr_st_num'])
-            # 获取学生最少的老师信息
+            print(tr_data, '000')
+            # 獲取學生最少的老師資訊
             if tr_id_old in tr_data or tr_data == []:
                 min_tr_id = tr_id_old
             else:
@@ -2696,7 +2722,7 @@ def tr_manage():
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
 
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -2731,7 +2757,7 @@ def tr_manage():
             # 確定圖片的 MIME 類型
             kind = filetype.guess(picture_data)
             mime_type = kind.mime
-            # 將二進制數據編碼為 Base64 字符串
+            # 將二進制數據編碼為 Base64 字串
             encoded_img = base64.b64encode(picture_data).decode('utf-8')
             # 構建適用於前端的 Base64 數據 URL
             picture = f"data:{mime_type};base64,{encoded_img}"
@@ -2867,7 +2893,7 @@ def leaveTeacherButton():
         tr_id = request.form['tr_id']
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # 更新用户信息
+            # 更新使用者資訊
             cursor.execute("DELETE FROM `teachers` WHERE tr_id=%s;", (tr_id))
             connection.commit()
         return redirect(url_for('tr_manage'))
@@ -2982,55 +3008,55 @@ def login():
                 if result:
                     stored_password = result['pwd']
 
-                    # 如果是明文密码并且匹配成功
+                    # 如果是純文字密碼並且匹配成功
                     if stored_password == pwd:
-                        # 明文密码加密并更新到数据库
+                        # 純文字密碼加密並更新到資料庫
                         hashed_password = bcrypt.generate_password_hash(pwd).decode('utf-8')
                         cursor.execute("UPDATE users SET pwd=%s WHERE acc=%s", (hashed_password, acc))
                         connection.commit()
 
-                        # 登录成功后存储会话数据
+                        # 登錄成功後存儲會話資料
                         session['login_status'] = "True"
                         session['user_id'] = result['user_id']
                         session['role'] = result['role']
                         session['status'] = result['status']
 
-                        # 根据角色跳转到不同页面
-                        if session['role'] == '1':  # 学生
+                        # 根據角色跳轉到不同頁面
+                        if session['role'] == '1':  # 學生
                             return redirect(url_for('index'))
                         
-                        elif session['role'] == '3':  # 老师
+                        elif session['role'] == '3':  # 老師
                             return redirect(url_for('tr_index'))
                         
-                        elif session['role'] == '4':  # 管理员
+                        elif session['role'] == '4':  # 管理員
                             return redirect(url_for('ad_index')) 
 
-                    # 如果是加密密码，进行验证
+                    # 如果是加密密碼，進行驗證
                     elif bcrypt.check_password_hash(stored_password, pwd):
                         session['login_status'] = "True"
                         session['user_id'] = result['user_id']
                         session['role'] = result['role']
                         session['status'] = result['status']
 
-                        # 根据角色跳转到不同页面
-                        if session['role'] == '1':  # 学生
+                        # 根據角色跳轉到不同頁面
+                        if session['role'] == '1':  # 學生
                             return redirect(url_for('index'))
                         
-                        elif session['role'] == '3':  # 老师
+                        elif session['role'] == '3':  # 老師
                             return redirect(url_for('tr_index'))
                         
-                        elif session['role'] == '4':  # 管理员
+                        elif session['role'] == '4':  # 管理員
                             return redirect(url_for('ad_index')) 
                     else:
                         session['login_status'] = "False"
-                        return render_template('login.html', error="密码错误")
+                        return render_template('login.html', error="密碼錯誤")
 
                 else:
                     session['login_status'] = "False"
-                    return render_template('login.html', error="用户不存在")
+                    return render_template('login.html', error="用戶不存在")
 
         except Exception as e:
-            return render_template('login.html', error="发生错误，请稍后再试")
+            return render_template('login.html', error="發生錯誤，請稍後再試")
         finally:
             connection.close()
 
@@ -3039,7 +3065,7 @@ def login():
 # logout 登出
 @app.route('/logout')
 def logout():
-    session.clear()  # 清除会话
+    session.clear()  # 清除會話
     return redirect(url_for('login'))
 
 # 防止瀏覽器快存 避免登出後按返回還能看到系統 
@@ -3057,13 +3083,13 @@ def add_header(response):
 
 if __name__ == "__main__":
     try:
-        # 启动定时任务调度器
+        # 啟動定時任務調度器
         scheduler.start()
 
-        # 启动 Flask 应用
-        app.run(debug=True, use_reloader=False)  # use_reloader=False 是为了防止调度器被多次启动
+        # 啟動 Flask 應用
+        app.run(debug=True, use_reloader=False)  # use_reloader=False 是為了防止調度器被多次啟動
     except (KeyboardInterrupt, SystemExit):
-        # 当程序终止时，关闭调度器
+        # 當程式終止時，關閉調度器
         scheduler.shutdown()
 
 if __name__ == "__main__":
@@ -3074,60 +3100,60 @@ if __name__ == "__main__":
 
 # @app.route("/scheduleButton", methods=['POST'])
 # def scheduleButton():
-    if request.method == 'POST':
-        user_id = session.get('user_id')
-        classroomAreaSelect = request.form['classroomAreaSelect']
-        classroomSelect = request.form['classroomSelect']
-        class_date = datetime.strptime(request.form['classDate'], '%Y-%m-%d')
-        timeslotSelect = request.form['timeslotSelect'].split()
-        classNumSelect = int(request.form['classNumSelect'])
-        class_week = timeslotSelect[0][-1]
-        start_time = timeslotSelect[1][:5]
-        end_time = timeslotSelect[1][6:]
+#     if request.method == 'POST':
+#         user_id = session.get('user_id')
+#         classroomAreaSelect = request.form['classroomAreaSelect']
+#         classroomSelect = request.form['classroomSelect']
+#         class_date = datetime.strptime(request.form['classDate'], '%Y-%m-%d')
+#         timeslotSelect = request.form['timeslotSelect'].split()
+#         classNumSelect = int(request.form['classNumSelect'])
+#         class_week = timeslotSelect[0][-1]
+#         start_time = timeslotSelect[1][:5]
+#         end_time = timeslotSelect[1][6:]
 
-        connection = get_db_connection()
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT count(attend_id) as semester FROM attend WHERE user_id=%s AND (status='1' OR status='3')", (user_id))
-            result = cursor.fetchone()
-            semester = result['semester'] // 20 + 1
+#         connection = get_db_connection()
+#         with connection.cursor() as cursor:
+#             cursor.execute("SELECT count(attend_id) as semester FROM attend WHERE user_id=%s AND (status='1' OR status='3')", (user_id))
+#             result = cursor.fetchone()
+#             semester = result['semester'] // 20 + 1
         
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT classtime_id FROM classroom_schedule WHERE classroom_name=%s AND class_week=%s AND start_time=%s AND end_time=%s;", 
-                                (classroomSelect, class_week, start_time, end_time))
-            result = cursor.fetchone()
-            classtime_id = result['classtime_id']
+#         with connection.cursor() as cursor:
+#             cursor.execute("SELECT classtime_id FROM classroom_schedule WHERE classroom_name=%s AND class_week=%s AND start_time=%s AND end_time=%s;", 
+#                                 (classroomSelect, class_week, start_time, end_time))
+#             result = cursor.fetchone()
+#             classtime_id = result['classtime_id']
 
-        for i in range(classNumSelect):
-            with connection.cursor() as cursor:
-                cursor.execute("INSERT INTO `attend`(`semester`, `user_id`, `classtime_id`, `class_date`) VALUES (%s, %s, %s, %s)", 
-                                (semester, user_id, classtime_id, class_date))
-            connection.commit()
-            class_date += timedelta(days=7)       
-        return redirect(url_for('index'))
-    return redirect(url_for('login'))
+#         for i in range(classNumSelect):
+#             with connection.cursor() as cursor:
+#                 cursor.execute("INSERT INTO `attend`(`semester`, `user_id`, `classtime_id`, `class_date`) VALUES (%s, %s, %s, %s)", 
+#                                 (semester, user_id, classtime_id, class_date))
+#             connection.commit()
+#             class_date += timedelta(days=7)       
+#         return redirect(url_for('index'))
+#     return redirect(url_for('login'))
 
 # @app.route("/leaveButton", methods=['POST'])
 # def leaveButton():
-    login_status = session.get('login_status')
-    user_id = session.get('user_id')
-    role = session.get('role')
+    # login_status = session.get('login_status')
+    # user_id = session.get('user_id')
+    # role = session.get('role')
 
-    if login_status == "True" and  role == '1':
-        leaveDate = datetime.strptime(request.form.get('leaveDate'), '%Y-%m-%d')
-        endDate = datetime.strptime(request.form.get('endDate'), '%Y-%m-%d')
+    # if login_status == "True" and  role == '1':
+    #     leaveDate = datetime.strptime(request.form.get('leaveDate'), '%Y-%m-%d')
+    #     endDate = datetime.strptime(request.form.get('endDate'), '%Y-%m-%d')
 
-        connection = get_db_connection()
-        with connection.cursor() as cursor:
-                cursor.execute("SELECT semester FROM `attend` WHERE user_id=%s ORDER BY `semester` DESC LIMIT 1;", (user_id,))
-                result = cursor.fetchone()
-                semester = result['semester']
+    #     connection = get_db_connection()
+    #     with connection.cursor() as cursor:
+    #             cursor.execute("SELECT semester FROM `attend` WHERE user_id=%s ORDER BY `semester` DESC LIMIT 1;", (user_id,))
+    #             result = cursor.fetchone()
+    #             semester = result['semester']
 
-        with connection.cursor() as cursor:
-            cursor.execute("UPDATE `attend` SET `status`=2 WHERE semester=%s AND class_date BETWEEN %s AND %s;",
-                (semester, leaveDate, endDate)
-            )
-            connection.commit()
+    #     with connection.cursor() as cursor:
+    #         cursor.execute("UPDATE `attend` SET `status`=2 WHERE semester=%s AND class_date BETWEEN %s AND %s;",
+    #             (semester, leaveDate, endDate)
+    #         )
+    #         connection.commit()
 
-        return redirect(url_for('index'))
-    else:
-        return redirect(url_for('login'))
+    #     return redirect(url_for('index'))
+    # else:
+    #     return redirect(url_for('login'))

@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="assets/modules/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="assets/modules/fontawesome/css/all.min.css">
 
-
   <!-- CSS Libraries -->
   <link rel="stylesheet" href="assets/modules/jqvmap/dist/jqvmap.min.css">
   <link rel="stylesheet" href="assets/modules/summernote/summernote-bs4.css">
@@ -20,28 +19,10 @@
   <link rel="stylesheet" href="assets/modules/fullcalendar/fullcalendar.min.css">
   <link rel="stylesheet" href="assets/modules/ionicons/css/ionicons.min.css">
 
-  <!-- air-datepicker -->
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/air-datepicker@3.3.5/air-datepicker.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/air-datepicker@3.3.5/air-datepicker.min.js"></script> -->
-
   <!-- Template CSS -->
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/components.css">
 
-  <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
-  <!-- 加载 Google API 客户端库 -->
-  <script src="https://apis.google.com/js/api.js"></script>
-
-  <!-- Start GA -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-94034622-3"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-
-    gtag('config', 'UA-94034622-3');
-  </script>
-  <!-- /END GA -->
   <style>
     .fc-toolbar h2 {
       line-height: 2;
@@ -54,7 +35,6 @@
         margin-right: auto !important;
       }
   </style>
-
 </head>
 
 <body>
@@ -192,108 +172,12 @@
 
       <footer class="main-footer">
         <div class="footer-left">
-          組別: 113201 指導老師 : 林俊杰老師 &nbsp 專題組員: 11236001 林奕辰
+          組別: 113201 指導老師 : 林俊傑老師 &nbsp 專題組員: 11236001 林奕辰
         </div>
         <div class="footer-right"></div>
       </footer>
     </div>
   </div>
-
-  <script>
-    var client_id = "346287506808-oe0cu9l0ovsie49b274hhkrmmsr4ih0v.apps.googleusercontent.com",
-      Key = "AIzaSyB63lPx97CBNrxTAli8oz1A3n3_olyirq8",
-      scope = "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/user.gender.read https://www.googleapis.com/auth/user.birthday.read",
-      personFields = "names,emailAddresses,photos,genders,birthdays",
-      discovery_doc = "https://www.googleapis.com/discovery/v1/apis/people/v1/rest",
-      resourceName = "people/me",
-      $personal_info = $("#personal_info"),
-      redirect_uri = "https://79ea-219-70-149-68.ngrok-free.app",
-      tokenClient;
-
-    loadApi();
-
-    // 載入 Google API
-    function loadApi() {
-      // 載入 gapi
-      $.getScript("https://apis.google.com/js/api.js", function () {
-        gapi.load("client", function () {
-          gapi.client.init({
-            apiKey: Key,
-            discoveryDocs: [discovery_doc],
-          });
-        });
-      });
-
-      // 載入 gsi
-      $.getScript("https://accounts.google.com/gsi/client", function () {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-          client_id: client_id,
-          scope: scope,
-          callback: signIn_callback,
-          error_callback: error_callback,
-          redirect_uri: redirect_uri
-        });
-      });
-    }
-
-    // 登入成功後 callback
-    function signIn_callback(res) {
-      if (res && res.access_token) {
-        var login_status = "True";
-        var login_method = "google";
-        var access_token = res.access_token;
-        $.ajax({
-          type: "POST",
-          url: "/login",
-          data: { login_status: login_status, login_method: login_method, access_token: access_token },
-          success: function (response) {
-            window.location.href = "/index";
-          },
-          error: function (error) {
-            console.error("Error loading:", error);
-          }
-        });
-      }
-    }
-
-    // 捕捉非 OAuth 錯誤 或是在傳回 OAuth 回應前遭到關閉
-    function error_callback(res) {
-      console.log(res);
-      $personal_info.html(res.message);
-    }
-
-    // 點擊登入按鈕
-    $("#google_login").click(function () {
-      // 進動畫
-      $personal_info.html("<img src='https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgATuJvkpy3TyBQtXW_JJ59fpiTcu6m9jkBoXtHXpCwpiiOqDdLSLIP2VkH56AQHEg_JubYb6aueZcHrVC-1muR1XwNF3Fxkt_fbNxdMtl6TiakzPHvqPlXefdZMOu2u9IzU6-a-X8So4ok/s512/indicator-light.gif' /> <span>請稍後...</span>");
-
-      if (gapi.client.getToken() === null) {
-        // 未登入則彈出登入視窗
-        tokenClient.requestAccessToken();
-      } else {
-        // 已登入則不彈出視窗
-        tokenClient.requestAccessToken({
-          prompt: ""
-        });
-      }
-    });
-
-    // $("#google_logout").click(function () {
-    //   $.ajax({
-    //     type: "GET",
-    //     url: "/logout",
-    //     success: function () {
-    //       // 清除浏览器的缓存
-    //       window.location.replace("/login");
-    //       window.location.reload(true);
-    //     },
-    //     error: function (error) {
-    //       console.error("Logout error:", error);
-    //     }
-    //   });
-    // });
-  </script>
-
 
   <!-- General JS Scripts -->
   <script src="assets/modules/jquery.min.js"></script>
@@ -319,10 +203,10 @@
   <script src="assets/js/page/modules-calendar.js"></script>
 
 
-
   <!-- Template JS File -->
   <script src="assets/js/scripts.js"></script>
   <script src="assets/js/custom.js"></script>
 </body>
 
 </html>
+

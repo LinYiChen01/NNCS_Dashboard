@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
     for (const [classroom, weeks] of Object.entries(groupedData)) {
       const listItem = document.createElement("li");
       listItem.classList.add("media");
-      listItem.style=("border-bottom: 1px solid #98a6ad;}");
+      listItem.style = "border-bottom: 1px solid #98a6ad;}";
       const weekStrings = [];
       for (const [week, times] of Object.entries(weeks)) {
         weekStrings.push(
@@ -81,18 +81,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 更新下拉選單和 <ul> 的內容
   window.updateDropdown = function (element, selectedClassroom) {
-  // 更新下拉選單按鈕的文字
-  document.getElementById("dropdownMenuButton").textContent = selectedClassroom;
+    // 更新下拉選單按鈕的文字
+    document.getElementById("dropdownMenuButton").textContent =
+      selectedClassroom;
 
-  // 更新下拉選單項目的活躍狀態
-  var items = document.querySelectorAll(".dropdown-item");
-  items.forEach(function (item) {
-    item.classList.remove("active");
-  });
-  element.classList.add("active");
+    // 更新下拉選單項目的活躍狀態
+    var items = document.querySelectorAll(".dropdown-item");
+    items.forEach(function (item) {
+      item.classList.remove("active");
+    });
+    element.classList.add("active");
 
-  // 更新 <ul> 的內容
-  updateClassroomList(selectedClassroom);
+    // 更新 <ul> 的內容
+    updateClassroomList(selectedClassroom);
   };
 
   // 初始時顯示所有教室

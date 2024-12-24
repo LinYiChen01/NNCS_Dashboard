@@ -27,6 +27,6 @@ document
   .getElementById("editNoteButton")
   .addEventListener("click", function () {
     $("#st_id").val(user_id);
-      
+
     $("#StudenNoteMessage").text("");
   });
